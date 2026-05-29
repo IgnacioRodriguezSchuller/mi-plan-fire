@@ -67,6 +67,7 @@ export function monthlyForGoal({ age, targetAge, capital, ret, target }) {
 }
 
 // ---------- v2 utilities: dates, ids, segments ----------
+export const uid = () => Math.random().toString(36).slice(2, 9);
 
 export function todayKey() {
   const d = new Date();

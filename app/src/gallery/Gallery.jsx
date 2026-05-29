@@ -5,12 +5,17 @@ import { useState, useMemo } from 'react'
 import { T } from '../tokens/index.js'
 import {
   EditableNumber, Slider, Pill, Card, Label, Btn, MonthInput,
-  Stat, SmallStat, Row, RowWithWarning, LegendChip,
+  Stat, SmallStat, Row, RowWithWarning, LegendChip, LearnIcon,
 } from '../ui/index.jsx'
 import {
   LineChart, Sparkline, LifecycleChart, LifecycleChartDual, MultiLineChart, FlowTimelineCard,
 } from '../charts/index.jsx'
 import { project, projectV2, projectDecumulation, projectStandardPlan } from '../lib/index.js'
+import {
+  ConfirmModal, WhyDifferentModal, MonthlyCalendarModal, PublicPensionDisclaimerModal,
+  ProgressionWizard, Concept, ConceptModal, AboutModal,
+} from '../modals/index.jsx'
+import { TABLON, LEARN_CORPUS } from '../content/index.js'
 
 function Section({ name, note, children }) {
   return (
@@ -50,6 +55,15 @@ export default function Gallery() {
   const [sliderV, setSliderV] = useState(15)
   const [sliderEur, setSliderEur] = useState(60000)
   const [month, setMonth] = useState('2026-05')
+  const [openModal, setOpenModal] = useState(null)
+
+  // Calendario de ejemplo para MonthlyCalendarModal (props/callbacks mock).
+  const year = new Date().getFullYear()
+  const monthsGrouped = [[String(year), [
+    { key: `${year}-01`, monthIndex: 0, year, actual: 600, label: 'ene. ' + year, note: '' },
+    { key: `${year}-02`, monthIndex: 1, year, actual: 450, label: 'feb. ' + year, note: 'mes flojo' },
+    { key: `${year}-03`, monthIndex: 2, year, actual: 800, label: 'mar. ' + year, note: '' },
+  ]]]
 
   // Datos de ejemplo para charts/ (proyecciones reales con las funciones de lib).
   const charts = useMemo(() => {
@@ -192,6 +206,63 @@ export default function Gallery() {
           <FlowTimelineCard plan={samplePlan} profile={sampleProfile} />
         </ChartBox>
       </Section>
+
+      <Section name="modals/" note="pulsa para abrir cada modal">
+        <div style={{ width: '100%', fontFamily: T.serif, fontSize: T.size.lead, color: T.ink, marginBottom: 4 }}>
+          Trigger <code>Concept</code>: el{' '}
+          <Concept id="interes-compuesto">interés compuesto</Concept>{' '}
+          es el motor del patrimonio. (clic → tooltip → "Saber más" abre <code>ConceptModal</code>)
+        </div>
+        <Btn variant="ghost" size="sm" onClick={() => setOpenModal('confirm')}>ConfirmModal</Btn>
+        <Btn variant="ghost" size="sm" onClick={() => setOpenModal('why')}>WhyDifferentModal</Btn>
+        <Btn variant="ghost" size="sm" onClick={() => setOpenModal('calendar')}>MonthlyCalendarModal</Btn>
+        <Btn variant="ghost" size="sm" onClick={() => setOpenModal('pension')}>PublicPensionDisclaimerModal</Btn>
+        <Btn variant="ghost" size="sm" onClick={() => setOpenModal('wizard')}>ProgressionWizard</Btn>
+        <Btn variant="ghost" size="sm" onClick={() => setOpenModal('about')}>AboutModal</Btn>
+        <Btn variant="ghost" size="sm" onClick={() => setOpenModal('concept')}>ConceptModal (directo)</Btn>
+      </Section>
+
+      <Section name="content/ · LearnIcon" note="iconos SVG (último = fallback)">
+        {['interes-compuesto', 'retorno-anual', 'inflacion', 'volatilidad', 'riesgo-incertidumbre', 'patrimonio', 'horizonte', 'aporte-mensual', 'asset-allocation', 'fondos-indexados', 'comisiones', 'diversificacion', 'pignoracion', 'desconocido'].map((id) => (
+          <div key={id} style={{ textAlign: 'center', width: 76 }}>
+            <LearnIcon id={id} size={36} />
+            <div style={{ fontFamily: T.mono, fontSize: 9, color: T.faint, marginTop: 4, wordBreak: 'break-word', letterSpacing: '0.04em' }}>{id}</div>
+          </div>
+        ))}
+      </Section>
+
+      <Section name="content/ · TABLON" note={`${TABLON.length} temas · corpus ${Object.keys(LEARN_CORPUS).length} conceptos`}>
+        <div style={{ width: '100%', columns: '2 300px', columnGap: 28 }}>
+          {TABLON.map((t, i) => (
+            <div key={i} style={{ breakInside: 'avoid', marginBottom: 16 }}>
+              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.accent, marginBottom: 6 }}>{t.theme}</div>
+              {t.lessons.map((l, j) => (
+                <div key={j} style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, marginBottom: 6, lineHeight: T.lh.snug }}>
+                  “{l.text}” <span style={{ color: T.faint, fontStyle: 'normal' }}>· {l.source}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Renders de modales (controlados por openModal) */}
+      {openModal === 'confirm' && (
+        <ConfirmModal open title="¿Borrar el plan?" body="Esta acción no se puede deshacer. Se eliminarán todos los datos del plan actual."
+          destructive confirmLabel="Borrar" cancelLabel="Cancelar"
+          onConfirm={() => setOpenModal(null)} onCancel={() => setOpenModal(null)} />
+      )}
+      {openModal === 'why' && <WhyDifferentModal onClose={() => setOpenModal(null)} />}
+      {openModal === 'calendar' && (
+        <MonthlyCalendarModal grouped={monthsGrouped} plan={samplePlan}
+          setMonth={() => {}} addMonths={() => {}}
+          ensureMonth={(y, idx) => `${y}-${String(idx + 1).padStart(2, '0')}`} update={() => {}}
+          onClose={() => setOpenModal(null)} />
+      )}
+      {openModal === 'pension' && <PublicPensionDisclaimerModal open onCancel={() => setOpenModal(null)} onConfirm={() => setOpenModal(null)} />}
+      {openModal === 'wizard' && <ProgressionWizard onClose={() => setOpenModal(null)} onApply={() => setOpenModal(null)} />}
+      {openModal === 'about' && <AboutModal onClose={() => setOpenModal(null)} />}
+      {openModal === 'concept' && <ConceptModal id="interes-compuesto" onClose={() => setOpenModal(null)} />}
     </div>
   )
 }

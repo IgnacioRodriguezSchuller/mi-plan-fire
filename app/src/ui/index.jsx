@@ -201,3 +201,44 @@ export function LegendChip({ color, label, dashed }) {
     </span>
   );
 }
+
+// LearnIcon (baseline POR DECIDIR → ui/): icono SVG puro, solo depende de T.
+// v5.11 (F2.5) · Minimalist single-stroke icons for the Esencial concepts.
+// Each renders inside a 36×36 box, stroke 1.6 in T.ink. Concepts without a
+// dedicated icon fall back to <LearnIconFallback />.
+export function LearnIcon({ id, size = 36, color }) {
+  const stroke = color || T.ink;
+  const sw = 1.6;
+  const common = { width: size, height: size, viewBox: '0 0 36 36', fill: 'none', stroke, strokeWidth: sw, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  switch (id) {
+    case 'interes-compuesto': // curva exponencial creciente
+      return <svg {...common}><path d="M 5 30 Q 18 30 24 18 T 31 5" /><circle cx="31" cy="5" r="1.5" fill={stroke} /></svg>;
+    case 'retorno-anual': // flecha hacia arriba con un punto
+      return <svg {...common}><path d="M 18 30 L 18 8" /><path d="M 11 15 L 18 8 L 25 15" /></svg>;
+    case 'inflacion': // monedas decrecientes
+      return <svg {...common}><circle cx="10" cy="14" r="5" /><circle cx="18" cy="20" r="4" /><circle cx="26" cy="25" r="3" /></svg>;
+    case 'volatilidad': // ola
+      return <svg {...common}><path d="M 4 18 Q 9 8 14 18 T 24 18 T 32 18" /></svg>;
+    case 'riesgo-incertidumbre': // signo de interrogación dentro de un círculo
+      return <svg {...common}><circle cx="18" cy="18" r="13" /><path d="M 14 14 Q 14 10 18 10 Q 22 10 22 14 Q 22 17 18 18 L 18 21" /><circle cx="18" cy="25" r="0.8" fill={stroke} /></svg>;
+    case 'patrimonio': // bóveda con barras
+      return <svg {...common}><rect x="6" y="10" width="24" height="18" rx="1.5" /><line x1="6" y1="16" x2="30" y2="16" /><line x1="12" y1="20" x2="12" y2="26" /><line x1="18" y1="20" x2="18" y2="26" /><line x1="24" y1="20" x2="24" y2="26" /></svg>;
+    case 'horizonte': // reloj de arena
+      return <svg {...common}><path d="M 10 6 L 26 6" /><path d="M 10 30 L 26 30" /><path d="M 10 6 Q 10 12 18 18 Q 26 24 26 30" /><path d="M 26 6 Q 26 12 18 18 Q 10 24 10 30" /></svg>;
+    case 'aporte-mensual': // calendario con flecha de entrada
+      return <svg {...common}><rect x="6" y="9" width="24" height="20" rx="2" /><line x1="6" y1="14" x2="30" y2="14" /><line x1="12" y1="6" x2="12" y2="11" /><line x1="24" y1="6" x2="24" y2="11" /><path d="M 14 22 L 22 22" /><path d="M 19 19 L 22 22 L 19 25" /></svg>;
+    case 'asset-allocation': // tres rectángulos verticales de distintas alturas
+      return <svg {...common}><rect x="6" y="14" width="6" height="16" /><rect x="15" y="8" width="6" height="22" /><rect x="24" y="20" width="6" height="10" /></svg>;
+    case 'fondos-indexados': // varias líneas horizontales subiendo (índice)
+      return <svg {...common}><line x1="5" y1="28" x2="31" y2="10" /><line x1="5" y1="32" x2="5" y2="6" /><line x1="3" y1="30" x2="33" y2="30" /></svg>;
+    case 'comisiones': // signo % grande
+      return <svg {...common}><circle cx="11" cy="11" r="4" /><circle cx="25" cy="25" r="4" /><line x1="9" y1="27" x2="27" y2="9" /></svg>;
+    case 'diversificacion': // diagrama de tres círculos solapados
+      return <svg {...common}><circle cx="14" cy="14" r="7" /><circle cx="22" cy="14" r="7" /><circle cx="18" cy="22" r="7" /></svg>;
+    case 'pignoracion': // escudo (asegurar sin vender)
+      return <svg {...common}><path d="M 18 4 L 28 8 L 28 18 Q 28 26 18 32 Q 8 26 8 18 L 8 8 Z" /><path d="M 14 18 L 17 21 L 23 14" /></svg>;
+    default:
+      // Fallback: rombo abstracto.
+      return <svg {...common}><path d="M 18 5 L 31 18 L 18 31 L 5 18 Z" /></svg>;
+  }
+}

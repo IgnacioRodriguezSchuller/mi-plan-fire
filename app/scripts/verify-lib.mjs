@@ -54,7 +54,7 @@ const partTier = slice('function getSavingsTier(pct) {', 'function Onboarding() 
 
 const EXPORTS = [
   'project', 'timeToGoal', 'monthlyForGoal', 'todayKey', 'monthKeyFromDate',
-  'addMonthsKey', 'compareKeys', 'isKeyInSegment', 'findActiveSegment',
+  'addMonthsKey', 'compareKeys', 'uid', 'isKeyInSegment', 'findActiveSegment',
   'sumActiveSegments', 'detectSegmentOverlaps', 'segmentHasOverlap',
   'normalizeSegments', 'readableMonth', 'projectV2', 'sumExpenses',
   'sumAllocation', 'computeEffectiveCapitalReturn', 'buildMortgageSchedule',
@@ -282,6 +282,7 @@ const SPEC = [
     [{ ...basePlan, capital: 0 }, monthsReg, {}],
   ]},
   { name: 'randomNormal', kind: 'random', invoke: (fn) => Array.from({ length: 16 }, () => fn()), cases: [[], []] },
+  { name: 'uid', kind: 'random', invoke: (fn) => Array.from({ length: 8 }, () => fn()), cases: [[], []] },
   { name: 'inferVolatility', cases: [[2], [4], [6], [8], [10], [12], [15], [-3], [null], [0]] },
   { name: 'percentile', cases: [
     [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 50], [[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 90],
