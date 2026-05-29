@@ -3,8 +3,12 @@
 // para que el build los empaquete y se demuestre la cadena
 // tokens/ -> entry. Los componentes reales llegan en tandas posteriores.
 import { T, WEB_URL } from './tokens'
+import { project, fmtEur } from './lib'
 
 export default function App() {
+  // Consumo de lib/ (Tanda 2): demuestra que el cálculo se empaqueta en el build.
+  const series = project({ age: 30, retireAge: 60, capital: 12000, monthly: 400, ret: 8 })
+  const finalPortfolio = series[series.length - 1].portfolio
   return (
     <main
       style={{
@@ -34,6 +38,9 @@ export default function App() {
           El sistema de diseño (<code>WEB_URL</code> y <code>T</code>) ya vive en{' '}
           <code>src/tokens/</code> y esta entrada lo consume. Aún no se ha movido
           ningún componente real del monolito.
+        </p>
+        <p style={{ fontFamily: T.sans, fontSize: T.size.caption, color: T.faint }}>
+          lib/ · proyección de ejemplo a los 60: <strong>{fmtEur(finalPortfolio)}</strong>
         </p>
         <p style={{ fontFamily: T.sans, fontSize: T.size.caption, color: T.faint }}>
           Web:{' '}
