@@ -7,6 +7,13 @@ import { viteSingleFile } from 'vite-plugin-singlefile'
 // `vite-plugin-singlefile` inlinea JS y CSS dentro de dist/index.html.
 export default defineConfig({
   plugins: [react(), viteSingleFile()],
+  // recharts se pre-empaqueta con su propia copia de React si no se deduplica,
+  // lo que provoca "Invalid hook call / more than one copy of React" en dev.
+  // Forzar una única instancia de react/react-dom lo resuelve. (Fix estándar
+  // de Vite para recharts; no toca ningún componente.)
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
   build: {
     // Refuerzos para garantizar un solo fichero (el plugin ya fija la mayoría):
     cssCodeSplit: false,

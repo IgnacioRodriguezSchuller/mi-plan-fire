@@ -1,12 +1,16 @@
 // Galería de componentes — herramienta de desarrollo PERMANENTE (Tanda 3).
 // Renderiza cada primitiva de ui/ con variantes representativas para
 // validación visual. No es UI de producto; no borrar.
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { T } from '../tokens/index.js'
 import {
   EditableNumber, Slider, Pill, Card, Label, Btn, MonthInput,
   Stat, SmallStat, Row, RowWithWarning, LegendChip,
 } from '../ui/index.jsx'
+import {
+  LineChart, Sparkline, LifecycleChart, LifecycleChartDual, MultiLineChart, FlowTimelineCard,
+} from '../charts/index.jsx'
+import { project, projectV2, projectDecumulation, projectStandardPlan } from '../lib/index.js'
 
 function Section({ name, note, children }) {
   return (
@@ -19,12 +23,48 @@ function Section({ name, note, children }) {
   )
 }
 
+// Plan/perfil de ejemplo para alimentar los gráficos con datos realistas.
+const samplePlan = {
+  capital: 12000, annualReturn: 8, inflationRate: 2.5, salaryInflationFactor: 1.0,
+  withdrawalRate: 4.0, lifeExpectancy: 90,
+  incomeSegments: [{ id: 'i1', from: '2020-01', to: null, amount: 2500 }],
+  bonusSegments: [{ id: 'b1', from: '2020-01', to: null, amount: 0 }],
+  savingSegments: [{ id: 's1', from: '2020-01', to: null, type: 'fixed', value: 600 }],
+  events: [],
+  publicPension: { enabled: true, monthlyAmount: 1000, startAge: 67 },
+}
+const sampleProfile = { age: 30, retireAge: 60 }
+
+function ChartBox({ name, w = 640, children }) {
+  return (
+    <div style={{ width: w, maxWidth: '100%' }}>
+      <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint, marginBottom: 6 }}>{name}</div>
+      {children}
+    </div>
+  )
+}
+
 export default function Gallery() {
   const [num, setNum] = useState(42)
   const [big, setBig] = useState(1200)
   const [sliderV, setSliderV] = useState(15)
   const [sliderEur, setSliderEur] = useState(60000)
   const [month, setMonth] = useState('2026-05')
+
+  // Datos de ejemplo para charts/ (proyecciones reales con las funciones de lib).
+  const charts = useMemo(() => {
+    const lineSeries = project({ age: 30, retireAge: 60, capital: 12000, monthly: 600, ret: 8 })
+    const userSeries = projectV2(samplePlan, sampleProfile)
+    const retireCapital = userSeries.length ? userSeries[userSeries.length - 1].portfolio : 0
+    const decum = projectDecumulation(retireCapital, samplePlan, sampleProfile.retireAge, samplePlan.lifeExpectancy).series
+    const std = projectStandardPlan({ plan: samplePlan, profile: sampleProfile }).series
+    const scenarios = [
+      { label: '8% anual (base)', color: T.accent, bold: true, series: userSeries },
+      { label: '10% anual', color: T.green, dashed: true, series: projectV2({ ...samplePlan, annualReturn: 10 }, sampleProfile) },
+      { label: '5% anual', color: T.faint, dashed: true, series: projectV2({ ...samplePlan, annualReturn: 5 }, sampleProfile) },
+    ]
+    return { lineSeries, userSeries, std, decum, scenarios }
+  }, [])
 
   return (
     <div style={{ background: T.bg, color: T.ink, padding: '2rem', fontFamily: T.sans }}>
@@ -124,6 +164,33 @@ export default function Gallery() {
             valor: {String(month)}
           </div>
         </div>
+      </Section>
+
+      <Section name="charts/" note="alimentados con datos de ejemplo realistas">
+        <ChartBox name="LineChart · showInvested + milestone">
+          <LineChart series={charts.lineSeries} showInvested milestones={[{ value: 300000, label: 'meta 300k', color: T.green }]} />
+        </ChartBox>
+        <ChartBox name="Sparkline" w={180}>
+          <Sparkline series={charts.lineSeries} width={180} height={48} />
+        </ChartBox>
+        <ChartBox name="LifecycleChart · nominal">
+          <LifecycleChart plan={samplePlan} profile={sampleProfile} d={{ seriesPlan: charts.userSeries, seriesDecum: charts.decum }} realMode={false} inflRate={samplePlan.inflationRate} />
+        </ChartBox>
+        <ChartBox name="LifecycleChart · real (ajustado por inflación)">
+          <LifecycleChart plan={samplePlan} profile={sampleProfile} d={{ seriesPlan: charts.userSeries, seriesDecum: charts.decum }} realMode={true} inflRate={samplePlan.inflationRate} />
+        </ChartBox>
+        <ChartBox name="LifecycleChartDual · nominal (tú vs estándar)">
+          <LifecycleChartDual userSeries={charts.userSeries} standardSeries={charts.std} profile={sampleProfile} realMode={false} inflRate={samplePlan.inflationRate} />
+        </ChartBox>
+        <ChartBox name="LifecycleChartDual · real">
+          <LifecycleChartDual userSeries={charts.userSeries} standardSeries={charts.std} profile={sampleProfile} realMode={true} inflRate={samplePlan.inflationRate} />
+        </ChartBox>
+        <ChartBox name="MultiLineChart · 3 escenarios de retorno">
+          <MultiLineChart scenarios={charts.scenarios} height={300} />
+        </ChartBox>
+        <ChartBox name="FlowTimelineCard · (POR DECIDIR, puro → movido)">
+          <FlowTimelineCard plan={samplePlan} profile={sampleProfile} />
+        </ChartBox>
       </Section>
     </div>
   )
