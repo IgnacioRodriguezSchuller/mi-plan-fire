@@ -16,6 +16,7 @@ import {
   ProgressionWizard, Concept, ConceptModal, AboutModal,
 } from '../modals/index.jsx'
 import { TABLON, LEARN_CORPUS } from '../content/index.js'
+import { LandingPreOnboarding, Landing } from '../flows/index.jsx'
 
 function Section({ name, note, children }) {
   return (
@@ -56,6 +57,7 @@ export default function Gallery() {
   const [sliderEur, setSliderEur] = useState(60000)
   const [month, setMonth] = useState('2026-05')
   const [openModal, setOpenModal] = useState(null)
+  const [openFlow, setOpenFlow] = useState(null)
 
   // Calendario de ejemplo para MonthlyCalendarModal (props/callbacks mock).
   const year = new Date().getFullYear()
@@ -222,6 +224,15 @@ export default function Gallery() {
         <Btn variant="ghost" size="sm" onClick={() => setOpenModal('concept')}>ConceptModal (directo)</Btn>
       </Section>
 
+      <Section name="flows/" note="pantalla completa — botón flotante para cerrar">
+        <div style={{ width: '100%', fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, fontStyle: 'italic', marginBottom: 4 }}>
+          Movidos (prop-driven). Onboarding y ActualLifeOnboarding NO están aquí:
+          importan state directamente (pendientes para la tanda de state).
+        </div>
+        <Btn variant="ghost" size="sm" onClick={() => setOpenFlow('landingPre')}>LandingPreOnboarding</Btn>
+        <Btn variant="ghost" size="sm" onClick={() => setOpenFlow('landing')}>Landing</Btn>
+      </Section>
+
       <Section name="content/ · LearnIcon" note="iconos SVG (último = fallback)">
         {['interes-compuesto', 'retorno-anual', 'inflacion', 'volatilidad', 'riesgo-incertidumbre', 'patrimonio', 'horizonte', 'aporte-mensual', 'asset-allocation', 'fondos-indexados', 'comisiones', 'diversificacion', 'pignoracion', 'desconocido'].map((id) => (
           <div key={id} style={{ textAlign: 'center', width: 76 }}>
@@ -263,6 +274,27 @@ export default function Gallery() {
       {openModal === 'wizard' && <ProgressionWizard onClose={() => setOpenModal(null)} onApply={() => setOpenModal(null)} />}
       {openModal === 'about' && <AboutModal onClose={() => setOpenModal(null)} />}
       {openModal === 'concept' && <ConceptModal id="interes-compuesto" onClose={() => setOpenModal(null)} />}
+
+      {/* Flows a pantalla completa (preview con cierre flotante) */}
+      {openFlow && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 3000, overflow: 'auto', background: T.bg }}>
+          <button onClick={() => setOpenFlow(null)}
+            style={{ position: 'fixed', top: 12, right: 12, zIndex: 3001, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', background: T.ink, color: '#fff', border: 'none', borderRadius: 999, padding: '8px 14px', cursor: 'pointer' }}>
+            ✕ cerrar preview
+          </button>
+          {openFlow === 'landingPre' && (
+            <LandingPreOnboarding mode="intro"
+              onStart={() => { console.log('LandingPreOnboarding · onStart'); setOpenFlow(null); }}
+              onOpenManifesto={() => { console.log('LandingPreOnboarding · onOpenManifesto'); setOpenFlow(null); }} />
+          )}
+          {openFlow === 'landing' && (
+            <Landing mode="intro"
+              onStart={() => { console.log('Landing · onStart'); setOpenFlow(null); }}
+              onLoadDemo={() => { console.log('Landing · onLoadDemo'); setOpenFlow(null); }}
+              onClose={() => setOpenFlow(null)} />
+          )}
+        </div>
+      )}
     </div>
   )
 }
