@@ -1,14 +1,47 @@
-// Placeholder del Paso 2 (Etapa 1). NO es un componente real migrado:
-// solo prueba que el andamiaje Vite + React arranca y que el build
-// single-file funciona. Los componentes reales se mueven en el Paso 3.
+// Placeholder del Paso 3 · Tanda 1. NO es UI real migrada todavía:
+// su único trabajo es CONSUMIR los tokens ya extraídos a src/tokens/,
+// para que el build los empaquete y se demuestre la cadena
+// tokens/ -> entry. Los componentes reales llegan en tandas posteriores.
+import { T, WEB_URL } from './tokens'
+
 export default function App() {
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem', maxWidth: 640 }}>
-      <h1>Hola — andamiaje Mi Plan FIRE</h1>
-      <p>
-        Etapa 1 · Paso 2: estructura de build montada. Aún no se ha movido
-        ningún componente real del monolito <code>mi_plan_v1_5_0a_3.html</code>.
-      </p>
+    <main
+      style={{
+        background: T.bg,
+        color: T.ink,
+        fontFamily: T.serif,
+        minHeight: '100vh',
+        padding: '2rem',
+      }}
+    >
+      <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        <p
+          style={{
+            fontFamily: T.mono,
+            fontSize: T.size.eyebrow,
+            letterSpacing: T.tracking.wider,
+            textTransform: 'uppercase',
+            color: T.accent,
+          }}
+        >
+          Etapa 1 · Paso 3 · Tanda 1
+        </p>
+        <h1 style={{ fontSize: T.size.displayLg, lineHeight: T.lh.tight, fontFamily: T.display }}>
+          tokens/ extraídos
+        </h1>
+        <p style={{ fontFamily: T.sans, fontSize: T.size.body, lineHeight: T.lh.normal, color: T.muted }}>
+          El sistema de diseño (<code>WEB_URL</code> y <code>T</code>) ya vive en{' '}
+          <code>src/tokens/</code> y esta entrada lo consume. Aún no se ha movido
+          ningún componente real del monolito.
+        </p>
+        <p style={{ fontFamily: T.sans, fontSize: T.size.caption, color: T.faint }}>
+          Web:{' '}
+          <a href={WEB_URL} style={{ color: T.accent }}>
+            {WEB_URL}
+          </a>
+        </p>
+      </div>
     </main>
   )
 }
