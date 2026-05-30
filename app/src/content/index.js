@@ -469,3 +469,58 @@ export const TABLON = [
     { text: 'El plan de pensiones no es bueno ni malo: es un instrumento de planificación fiscal. Funciona si tu tipo marginal al aportar es claramente superior al esperado al rescatar.', source: 'plan-pensiones' },
   ]},
 ];
+
+// ---------- Constantes editoriales (arrastradas Tanda final) ----------
+export const GOAL_CATEGORIES = [
+  { id: 'liquidez',       label: 'Colchón de liquidez', short: 'Liquidez' },
+  { id: 'vivienda',       label: 'Vivienda',            short: 'Vivienda' },
+  { id: 'coche',          label: 'Coche',               short: 'Coche' },
+  { id: 'objetoGrande',   label: 'Objeto grande',       short: 'Otro objeto' },
+  { id: 'ayudaFamiliar',  label: 'Ayuda familiar',      short: 'Familia' },
+  { id: 'herencia',       label: 'Herencia',            short: 'Herencia' },
+  { id: 'jubilacion',     label: 'Jubilación',          short: 'Jubilación' },
+  { id: 'otro',           label: 'Otro',                short: 'Otro' },
+];
+
+export const GOAL_CATEGORY_LABEL = (() => {
+  const m = {}; GOAL_CATEGORIES.forEach(c => { m[c.id] = c.label; }); return m;
+})();
+
+export const LEARN_DISCLAIMER = 'Mi Plan FIRE es una herramienta de planificación financiera personal. No es un servicio de asesoramiento financiero ni de inversión. El contenido educativo tiene carácter exclusivamente informativo y formativo. No constituye recomendación personalizada de inversión, asesoramiento financiero, fiscal o legal. Las decisiones financieras son responsabilidad exclusiva del usuario. Las menciones a tipos de productos (fondos indexados, ETFs, planes de pensiones) son referencias genéricas a categorías reguladas, no recomendaciones específicas. Las proyecciones son estimaciones basadas en supuestos: el comportamiento real puede diferir. Rentabilidades pasadas no garantizan rentabilidades futuras. Los datos fiscales corresponden a normativa vigente en mayo 2026; reformas posteriores pueden alterarlos.';
+
+export const LEARN_LEVELS = {
+  esencial: [
+    'interes-compuesto', 'retorno-anual', 'inflacion', 'volatilidad',
+    'riesgo-incertidumbre', 'patrimonio', 'horizonte', 'aporte-mensual',
+    'asset-allocation', 'fondos-indexados', 'comisiones', 'diversificacion',
+  ],
+  profundizando: [
+    'regla-4', 'monte-carlo', 'libertad-financiera', 'tasa-retiro',
+    'secuencia-retornos', 'esperanza-vida', 'independencia-jubilacion',
+    'etfs-vs-fondos', 'plan-pensiones', 'broker', 'robo-advisors',
+    'inversion-pasiva', 'dca',
+  ],
+  avanzado: [
+    'tramos', 'eventos-pos-conf', 'lean-coast-fat', 'rebalanceo',
+    'pignoracion',
+    'irpf', 'pension-publica', 'base-reguladora', 'tributacion-pp', 'modelo-720',
+  ],
+};
+
+export const LEARN_LEVEL_LABELS = {
+  esencial: 'Esencial',
+  profundizando: 'Profundizando',
+  avanzado: 'Avanzado',
+};
+
+export const LEARN_LEVEL_SUB = {
+  esencial: 'Para quien empieza',
+  profundizando: 'Para quien ya entiende lo básico',
+  avanzado: 'Para optimización',
+};
+
+export const LEARN_LEVEL_BY_ID = (() => {
+  const m = {};
+  Object.entries(LEARN_LEVELS).forEach(([lvl, ids]) => ids.forEach(id => { m[id] = lvl; }));
+  return m;
+})();

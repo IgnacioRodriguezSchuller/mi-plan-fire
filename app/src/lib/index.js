@@ -1164,3 +1164,7 @@ export function computeSinPlanKPIs(plan, profile) {
   const oppDifference = investedFinalReal - parkedFinalReal;
   return { lost, oppDifference, yearsToRetire, planReturn, hasData: true };
 }
+
+// ---------- Formatters (arrastrados Tanda final: fmtEurFull, fmtPct) ----------
+export const fmtEurFull = (n) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
+export const fmtPct = (n, digits = 1) => `${(n >= 0 ? '+' : '')}${n.toFixed(digits)}%`;
