@@ -10,6 +10,37 @@ import { T } from '../tokens/index.js'
 import { Btn } from '../ui/index.jsx'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 
+// Iconos de línea propios para los 3 principios — mismo trazo que LearnIcon
+// (viewBox 0 0 36 36, stroke 1.6, fill none, caps redondos). Sin librería de
+// iconos (formas inspiradas en lock/map/arrow-right de Lucide, reescritas a mano).
+const principleIconProps = { width: 30, height: 30, viewBox: '0 0 36 36', fill: 'none', stroke: T.accent, strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round' };
+function IconLock() {
+  return (
+    <svg {...principleIconProps}>
+      <rect x="9" y="16" width="18" height="13" rx="2" />
+      <path d="M 13 16 v -3 a 5 5 0 0 1 10 0 v 3" />
+      <path d="M 18 21 v 3.5" />
+    </svg>
+  );
+}
+function IconMap() {
+  return (
+    <svg {...principleIconProps}>
+      <path d="M 6 9 l 8 -3 l 8 3 l 8 -3 v 21 l -8 3 l -8 -3 l -8 3 Z" />
+      <path d="M 14 6 v 21" />
+      <path d="M 22 9 v 21" />
+    </svg>
+  );
+}
+function IconArrowRight() {
+  return (
+    <svg {...principleIconProps}>
+      <path d="M 5 18 H 29" />
+      <path d="M 22 11 L 29 18 L 22 25" />
+    </svg>
+  );
+}
+
 export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro', onBack }) {
   const mobile = useIsMobile();
   return (
@@ -27,35 +58,30 @@ export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro',
             Mi <em style={{ color: T.accent }}>Plan</em> <span style={{ color: T.accent }}>FIRE</span>
           </div>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: mobile ? 15 : 17, color: T.muted, marginTop: 10, lineHeight: T.lh.normal }}>
-            Financial Independence, Retire Early<br />
             Independencia Financiera, Retiro Temprano
           </div>
         </div>
 
-        {/* Prose */}
-        <div style={{ fontFamily: T.serif, fontSize: mobile ? 15 : 16, lineHeight: T.lh.relaxed, color: T.ink, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Prose · un solo párrafo (las otras dos ideas pasan a los principios) */}
+        <div style={{ fontFamily: T.serif, fontSize: mobile ? 15 : 16, lineHeight: T.lh.relaxed, color: T.ink }}>
           <p style={{ margin: 0 }}>
-            Una herramienta para planificar tu camino hacia la independencia financiera. Te ayuda a ver cuánto necesitas, cuánto tiempo te llevará y qué decisiones cambian más esas cifras.
-          </p>
-          <p style={{ margin: 0 }}>
-            Funciona enteramente en tu navegador. No hay servidor, no hay cuenta, no hay nube. Todo lo que escribes vive en este dispositivo y se borra cuando tú lo digas.
-          </p>
-          <p style={{ margin: 0 }}>
-            Mi Plan FIRE no te recomienda productos concretos ni te dice qué comprar. Te educa sobre categorías, te muestra tu situación, y te prepara para tomar decisiones informadas.
+            Una herramienta para planificar tu camino hacia la independencia financiera. Te ayuda a ver cuánto necesitas, en cuánto tiempo, y qué decisiones mueven más esas cifras.
           </p>
         </div>
 
-        {/* Three bullets */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 8, borderTop: '1px solid ' + T.lineSoft }}>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.accent, lineHeight: T.lh.relaxed }}>
-            <strong style={{ color: T.accent }}>Privacidad verificable</strong> — El código es público, ábrelo y léelo.
-          </div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.accent, lineHeight: T.lh.relaxed }}>
-            <strong style={{ color: T.accent }}>Sin gurús</strong> — No recomendamos productos. Te educamos para decidir tú.
-          </div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.accent, lineHeight: T.lh.relaxed }}>
-            <strong style={{ color: T.accent }}>Honesto cuando incomoda</strong> — Si tu plan es frágil, te lo decimos.
-          </div>
+        {/* Principios · icono de línea + palabra, 3 columnas (icono T.accent,
+            palabra mono versales T.muted). Sustituye a los 3 bullets en prosa. */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: mobile ? 12 : 24, paddingTop: 18, borderTop: '1px solid ' + T.lineSoft }}>
+          {[
+            { icon: <IconLock />, label: 'Privacidad' },
+            { icon: <IconMap />, label: 'Educación' },
+            { icon: <IconArrowRight />, label: 'Sin rodeos' },
+          ].map((p) => (
+            <div key={p.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
+              {p.icon}
+              <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted }}>{p.label}</span>
+            </div>
+          ))}
         </div>
 
         {/* CTAs · 'intro' shows both buttons; 'revisit' shows just "Volver". */}
