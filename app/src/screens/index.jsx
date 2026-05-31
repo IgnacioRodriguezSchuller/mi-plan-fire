@@ -1183,14 +1183,14 @@ export function Onboarding() {
               }
               return null;
             })()}
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal }}>
-              En España la mayoría de convenios actualizan parcialmente con IPC. Si tu empresa no lo hace, marca "No"; el plan será más realista.
-            </div>
+            {/* 2ª pasada · aclaración IPC movida al "+¿por qué?" (limpieza). */}
           </div>
           <OnboardingHelp title="¿Por qué necesito tu salario?">
             Porque es la base sobre la que se construye tu capacidad de ahorro y, por tanto, de inversión. No te lo pedimos para juzgar nada. Lo usamos para estimar cuánto puedes aportar de forma realista, y para proyectar tu pensión pública futura (la fórmula española se basa en las bases de cotización de tu carrera laboral). Si tu sueldo cambia con frecuencia, puedes definir distintos tramos más adelante. Una cifra aproximada al mes es suficiente al principio.
             <br /><br />
             Introduce tu salario neto (lo que efectivamente recibes en cuenta cada mes después de IRPF y Seguridad Social), no el bruto. Si pones bruto, el plan estará distorsionado. Ejemplo: si tu bruto es 35.000 €/año y el neto que ingresas son 24.000 €/año, divide 24.000/12 = 2.000 € mensuales netos.
+            <br /><br />
+            En España la mayoría de convenios actualizan parcialmente con IPC. Si tu empresa no lo hace, marca "No"; el plan será más realista.
           </OnboardingHelp>
         </div>
       ),
@@ -1218,18 +1218,8 @@ export function Onboarding() {
             ))}
           </div>
           {/* B4 · Explicación Porcentual/Fijo movida al "+¿por qué?" (limpieza). */}
-          {/* F1.1 · Live preview comparing both modes */}
-          {data.income > 0 && (
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal, marginBottom: 16, padding: '10px 12px', background: T.panel, borderRadius: 8, border: '1px solid ' + T.lineSoft }}>
-              Con tu salario actual de <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(data.income)}/mes</strong>, esto serían{' '}
-              <strong style={{ color: T.accent, fontStyle: 'normal' }}>
-                {fmtEur(data.savingType === 'percent'
-                  ? Math.round(data.income * data.savingPercent / 100)
-                  : data.monthly)
-                }/mes
-              </strong> de aporte ({data.savingType === 'percent' ? `${data.savingPercent}% de tu neto` : 'cantidad fija'}).
-            </div>
-          )}
+          {/* 2ª pasada · preview en vivo redundante eliminada: el aporte en € ya se
+              muestra junto al campo, justo debajo (eco de valor por modo). */}
 
           {data.savingType === 'percent' ? (() => {
             const tier = getSavingsTier(data.savingPercent);
