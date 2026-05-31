@@ -1037,11 +1037,9 @@ export function Onboarding() {
       events: [],
     };
   }, [data]);
-  const live = useMemo(() => projectV2(livePlan, { age: data.age, retireAge: data.retireAge }, {
-    capital: data.capital,
-    includeHypothetical: false,
-  }), [livePlan, data.age, data.retireAge, data.capital]);
-  const final = live[live.length - 1];
+  // `live`/`final` (proyección en vivo) eliminados: alimentaban solo el panel
+  // lateral de preview, retirado del onboarding. `livePlan` se mantiene porque
+  // el paso espejo (8 · "Antes de soltarte") lo usa para la Verdad 1.
 
   const steps = [
     {
@@ -1696,9 +1694,9 @@ export function Onboarding() {
   };
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: T.bg, fontFamily: T.serif, color: T.ink, display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1.05fr 1fr', overflow: 'hidden' }}>
-      {/* Left: conversation */}
-      <div style={{ padding: mobile ? '32px 24px' : '64px 80px', display: 'flex', flexDirection: 'column', gap: 28, overflowY: 'auto' }}>
+    <div style={{ width: '100vw', height: '100vh', background: T.bg, fontFamily: T.serif, color: T.ink, display: 'grid', gridTemplateColumns: '1fr', overflow: 'hidden' }}>
+      {/* Conversación · una sola columna (panel de preview en vivo eliminado) */}
+      <div style={{ padding: mobile ? '32px 24px' : '64px 80px', display: 'flex', flexDirection: 'column', gap: 28, overflowY: 'auto', width: '100%', maxWidth: mobile ? '100%' : 720, margin: '0 auto', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, letterSpacing: T.tracking.tight }}>
             Mi <em style={{ color: T.accent }}>Plan</em>
@@ -1752,44 +1750,6 @@ export function Onboarding() {
           )}
         </div>
       </div>
-
-      {/* Right: live preview */}
-      {!mobile && <div style={{ background: T.panel, borderLeft: '1px solid ' + T.line, padding: '64px 60px', display: 'flex', flexDirection: 'column', gap: 22, overflow: 'hidden' }}>
-        <Label>Lo que ya vamos pintando</Label>
-        <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, lineHeight: T.lh.snug, letterSpacing: T.tracking.tight, color: T.ink }}>
-          A los <em style={{ color: T.accent }}>{data.retireAge}</em> años, podrías tener…
-        </div>
-        <div style={{ fontFamily: T.display, fontSize: 96, /* excepción · hero numérico del paso espejo "Antes de soltarte" */ color: T.accent, lineHeight: T.lh.tight, letterSpacing: T.tracking.display }}>
-          {fmtEur(final.portfolio)}
-        </div>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body }}>
-          De los que <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(final.portfolio - final.invested)}</strong> los pone el <Concept id="interes-compuesto">interés compuesto</Concept>. No tú.
-        </div>
-
-        <div style={{ flex: 1, marginTop: 12, display: 'flex', alignItems: 'stretch' }}>
-          <div style={{ width: '100%' }}>
-            <LineChart series={live} width={560} height={260} showInvested showAxis />
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, borderTop: '1px dashed ' + T.line, paddingTop: 18 }}>
-          {[5, 15, data.retireAge - data.age].map((yr) => {
-            const idx = Math.min(yr * 12, live.length - 1);
-            const v = live[idx];
-            return (
-              <div key={yr}>
-                <Label style={{ marginBottom: 4 }}>+{yr} años</Label>
-                <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(v.portfolio)}</div>
-                {v.monthlyIncome > 0 && (
-                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 2, letterSpacing: T.tracking.wide }}>
-                    ingreso {fmtEur(v.monthlyIncome)}/mes
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>}
 
       {/* F1.6 · ActualLifeOnboarding modal no longer launches from the initial
           onboarding. */}
