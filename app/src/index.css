@@ -1,0 +1,35 @@
+/* Reset global de layout — portado byte-a-byte del baseline
+ * mi_plan_v1_5_0a_3.html (<style> de cabecera, líneas 28-31).
+ *
+ * La migración del monolito a /src no portó el bloque <style> global. Sin él,
+ * el <body> conservaba el `margin: 8px` por defecto del navegador; como los
+ * contenedores raíz (Onboarding, Landing) usan `width: 100vw`, sobresalían 8px
+ * por la derecha y el documento ganaba scroll horizontal. La causa raíz es esa
+ * ausencia del reset, no el layout del onboarding: el arreglo correcto es
+ * restaurar el reset (`margin: 0`), no tapar el desbordamiento.
+ *
+ * NOTA: el baseline tenía más reglas globales en ese mismo <style> (estilado de
+ * inputs, @keyframes fadeUp/.tab-enter, overrides de recharts) que la migración
+ * también dejó fuera. No se restauran aquí porque afectan a apariencia, no al
+ * scroll; quedan pendientes de decisión del dueño. */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #f5f0e6;
+  font-family: Fraunces, Georgia, serif;
+  color: #1a1612;
+  overflow-x: hidden;
+  width: 100vw;
+  max-width: 100vw;
+}
+
+#root {
+  min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
