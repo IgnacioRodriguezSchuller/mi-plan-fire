@@ -170,7 +170,7 @@ Cualquier pantalla o componente nuevo debe pasar estas preguntas binarias antes 
 `T.display` = Instrument Serif (display, hero, anclajes, KPIs grandes).
 `T.serif` = Fraunces (prosa, lead, body, captions).
 `T.mono` = DM Mono (labels, eyebrows, ticks, footer).
-`T.size.*` y `T.lh.*` y `T.tracking.*` ver `CLAUDE_CODE_CONTEXTO_9.md` §Sistema tipográfico.
+`T.size.*` y `T.lh.*` y `T.tracking.*` ver `CLAUDE_CODE_CONTEXTO.md` §Sistema tipográfico.
 
 ### Paleta (v1.3.0 + tokens nuevos de esta doctrina)
 
@@ -254,4 +254,4 @@ Toda modificación futura entra aquí con fecha. Si en v1.4.0b o posteriores apa
 - **v1.4.0b** aplica Bloques 1, 2, 3, 5, 6: identidad (logo, nav), prosa, KPIs sobre fondo claro, contenedores (callouts unificados U1), charts conservadores. Refactor moderado. Añade un único token a `T`: `T.inputBg` (#faf3e4), aunque sólo se usa en v1.4.0c.
 - **v1.4.0c** aplica Bloque 4: refactor de ~50+ inputs al patrón sin negro. Específicamente: (a) background T.inputBg, sin borde, shadow inset T.line/T.accent; (b) reset CSS obligatorio (`appearance: none` y `-webkit-appearance: none`) para evitar que el navegador en modo oscuro sobrescriba el fondo; (c) texto del input en T.muted, nunca T.ink; (d) labels en Fraunces 13 muted con copy en frase natural. **Auditoría visual obligatoria en macOS/iOS modo oscuro como parte del cierre del sub-sprint** — sin esta verificación, el bug que motivó la revisión 1.2 puede persistir.
 
-`CLAUDE_CODE_CONTEXTO_9.md` debe actualizarse en v1.4.0b para referenciar este documento desde su cabecera y añadir `T.inputBg` al apartado de paleta.
+`CLAUDE_CODE_CONTEXTO.md` debe actualizarse en v1.4.0b para referenciar este documento desde su cabecera y añadir `T.inputBg` al apartado de paleta.
