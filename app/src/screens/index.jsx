@@ -2089,7 +2089,7 @@ export function ScreenHoy({ goTo }) {
             }
             if (planAporte > 0) {
               parts.push(
-                <>ahorras <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(planAporte)}</strong>{income > 0 && <span style={{ color: T.muted, fontSize: T.size.body }}> ({Math.round(savingRate * 100)}% de tu neto)</span>}</>
+                <>ahorras <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(planAporte)}</strong>{income > 0 && <span style={{ color: T.muted, fontSize: T.size.body, whiteSpace: 'nowrap' }}> ({Math.round(savingRate * 100)}% de tu neto)</span>}</>
               );
             }
             const joined = parts.map((p, i) => {
@@ -2101,9 +2101,8 @@ export function ScreenHoy({ goTo }) {
             return <>{part1}{' '}{joined}.</>;
           })()}
         </div>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 12, lineHeight: T.lh.normal, maxWidth: 720 }}>
-          Tienes <strong style={{ color: T.ink, fontStyle: 'normal' }}>{profile.age}</strong> años. Tu objetivo FIRE es a los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{profile.retireAge}</strong>, en {yearsToRetire} {yearsToRetire === 1 ? 'año' : 'años'} desde hoy.
-        </div>
+        {/* Limpieza · frase "Tienes X años · objetivo FIRE a los Y, en Z años"
+            eliminada: redundante con el badge superior (retireAge → objetivo). */}
 
         {/* Sub-bloque 1.B · Sin un plan (KPIs destilados + CTA modal) */}
         <div style={{ marginTop: 24, paddingTop: 22, borderTop: '1px dashed ' + T.lineSoft }}>
@@ -2121,18 +2120,18 @@ export function ScreenHoy({ goTo }) {
                 <div style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.amber, letterSpacing: T.tracking.display, marginTop: 6, lineHeight: 1 }}>
                   −{fmtEur(sinPlanKPIs.lost)}
                 </div>
-                <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, marginTop: 8, lineHeight: T.lh.normal }}>
-                  Asumiendo que tu salario sube ~1% nominal al año (media española) y la inflación 2,5%. Esta erosión la sufre todo asalariado medio; el plan no la elimina, pero la siguiente Card sí muestra qué SÍ depende de actuar.
-                </div>
+                <OnboardingHelp title="Supuestos">
+                  Asumiendo que tu salario sube ~1% nominal al año (media española) y la inflación 2,5%.
+                </OnboardingHelp>
               </Card>
               <Card pad={mobile ? 16 : 20}>
                 <Label>Lo que dejarías de tener si no inviertes</Label>
                 <div style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.red, letterSpacing: T.tracking.display, marginTop: 6, lineHeight: 1 }}>
                   {fmtEur(sinPlanKPIs.oppDifference)}
                 </div>
-                <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, marginTop: 8, lineHeight: T.lh.normal }}>
+                <OnboardingHelp title="Supuestos">
                   Diferencia entre dejar tu ahorro en cuenta corriente vs. invertirlo al {sinPlanKPIs.planReturn}% anual durante {sinPlanKPIs.yearsToRetire} años, ajustado por inflación.
-                </div>
+                </OnboardingHelp>
               </Card>
             </div>
           ) : (
@@ -2162,13 +2161,13 @@ export function ScreenHoy({ goTo }) {
         {/* Prosa adaptativa según perfil del usuario (A: no aporta · B: aporta poco · C: razonable) */}
         <div style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.relaxed, color: T.ink, maxWidth: 720, marginBottom: 18 }}>
           {userProfile === 'A' && (
-            <>Actualmente <strong style={{ color: T.ink, fontStyle: 'normal' }}>no estás aportando</strong> a inversión. Esta gráfica te enseña qué podrías construir si apartaras un <strong style={{ color: T.accent, fontStyle: 'normal' }}>20% de tu neto</strong> cada mes (unos <strong style={{ color: T.accent, fontStyle: 'normal' }}>{fmtEur(standard.targetMonthly)}/mes</strong>) hacia un fondo indexado mundial con DCA mensual. La diferencia entre no hacer nada y empezar es enorme.</>
+            <>Actualmente <strong style={{ color: T.ink, fontStyle: 'normal' }}>no estás aportando</strong> a inversión. Esta gráfica te enseña qué podrías construir si apartaras un <strong style={{ color: T.accent, fontStyle: 'normal' }}>20% de tu neto</strong> cada mes (unos <strong style={{ color: T.accent, fontStyle: 'normal' }}>{fmtEur(standard.targetMonthly)}/mes</strong>) hacia un fondo indexado mundial con DCA mensual.</>
           )}
           {userProfile === 'B' && (
-            <>Estás aportando <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(planAporte)}/mes</strong> ({Math.round(savingRate * 100)}% de tu neto). Es un comienzo, pero un 20% de aporte cambiaría tu trayectoria sustancialmente. La gráfica compara tu plan actual con un plan estándar (20% de aporte, allocation por horizonte).</>
+            <>Estás aportando <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(planAporte)}/mes</strong> ({Math.round(savingRate * 100)}% de tu neto). Es un comienzo, pero un 20% de aporte cambiaría tu trayectoria sustancialmente.</>
           )}
           {userProfile === 'C' && (
-            <>Estás aportando <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(planAporte)}/mes</strong> ({Math.round(savingRate * 100)}% de tu neto), por encima del 15% recomendado como mínimo razonable. Tu plan es defendible. La línea fina gris muestra el plan estándar como referencia.</>
+            <>Estás aportando <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(planAporte)}/mes</strong> ({Math.round(savingRate * 100)}% de tu neto), por encima del 15% recomendado como mínimo razonable. Tu plan es defendible.</>
           )}
         </div>
 
@@ -2191,13 +2190,13 @@ export function ScreenHoy({ goTo }) {
             height={mobile ? 220 : 280} />
         </Card>
 
-        {/* Cifras del plan del usuario (mantenidas como subtexto) */}
+        {/* Limpieza · veredicto compacto en el cuerpo (el gráfico ya muestra la
+            curva); supuestos —rentabilidad, tasa de retiro— movidos al "+¿por qué?". */}
         <div style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.relaxed, color: T.ink, marginTop: 18, maxWidth: 720 }}>
-          Si mantienes este ritmo y los mercados rinden de media un <strong style={{ color: T.ink, fontStyle: 'normal' }}>{planReturn}% anual</strong> (asumido, configurable en Proyección), a los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{profile.retireAge} años tendrás {fmtEur(realMode ? finalReal : finalNominal)}</strong>{realMode ? ' (ajustado por inflación)' : ''}.
-          {' '}Con una tasa de retiro del <strong style={{ color: T.ink, fontStyle: 'normal' }}>{withdrawalRate}%</strong>, eso equivale a <strong style={{ color: T.accent, fontStyle: 'normal' }}>{fmtEur(realMode ? retirementMonthlyReal : retirementMonthly)}/mes</strong>{realMode ? ' ajustado por inflación' : ''} durante el resto de tu vida.
+          A los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{profile.retireAge}</strong>: <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(realMode ? finalReal : finalNominal)}</strong>{realMode ? ' (ajustado por inflación)' : ''} · <strong style={{ color: T.accent, fontStyle: 'normal' }}>{fmtEur(realMode ? retirementMonthlyReal : retirementMonthly)}/mes</strong>.
           {monthlyLife > 0 && (
             <>
-              {' '}Comparado con tu gasto actual de {fmtEur(monthlyLife)}/mes, <strong style={{ color: sufficiency.color, fontStyle: 'normal' }}>tu plan {
+              {' '}<strong style={{ color: sufficiency.color, fontStyle: 'normal' }}>Tu plan {
                 sufficiency.kind === 'comfortable' ? 'es viable con margen' :
                 sufficiency.kind === 'tight' ? 'es viable, justo' :
                 sufficiency.kind === 'short' ? 'no llega' : 'necesita más datos'
@@ -2205,6 +2204,9 @@ export function ScreenHoy({ goTo }) {
             </>
           )}
         </div>
+        <OnboardingHelp title="Supuestos">
+          Si mantienes este ritmo y los mercados rinden de media un {planReturn}% anual (asumido, configurable en Proyección). Con una tasa de retiro del {withdrawalRate}%, esa cifra mensual{realMode ? ', ajustada por inflación,' : ''} se mantiene durante el resto de tu vida.
+        </OnboardingHelp>
 
         {/* CTA Proyección (Monte Carlo destilado vive en Proyección) */}
         <div style={{ marginTop: 20, paddingTop: 18, borderTop: '1px dashed ' + T.lineSoft, display: 'flex', justifyContent: 'flex-end' }}>
@@ -2219,7 +2221,7 @@ export function ScreenHoy({ goTo }) {
           <h2 style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Tu ruta</h2>
         </div>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, maxWidth: 720, marginBottom: 18 }}>
-          Cinco fases que estructuran el camino FIRE. La fase activa aparece expandida; el resto se despliegan al hacer clic.
+          Cinco fases que estructuran el camino FIRE.
         </div>
         <RutaCincoFases state={state} d={d} mobile={mobile} />
       </section>
