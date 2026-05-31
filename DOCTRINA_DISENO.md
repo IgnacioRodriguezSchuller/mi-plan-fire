@@ -3,8 +3,8 @@
 > Documento vivo. Toda decisión visual o de interacción del producto se subordina a este texto. Cualquier prompt futuro a Claude Code que toque UI o UX debe referenciarlo en cabecera.
 >
 > **Versión:** 1.2.1 · Mayo 2026 · Destilada en chat de planificación tras el cierre de v1.4.0a · Atemperada (Ruta B), paleta P3 de inputs, y T.amber añadido como cuarta opción válida para cifras hero (patch v1.2.1).
-> **Documentos hermanos:** `CLAUDE_CODE_CONTEXTO_9.md` (contexto técnico), `DECISIONES_PRODUCTO_4.md` (bitácora editorial y modelo de distribución).
-> **Aplica a:** `mi_plan_v1_5_0a.html` y todas las versiones posteriores hasta nuevo documento.
+> **Documentos hermanos:** `CLAUDE_CODE_CONTEXTO.md` (contexto técnico), `DECISIONES_PRODUCTO_4.md` (bitácora editorial y modelo de distribución).
+> **Aplica a:** el codebase `app/src/` (build **Vite** single-file; v1.5.0a.3 funcional, app idéntica) y versiones posteriores. *(Post-Etapa 1, mayo 2026: el HTML `mi_plan_v1_5_0a_3.html` queda **congelado como red de regresión**, no se edita — hash `b3ea52b1…3603e7`; ver `CHANGELOG_v1_5_0a_3_src.md`.)* La doctrina visual/UX de abajo **no cambia** con la migración.
 
 ---
 

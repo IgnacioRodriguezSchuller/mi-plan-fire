@@ -36,3 +36,10 @@
 - **Línea roja:** **no renombrar las claves localStorage** (`miplan.state.v1`, `miplan.accounts.v1`) en ninguna etapa. Ver `docs/etapa1-baseline.md` §3.
 - Punto de retorno: tag git `baseline-pre-migracion`.
 - Red de seguridad y examen de regresión: `docs/etapa1-baseline.md`.
+
+**Estado · Etapa 1 CERRADA (mayo 2026).** Migración completada: el monolito se extrajo byte-a-byte a `app/src/` (modular, build Vite single-file).
+- **Fuente de verdad = `app/src/`.** El HTML `mi_plan_v1_5_0a_3.html` quedó **congelado como red de regresión** (no se edita; hash `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`). *Matiz a la predicción de arriba: el monolito NO se regenera — el artefacto que produce el build es `dist/index.html`, separado.*
+- **Correr/construir:** `cd app && npm run dev` (app real) · `npm run build` → `dist/index.html`. `?gallery` → galería de componentes (herramienta de desarrollo permanente).
+- **Estructura por capas:** `tokens/ lib/ hooks/ ui/ charts/ content/ modals/ flows/ state/ screens/`.
+- **App funcionalmente idéntica** a v1.5.0a.3 (examen de regresión §1 del baseline: 16/16 PASS). **Línea roja localStorage reafirmada:** claves (`miplan.state.v1` / `miplan.accounts.v1`) y formato sin tocar, `migrateToV2` copiado byte-a-byte.
+- Registro de la migración: **`CHANGELOG_v1_5_0a_3_src.md`**. (Etapa 2 = Next.js + Supabase + Stripe: sin cambios — sigue posterior y separada.)

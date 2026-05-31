@@ -5,15 +5,17 @@
 >
 > **Documento de diseño maestro: `DOCTRINA_DISENO.md` v1.2.** Toda decisión visual o de UX debe consultarse allí antes que aquí. Este documento (CONTEXTO) es la referencia técnica; la doctrina es la referencia editorial/visual.
 
+> 🔁 **ACTUALIZACIÓN post-Etapa 1 (mayo 2026 · migración cerrada).** La app ya **NO es un HTML monolítico**: la **fuente de verdad es `app/src/`** (modular, build **Vite** single-file). El monolito `mi_plan_v1_5_0a_3.html` queda **congelado como RED DE REGRESIÓN** (no se edita; hash `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`). **Correr/construir:** `cd app && npm run dev` (app real, http://localhost:5173) · `npm run build` → `dist/index.html` (lead magnet single-file) · `?gallery` abre la galería de componentes. **Estructura por capas:** `tokens/ lib/ hooks/ ui/ charts/ content/ modals/ flows/ state/ screens/`. **Contrato localStorage intacto** (claves `miplan.state.v1` / `miplan.accounts.v1`, `migrateToV2` sin tocar) — sigue siendo regla dura. Registro: **`CHANGELOG_v1_5_0a_3_src.md`**. *El resto de este documento describe el comportamiento del producto (sigue vigente: los componentes/flows existen en `app/src/`); las secciones sobre el flujo de trabajo del HTML están desfasadas y van marcadas.*
+
 ---
 
 ## ¿Qué es Mi Plan FIRE?
 
-Mi Plan FIRE es una herramienta web monolítica (single-file HTML con React vía Babel-standalone) para planificación financiera personal a largo plazo orientada al perfil **FIRE-en-formación español** (no a principiantes generales, no a inversores avanzados).
+Mi Plan FIRE es una herramienta web de planificación financiera personal a largo plazo orientada al perfil **FIRE-en-formación español** (no a principiantes generales, no a inversores avanzados). *(Arquitectura post-Etapa 1: codebase modular en `app/src/` con build **Vite** a HTML autocontenido; antes era un monolito single-file con React vía Babel-standalone in-browser.)*
 
 Funciona enteramente en local: cero backend, todo el estado en `localStorage`. Sin cuenta, sin nube, sin perfilado. La promesa de privacidad es verificable: cualquiera puede abrir el HTML y leer el código.
 
-**El archivo de trabajo es `mi_plan_v1_4_0b.html`** (~540 KB, ~9.700 líneas).
+**El código fuente vive en `app/src/`** (modular, build Vite single-file → `dist/index.html`). El HTML monolítico `mi_plan_v1_5_0a_3.html` (9.372 líneas) queda **congelado como red de regresión** — no se edita (hash `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`). *(Histórico: el archivo de trabajo fue `mi_plan_v1_4_0b.html` y, hasta el cierre de la Etapa 1, los sucesivos `mi_plan_v*.html`.)*
 
 ---
 
@@ -261,6 +263,8 @@ Iconos SVG inline para los **12 conceptos Esencial** vía `<LearnIcon id />` + 1
 
 ## Cómo trabajar
 
+> ⚠️ **Desfasado tras la Etapa 1.** El flujo de abajo (copiar el HTML, editar la copia, validar con Babel, abrir en navegador) describía el **monolito** y ya **no aplica** para desarrollo. Ahora: `cd app && npm run dev` (Vite dev server) · `npm run build` → `dist/index.html` · verificadores deterministas en `app/scripts/` (`verify-tokens/lib/content/state.mjs`) · el HTML monolítico está **congelado** (red de regresión). Se conserva lo de abajo como referencia histórica del lead magnet.
+
 - El archivo a modificar es `mi_plan_v1_1_1.html`. **Trabaja siempre sobre una copia** (`cp mi_plan_v1_1_1.html mi_plan_v1_x.html` con la versión que toque) y modifica la copia.
 - Valida sintaxis JSX después de cada bloque significativo de cambios. Stack de validación al final del documento.
 - Si modificas estado persistido, escribe la migración correspondiente en `migrateToV2()` y `emptyState()`.
@@ -304,6 +308,8 @@ Iconos SVG inline para los **12 conceptos Esencial** vía `<LearnIcon id />` + 1
 
 ## Stack de validación
 
+> ⚠️ **Desfasado tras la Etapa 1.** La validación Babel-in-browser de abajo aplicaba al monolito. Ahora la build/validación es `npm run build` (Vite transpila y empaqueta en disco) + los verificadores deterministas en `app/scripts/`. Lo de abajo se conserva como histórico.
+
 ```bash
 # Babel para validar sintaxis JSX
 cd /tmp/babelcheck
@@ -333,6 +339,8 @@ Para runtime, montar deps locales y servir el HTML con file://. Playwright + Chr
 ---
 
 ## Estructura del archivo (referencia rápida)
+
+> ⚠️ **Post-Etapa 1:** este orden describe el **monolito congelado**. En `app/src/` el mismo contenido vive modularizado por capas (`tokens/ lib/ hooks/ ui/ charts/ content/ modals/ flows/ state/ screens/`). El mapa de abajo sigue siendo útil para localizar símbolos en el HTML de regresión.
 
 Las secciones principales del archivo `mi_plan_v1_1_1.html` siguen este orden aproximado (líneas verificadas con `grep -n`):
 
