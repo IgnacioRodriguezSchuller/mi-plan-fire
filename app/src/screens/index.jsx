@@ -2045,8 +2045,14 @@ export function ScreenHoy({ goTo }) {
   const sinPlanKPIs = useMemo(() => computeSinPlanKPIs(plan, profile), [plan, profile]);
   const [showSinPlanModal, setShowSinPlanModal] = useState(false);
 
+  // ── Layout · columna de lectura (BASE; el layout de 2 columnas en escritorio
+  //    llega en la fase siguiente). Variables fáciles de iterar a ojo. ──
+  const READING_MAX = 720;               // ancho máx. de la columna centrada (px)
+  const SECTION_GAP = mobile ? 40 : 56;  // aire ENTRE secciones grandes (01/02/03)
+  const BLOCK_GAP = mobile ? 16 : 20;    // aire DENTRO de cada sección (título → contenido)
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: mobile ? 22 : 32, paddingBottom: 40 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: SECTION_GAP, paddingBottom: 40, width: '100%', maxWidth: READING_MAX, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
         <div>
@@ -2063,7 +2069,7 @@ export function ScreenHoy({ goTo }) {
 
       {/* ─────────────── Movimiento 1 · Dónde estás ─────────────── */}
       <section>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
           <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.faint, letterSpacing: T.tracking.widest }}>01</span>
           <h2 style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Dónde estás</h2>
         </div>
@@ -2153,7 +2159,7 @@ export function ScreenHoy({ goTo }) {
 
       {/* ─────────────── Movimiento 2 · Hacia dónde puedes ir ─────────────── */}
       <section>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
           <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.faint, letterSpacing: T.tracking.widest }}>02</span>
           <h2 style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Hacia dónde puedes ir</h2>
         </div>
@@ -2216,7 +2222,7 @@ export function ScreenHoy({ goTo }) {
 
       {/* ─────────────── Movimiento 3 · Tu ruta ─────────────── */}
       <section>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 18, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
           <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.faint, letterSpacing: T.tracking.widest }}>03</span>
           <h2 style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Tu ruta</h2>
         </div>
