@@ -2110,42 +2110,61 @@ export function ScreenHoy({ goTo }) {
         {/* Limpieza · frase "Tienes X años · objetivo FIRE a los Y, en Z años"
             eliminada: redundante con el badge superior (retireAge → objetivo). */}
 
-        {/* Sub-bloque 1.B · Sin un plan (KPIs destilados + CTA modal) */}
+        {/* "Sin un plan" · BALANZA VERTICAL. Contrasta no-actuar (rojo) vs actuar
+            (verde). La cifra es la MISMA (coste de oportunidad = oppDifference),
+            vista desde los dos lados: lo que pierdes parado = lo que ganarías
+            invirtiendo. La inflación baja a contexto, al pie. Numeración interna
+            1.B retirada (era incoherente: no existía un 1.A etiquetado). */}
         <div style={{ marginTop: 24, paddingTop: 22, borderTop: '1px dashed ' + T.lineSoft }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
-            <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>1.B</span>
-            <h3 style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Sin un plan</h3>
-          </div>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, maxWidth: 640, marginBottom: 14 }}>
+          <h3 style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Sin un plan</h3>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, maxWidth: 640, marginTop: 8, marginBottom: 16 }}>
             Lo que el sistema económico hace con tu dinero si no haces nada, calculado con tus propias cifras.
           </div>
-          {sinPlanKPIs.hasData ? (
-            <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(2, 1fr)', gap: 14 }}>
-              <Card pad={mobile ? 16 : 20}>
-                <Label>Erosión salarial por inflación en {sinPlanKPIs.yearsToRetire} años</Label>
-                <div style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.amber, letterSpacing: T.tracking.display, marginTop: 6, lineHeight: 1 }}>
-                  −{fmtEur(sinPlanKPIs.lost)}
+          {sinPlanKPIs.hasData ? (() => {
+            // Solo lectura + 1 división (display): promedio anual de la erosión
+            // acumulada. NO toca computeSinPlanKPIs ni lost/oppDifference.
+            const opp = Math.abs(sinPlanKPIs.oppDifference);
+            const inflacionAnual = sinPlanKPIs.lost / sinPlanKPIs.yearsToRetire;
+            return (
+            <div>
+              {/* Balanza · plato rojo (no actuar) / fiel / plato verde (actuar) */}
+              <div style={{ border: '1px solid ' + T.lineSoft, borderRadius: 10, overflow: 'hidden' }}>
+                {/* Plato superior · si no haces nada */}
+                <div style={{ background: T.bg, borderLeft: '3px solid ' + T.red, padding: '16px 18px' }}>
+                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.red }}>Si no haces nada</div>
+                  <div style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.red, letterSpacing: T.tracking.display, marginTop: 6, lineHeight: 1 }}>−{fmtEur(opp)}</div>
+                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 8, lineHeight: T.lh.normal }}>tu dinero parado, comido por el tiempo</div>
+                </div>
+                {/* Fiel / bisagra */}
+                <div style={{ background: T.panel, borderTop: '1px solid ' + T.lineSoft, borderBottom: '1px solid ' + T.lineSoft, padding: '12px 18px' }}>
+                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.ink, fontSize: T.size.body, lineHeight: T.lh.normal, textAlign: 'center' }}>
+                    La diferencia —{fmtEur(opp)}— no la pones tú. La pone el tiempo.
+                  </div>
+                </div>
+                {/* Plato inferior · si invirtieras */}
+                <div style={{ background: T.bg, borderLeft: '3px solid ' + T.green, padding: '16px 18px' }}>
+                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.green }}>Si invirtieras</div>
+                  <div style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.green, letterSpacing: T.tracking.display, marginTop: 6, lineHeight: 1 }}>+{fmtEur(opp)}</div>
+                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 8, lineHeight: T.lh.normal }}>el mismo dinero, puesto a trabajar</div>
+                </div>
+              </div>
+              {/* Pie · inflación como contexto (no es la balanza) */}
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid ' + T.lineSoft }}>
+                <div style={{ fontFamily: T.serif, color: T.faint, fontSize: T.size.caption, lineHeight: T.lh.normal }}>
+                  Aparte, la inflación resta a tu salario ~{fmtEur(inflacionAnual)}/año de poder de compra — le pasa a cualquiera, actúes o no.
                 </div>
                 <OnboardingHelp title="Supuestos">
-                  Asumiendo que tu salario sube ~1% nominal al año (media española) y la inflación 2,5%.
+                  Promedio anual de la erosión acumulada ({fmtEur(sinPlanKPIs.lost)} en {sinPlanKPIs.yearsToRetire} años). Asumiendo que tu salario sube ~1% nominal al año (media española) y la inflación 2,5%.
                 </OnboardingHelp>
-              </Card>
-              <Card pad={mobile ? 16 : 20}>
-                <Label>Lo que dejarías de tener si no inviertes</Label>
-                <div style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.red, letterSpacing: T.tracking.display, marginTop: 6, lineHeight: 1 }}>
-                  {fmtEur(sinPlanKPIs.oppDifference)}
-                </div>
-                <OnboardingHelp title="Supuestos">
-                  Diferencia entre dejar tu ahorro en cuenta corriente vs. invertirlo al {sinPlanKPIs.planReturn}% anual durante {sinPlanKPIs.yearsToRetire} años, ajustado por inflación.
-                </OnboardingHelp>
-              </Card>
+              </div>
             </div>
-          ) : (
+            );
+          })() : (
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal }}>
               Define un ingreso en Ajustes para ver el cálculo completo.
             </div>
           )}
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 16 }}>
             <Btn variant="ghost" size="sm" onClick={() => setShowSinPlanModal(true)}>Ver el cálculo completo →</Btn>
           </div>
         </div>
