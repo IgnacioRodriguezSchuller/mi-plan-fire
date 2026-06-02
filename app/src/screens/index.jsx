@@ -981,65 +981,9 @@ export function Onboarding() {
 
   const set = (k, v) => setData((d) => ({ ...d, [k]: v }));
 
-  // Build a mock plan from current onboarding data so the live preview
-  // reacts to income/evolution choices, not just monthly savings.
-  // Hoisted above `steps` because the mirror step (8) references `livePlan`.
-  const livePlan = useMemo(() => {
-    const tk = todayKey();
-    let incomeSegments;
-    if (data.evolution === 'escalonado' && data.evoStep > 0 && data.evoCap > data.income) {
-      const segs = [];
-      let amount = data.income;
-      let cursor = tk;
-      let safety = 0;
-      // Stepwise progression: build one segment per cap-step. The final
-      // segment runs from the moment we'd cross `evoCap` to null (open-ended)
-      // at exactly `evoCap`, so the projection actually reaches the ceiling.
-      while (amount < data.evoCap && safety < 50) {
-        const nextAmount = amount + data.evoStep;
-        const next = addMonthsKey(cursor, data.evoEvery);
-        if (nextAmount >= data.evoCap) {
-          // Last partial step before the cap: shorten its duration
-          // proportionally to the fraction of the step left.
-          const fractionMonths = Math.max(1, Math.round((data.evoCap - amount) / data.evoStep * data.evoEvery));
-          const shortEnd = addMonthsKey(cursor, fractionMonths);
-          segs.push({ id: 'l' + safety, from: cursor, to: addMonthsKey(shortEnd, -1), amount, label: 'S' });
-          segs.push({ id: 'l' + (safety + 1), from: shortEnd, to: null, amount: data.evoCap, label: 'S' });
-          break;
-        }
-        segs.push({ id: 'l' + safety, from: cursor, to: addMonthsKey(next, -1), amount, label: 'S' });
-        cursor = next; amount = nextAmount; safety++;
-      }
-      if (segs.length === 0) segs.push({ id: 'l0', from: tk, to: null, amount: data.income, label: 'S' });
-      incomeSegments = segs;
-    } else if (data.evolution === 'variable' && data.variableSegments && data.variableSegments.length > 0) {
-      // F1.5 · Inline-defined tramos for the "variable" path.
-      const segs = data.variableSegments.slice(0, 4).map((s, i, arr) => {
-        const from = addMonthsKey(tk, s.fromMonth || 0);
-        const next = arr[i + 1];
-        const to = next ? addMonthsKey(tk, (next.fromMonth || 0) - 1) : null;
-        return { id: 'lv' + i, from, to, amount: s.amount, label: 'S' };
-      });
-      incomeSegments = segs.length ? segs : [{ id: 'l', from: tk, to: null, amount: data.income, label: 'S' }];
-    } else {
-      incomeSegments = [{ id: 'l', from: tk, to: null, amount: data.income, label: 'S' }];
-    }
-    return {
-      capital: data.capital,
-      annualReturn: data.annualReturn,
-      incomeSegments,
-      bonusSegments: [],
-      savingSegments: [
-        data.savingType === 'percent'
-          ? { id: 'a', from: tk, to: null, type: 'percent', value: data.savingPercent, label: 'A' }
-          : { id: 'a', from: tk, to: null, type: 'fixed', value: data.monthly, label: 'A' }
-      ],
-      events: [],
-    };
-  }, [data]);
-  // `live`/`final` (proyección en vivo) eliminados: alimentaban solo el panel
-  // lateral de preview, retirado del onboarding. `livePlan` se mantiene porque
-  // el paso espejo (8 · "Antes de soltarte") lo usa para la Verdad 1.
+  // `livePlan` retirado: solo lo usaba el paso "Antes de soltarte" del
+  // onboarding (ya eliminado). Ese contenido vive ahora, mejor, en la pantalla
+  // Plan (la bifurcación). `live`/`final` (panel de preview) ya se habían quitado.
 
   const steps = [
     {
@@ -1464,122 +1408,6 @@ export function Onboarding() {
       ),
       canNext: data.retireAge > data.age,
     },
-    // ─── Paso 8 nuevo · "Antes de Mi Plan" (vista mínima) ───────────────
-    {
-      title: 'Antes de soltarte: tu situación si no haces nada.',
-      sub: 'Dos verdades calculadas con tus números.',
-      input: (() => {
-        const tk = todayKey();
-        const yrs = Math.max(1, data.retireAge - data.age);
-        const monthsToRetire = yrs * 12;
-        const inflRate = 2.5;
-        const planRet = data.annualReturn || 8;
-        const piMo = Math.pow(1 + inflRate / 100, 1 / 12) - 1;
-        const planMo = Math.pow(1 + planRet / 100, 1 / 12) - 1;
-        const monthlyAporte = data.savingType === 'percent'
-          ? Math.round((data.income || 0) * data.savingPercent / 100)
-          : (data.monthly || 0);
-        // Truth 1: project salary using the user's actual income segments
-        // (livePlan already mirrors the onboarding's evolution choice — estable,
-        // escalonado with evoCap, or single tramo for variable).
-        let sumNominal = 0, sumReal = 0;
-        let finalNominal = data.income, finalReal = data.income;
-        for (let m = 1; m <= monthsToRetire; m++) {
-          const nominal = computeIncomeFor(livePlan, addMonthsKey(tk, m));
-          const real = nominal / Math.pow(1 + piMo, m);
-          sumNominal += nominal; sumReal += real;
-          if (m === monthsToRetire) { finalNominal = nominal; finalReal = real; }
-        }
-        const lost = sumNominal - sumReal;
-        // Truth 2 values
-        let parked = data.capital, invested = data.capital;
-        for (let m = 1; m <= monthsToRetire; m++) {
-          parked += monthlyAporte;
-          invested = invested * (1 + planMo) + monthlyAporte;
-        }
-        const deflator = Math.pow(1 + piMo, monthsToRetire);
-        const parkedReal = parked / deflator;
-        const investedReal = invested / deflator;
-        const diff = investedReal - parkedReal;
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 620 }}>
-            {/* Verdad 1 */}
-            <div style={{ padding: 18, background: T.panel, border: '1px solid ' + T.line, borderRadius: 12 }}>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted, marginBottom: 6 }}>Verdad 1 · La erosión del salario</div>
-              <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
-                En <strong>{yrs} años</strong>, tu salario habrá crecido hasta <strong style={{ color: T.accent }}>{fmtEur(finalNominal)}/mes</strong> sobre el papel, pero comprará lo que <strong style={{ color: T.accent }}>{fmtEur(finalReal)}</strong> compran hoy.
-              </div>
-              <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed ' + T.line }}>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>Poder adquisitivo perdido (acumulado)</div>
-                <div style={{ fontFamily: T.display, fontSize: T.size.displayLg, color: T.red, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 2 }}>−{fmtEur(lost)}</div>
-              </div>
-            </div>
-            {/* Verdad 2 */}
-            <div style={{ padding: 18, background: T.panel, border: '1px solid ' + T.line, borderRadius: 12 }}>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted, marginBottom: 6 }}>Verdad 2 · El coste de oportunidad</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 10 }}>
-                <div>
-                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Sin Plan</div>
-                  <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: T.faint, letterSpacing: T.tracking.tight }}>{fmtEur(parkedReal)}</div>
-                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint }}>ajustado por inflación</div>
-                </div>
-                <div>
-                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Con Plan</div>
-                  <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: T.accent, letterSpacing: T.tracking.tight }}>{fmtEur(investedReal)}</div>
-                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint }}>ajustado por inflación</div>
-                </div>
-              </div>
-              <div style={{ paddingTop: 10, borderTop: '1px dashed ' + T.line }}>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>Diferencia</div>
-                <div style={{ fontFamily: T.display, fontSize: T.size.displayLg, color: T.red, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 2 }}>{fmtEur(diff)}</div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 6, lineHeight: T.lh.normal }}>
-                  Es lo que te separa de la realidad si no hicieras nada. Matemática del interés compuesto durante {yrs} años.
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })(),
-      canNext: true,
-    },
-    {
-      title: 'Esto es lo que Mi Plan FIRE va a hacer contigo',
-      sub: 'Qué es y qué no es esta herramienta.',
-      input: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 720 }}>
-          <div style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.normal, color: T.ink }}>
-            Una herramienta de proyección, no de asesoramiento. Para que entiendas qué patrimonio puedes construir y qué decisiones cambian más esas cifras.
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: 18 }}>
-            <div style={{ padding: 18, background: T.panel, border: '1px solid ' + T.line, borderRadius: 12 }}>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.green, letterSpacing: T.tracking.widest, textTransform: 'uppercase', marginBottom: 12 }}>
-                Lo que sí
-              </div>
-              <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>Proyecta a 5, 10, 20 años.</li>
-                <li style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>Te enseña qué decisiones cambian más las cifras.</li>
-                <li style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>Explica cada concepto en <em>Aprende</em>.</li>
-                <li style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>Vive solo en tu dispositivo.</li>
-              </ul>
-            </div>
-            <div style={{ padding: 18, background: T.panel, border: '1px solid ' + T.line, borderRadius: 12 }}>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, textTransform: 'uppercase', marginBottom: 12 }}>
-                Lo que no
-              </div>
-              <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal }}>Recomienda productos concretos.</li>
-                <li style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal }}>Garantiza rentabilidades.</li>
-                <li style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal }}>Sustituye a un asesor cuando lo necesites.</li>
-              </ul>
-            </div>
-          </div>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal }}>
-            A partir de ahora vas a ver tu plan. Todo se ajusta. El plan es tuyo.
-          </div>
-        </div>
-      ),
-      canNext: true,
-    },
   ];
 
   const isLast = step === steps.length - 1;
@@ -1590,10 +1418,9 @@ export function Onboarding() {
     // Build income segments based on evolution choice
     let incomeSegments;
     if (data.evolution === 'escalonado' && data.evoStep > 0 && data.evoCap > data.income) {
-      // Stepwise progression. Mirror of livePlan: build one segment per cap-step,
-      // and on the last partial step before reaching evoCap, shorten the duration
-      // proportionally and add a final open-ended segment at evoCap so the cap is
-      // actually reached.
+      // Stepwise progression: build one segment per cap-step, and on the last
+      // partial step before reaching evoCap, shorten the duration proportionally
+      // and add a final open-ended segment at evoCap so the cap is actually reached.
       const segs = [];
       let amount = data.income;
       let cursor = tk;
@@ -4989,6 +4816,9 @@ export function Shell() {
       </main>
       <footer style={{ padding: '14px 16px 80px', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, textTransform: 'uppercase', textAlign: 'center' }}>
         Datos guardados en local · Mi Plan v1.5.0a3
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, textTransform: 'none', color: T.faint, marginTop: 8, lineHeight: T.lh.normal }}>
+          Herramienta de proyección, no de asesoramiento financiero. No garantiza rentabilidades.
+        </div>
       </footer>
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: T.panel, borderTop: '1px solid ' + T.line, display: 'flex', zIndex: 100, paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {tabs.map(t => (
@@ -5055,6 +4885,9 @@ export function Shell() {
       </main>
       <footer style={{ padding: '20px clamp(24px, 3vw, 48px)', borderTop: '1px solid ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, textTransform: 'uppercase' }}>
         Datos guardados en local · Mi Plan v1.5.0a3
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, textTransform: 'none', color: T.faint, marginTop: 8, lineHeight: T.lh.normal }}>
+          Herramienta de proyección, no de asesoramiento financiero. No garantiza rentabilidades.
+        </div>
       </footer>
     </div>
     {globalConceptId && <ConceptModal id={globalConceptId} onClose={() => setGlobalConceptId(null)} />}
