@@ -2050,18 +2050,21 @@ export function ScreenHoy({ goTo }) {
   const READING_MAX = 720;               // ancho máx. de la columna centrada (px)
   const SECTION_GAP = mobile ? 40 : 56;  // aire ENTRE secciones grandes (01/02/03)
   const BLOCK_GAP = mobile ? 16 : 20;    // aire DENTRO de cada sección (título → contenido)
+  // Tamaños display LOCALES y estables (los tokens displayMd/displayLg son clamp()
+  // dependiente de vw y encogen en anchos intermedios; aquí la columna es fija a
+  // 720, así que fijamos el tamaño: móvil = mínimos actuales, escritorio = constante).
+  const DISPLAY_LG = mobile ? 28 : 44;   // "Hola, {nombre}"
+  const DISPLAY_MD = mobile ? 24 : 32;   // títulos de sección, "Sin un plan", cifras clave
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: SECTION_GAP, paddingBottom: 40, width: '100%', maxWidth: READING_MAX, margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
-        <div>
-          <Label style={{ marginBottom: 6 }}>Mi Plan · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</Label>
-          <div style={{ fontFamily: T.display, fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, color: T.ink }}>
-            Hola, <em style={{ color: T.accent }}>{profile.name || 'amigo'}</em>.
-          </div>
+      {/* Header · saludo a la izquierda; fecha (metadato) a la derecha, asentada en
+          la BASELINE del saludo para que se relacione con él (no flote suelta). */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: T.display, fontSize: DISPLAY_LG, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, color: T.ink }}>
+          Hola, <em style={{ color: T.accent }}>{profile.name || 'amigo'}</em>.
         </div>
-        {/* v1.4.0c BIG-A · DisplayModeToggle reubicado al header de la gráfica dual del Movimiento 2 (pegado al elemento que afecta). */}
+        <Label style={{ marginBottom: 0 }}>Mi Plan · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</Label>
       </div>
 
       {/* Household multi-account summary (only renders if list.length > 1) */}
@@ -2071,90 +2074,109 @@ export function ScreenHoy({ goTo }) {
       <section>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
           <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.faint, letterSpacing: T.tracking.widest }}>01</span>
-          <h2 style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Dónde estás</h2>
+          <h2 style={{ fontFamily: T.display, fontSize: DISPLAY_MD, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Dónde estás</h2>
         </div>
 
-        {/* Sub-bloque 1.A · Tu situación actual */}
-        <div style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.relaxed, color: T.ink, maxWidth: 640 }}>
-          {/* H43 · Refactor: frase compuesta condicionalmente para evitar
-              puntuación huérfana en edge cases (income=0, planAporte=0, etc.). */}
-          {(() => {
-            const part1 = (
-              <>Tienes <strong style={{ color: T.accent, fontStyle: 'normal' }}>{fmtEur(d.currentPortfolio || 0)}</strong> de patrimonio.</>
+        {/* Sub-bloque 1.A · Situación hecha forma: patrimonio destacado + reparto
+            del ingreso en barra apilada (el dato se ve sin leer). Solo lectura. */}
+        <div style={{ maxWidth: 560 }}>
+          {/* Patrimonio destacado + icono de línea de acento (SVG propio, estilo LearnIcon) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <svg width="30" height="30" viewBox="0 0 36 36" fill="none" stroke={T.accent} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <ellipse cx="18" cy="10" rx="9" ry="3.5" />
+              <path d="M9 10 v8 a9 3.5 0 0 0 18 0 v-8" />
+              <path d="M9 18 a9 3.5 0 0 0 18 0" />
+            </svg>
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: T.size.caption, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>Tu patrimonio</div>
+              <div style={{ fontFamily: T.display, fontSize: DISPLAY_MD, color: T.accent, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 3 }}>{fmtEur(d.currentPortfolio || 0)}</div>
+            </div>
+          </div>
+          {income > 0 ? (() => {
+            const gastoPct = Math.round((monthlyLife / income) * 100);
+            const ahorroPct = Math.round(savingRate * 100);
+            const resto = Math.max(0, income - monthlyLife - planAporte);
+            return (
+              <div style={{ marginTop: mobile ? 22 : 26 }}>
+                {/* Barra del ingreso (sin frase): el AHORRO (verde) va primero y con
+                    peso; "para vivir" apagado a la derecha. Dato real ({ahorroPct}/{gastoPct}). */}
+                <div style={{ display: 'flex', height: mobile ? 42 : 48, borderRadius: 8, overflow: 'hidden', border: '1px solid ' + T.lineSoft }}>
+                  {planAporte > 0 && (
+                    <div style={{ flexGrow: Math.max(0.001, planAporte), background: T.green, display: 'flex', alignItems: 'center', paddingLeft: 13, minWidth: 0 }}>
+                      <span style={{ fontFamily: T.mono, fontSize: T.size.body, color: T.bg, letterSpacing: T.tracking.wide, fontWeight: 600 }}>{ahorroPct}%</span>
+                    </div>
+                  )}
+                  <div style={{ flexGrow: Math.max(0.5, monthlyLife), background: T.lineSoft, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 13, minWidth: 0 }}>
+                    <span style={{ fontFamily: T.mono, fontSize: T.size.body, color: T.muted, letterSpacing: T.tracking.wide }}>{gastoPct}%</span>
+                  </div>
+                  {resto > 0 && <div style={{ flexGrow: resto, background: T.bg, minWidth: 0 }} />}
+                </div>
+                {/* Leyenda · "Ahorras" primero y destacado (legible, lead) */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', marginTop: 14, fontFamily: T.serif, fontSize: T.size.lead }}>
+                  {planAporte > 0 && <span style={{ color: T.green }}><span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: 3, background: T.green, marginRight: 9, verticalAlign: 'middle' }} /><strong style={{ fontStyle: 'normal' }}>Ahorras · {fmtEur(planAporte)}</strong></span>}
+                  <span style={{ color: T.muted }}><span style={{ display: 'inline-block', width: 12, height: 12, borderRadius: 3, background: T.line, marginRight: 9, verticalAlign: 'middle' }} />Para vivir · {fmtEur(monthlyLife)}{declared != null && ' (declarado)'}</span>
+                </div>
+              </div>
             );
-            if (income <= 0) {
-              return (
-                <>{part1}{' '}<span>Sin ingreso definido — añade un tramo en <strong style={{ color: T.ink, fontStyle: 'normal' }}>Proyección</strong>.</span></>
-              );
-            }
-            const parts = [<>Ganas <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(income)}/mes neto</strong></>];
-            if (monthlyLife > 0) {
-              parts.push(
-                <>gastas {fmtEur(monthlyLife)}{declared != null && <span style={{ color: T.muted, fontSize: T.size.body }}> (declarado)</span>}</>
-              );
-            }
-            if (planAporte > 0) {
-              parts.push(
-                <>ahorras <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(planAporte)}</strong>{income > 0 && <span style={{ color: T.muted, fontSize: T.size.body, whiteSpace: 'nowrap' }}> ({Math.round(savingRate * 100)}% de tu neto)</span>}</>
-              );
-            }
-            const joined = parts.map((p, i) => {
-              if (parts.length === 1) return <React.Fragment key={i}>{p}</React.Fragment>;
-              if (i === parts.length - 1) return <React.Fragment key={i}> y {p}</React.Fragment>;
-              if (i === 0) return <React.Fragment key={i}>{p}</React.Fragment>;
-              return <React.Fragment key={i}>, {p}</React.Fragment>;
-            });
-            return <>{part1}{' '}{joined}.</>;
-          })()}
+          })() : (
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, marginTop: 14 }}>
+              Sin ingreso definido — añade un tramo en <strong style={{ color: T.ink, fontStyle: 'normal' }}>Proyección</strong>.
+            </div>
+          )}
         </div>
         {/* Limpieza · frase "Tienes X años · objetivo FIRE a los Y, en Z años"
             eliminada: redundante con el badge superior (retireAge → objetivo). */}
 
-        {/* "Sin un plan" · BALANZA VERTICAL. Contrasta no-actuar (rojo) vs actuar
-            (verde). La cifra es la MISMA (coste de oportunidad = oppDifference),
-            vista desde los dos lados: lo que pierdes parado = lo que ganarías
-            invirtiendo. La inflación baja a contexto, al pie. Numeración interna
-            1.B retirada (era incoherente: no existía un 1.A etiquetado). */}
-        <div style={{ marginTop: 24, paddingTop: 22, borderTop: '1px dashed ' + T.lineSoft }}>
-          <h3 style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Sin un plan</h3>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, maxWidth: 640, marginTop: 8, marginBottom: 16 }}>
-            Lo que el sistema económico hace con tu dinero si no haces nada, calculado con tus propias cifras.
-          </div>
+        {/* BIFURCACIÓN · el mismo dinero, dos destinos (reemplaza la balanza).
+            Origen = lo que apartas al mes; rama izquierda parado (rojo =
+            parkedFinalReal), rama derecha invertido (verde = finalReal, cuadra
+            con el resto de la pantalla). Inflación al pie. Solo lectura/derivación. */}
+        <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px dashed ' + T.lineSoft }}>
           {sinPlanKPIs.hasData ? (() => {
-            // Solo lectura + 1 división (display): promedio anual de la erosión
-            // acumulada. NO toca computeSinPlanKPIs ni lost/oppDifference.
-            const opp = Math.abs(sinPlanKPIs.oppDifference);
-            const inflacionAnual = sinPlanKPIs.lost / sinPlanKPIs.yearsToRetire;
+            const aporta = planAporte > 0 ? planAporte : Math.round(income * 0.15);
+            const aportaLabel = planAporte > 0 ? 'Cada mes apartas' : 'Si apartaras el 15%';
+            const parked = sinPlanKPIs.parkedFinalReal;
+            const invested = finalReal;
+            const maxFork = Math.max(parked, invested, 1);
+            const redW = Math.round((parked / maxFork) * 100);
+            const greenW = Math.round((invested / maxFork) * 100);
             return (
             <div>
-              {/* Balanza · plato rojo (no actuar) / fiel / plato verde (actuar) */}
-              <div style={{ border: '1px solid ' + T.lineSoft, borderRadius: 10, overflow: 'hidden' }}>
-                {/* Plato superior · si no haces nada */}
-                <div style={{ background: T.bg, borderLeft: '3px solid ' + T.red, padding: '16px 18px' }}>
-                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.red }}>Si no haces nada</div>
-                  <div style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.red, letterSpacing: T.tracking.display, marginTop: 6, lineHeight: 1 }}>−{fmtEur(opp)}</div>
-                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 8, lineHeight: T.lh.normal }}>tu dinero parado, comido por el tiempo</div>
+              {/* Origen */}
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: T.mono, fontSize: T.size.caption, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>{aportaLabel}</div>
+                <div style={{ fontFamily: T.display, fontSize: DISPLAY_MD, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 4 }}>{fmtEur(aporta)}</div>
+              </div>
+              {/* Bifurcación · SVG en Y, rama izq roja / der verde (responsive) */}
+              <svg viewBox="0 0 100 30" width="100%" height={mobile ? 30 : 38} preserveAspectRatio="none" style={{ display: 'block', marginTop: 6 }} aria-hidden="true">
+                <path d="M50 0 V11" stroke={T.line} strokeWidth="1.5" fill="none" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                <path d="M50 11 L25 30" stroke={T.red} strokeWidth="1.5" fill="none" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                <path d="M50 11 L75 30" stroke={T.green} strokeWidth="1.5" fill="none" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+              </svg>
+              {/* Dos ramas */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: mobile ? 12 : 20 }}>
+                <div style={{ border: '1px solid ' + T.lineSoft, borderTop: '3px solid ' + T.red, borderRadius: 8, padding: mobile ? '14px' : '16px 18px' }}>
+                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.red }}>Si lo dejas parado</div>
+                  <div style={{ fontFamily: T.display, fontSize: DISPLAY_MD, color: T.red, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }}>{fmtEur(parked)}</div>
+                  <div style={{ height: 6, background: T.lineSoft, borderRadius: 3, marginTop: 12, overflow: 'hidden' }} aria-hidden="true"><div style={{ width: redW + '%', height: '100%', background: T.red, borderRadius: 3 }} /></div>
                 </div>
-                {/* Fiel / bisagra */}
-                <div style={{ background: T.panel, borderTop: '1px solid ' + T.lineSoft, borderBottom: '1px solid ' + T.lineSoft, padding: '12px 18px' }}>
-                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.ink, fontSize: T.size.body, lineHeight: T.lh.normal, textAlign: 'center' }}>
-                    La diferencia —{fmtEur(opp)}— no la pones tú. La pone el tiempo.
-                  </div>
-                </div>
-                {/* Plato inferior · si invirtieras */}
-                <div style={{ background: T.bg, borderLeft: '3px solid ' + T.green, padding: '16px 18px' }}>
-                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.green }}>Si invirtieras</div>
-                  <div style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.green, letterSpacing: T.tracking.display, marginTop: 6, lineHeight: 1 }}>+{fmtEur(opp)}</div>
-                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 8, lineHeight: T.lh.normal }}>el mismo dinero, puesto a trabajar</div>
+                <div style={{ border: '1px solid ' + T.lineSoft, borderTop: '3px solid ' + T.green, borderRadius: 8, padding: mobile ? '14px' : '16px 18px' }}>
+                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.green }}>Si lo inviertes</div>
+                  <div style={{ fontFamily: T.display, fontSize: DISPLAY_MD, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }}>{fmtEur(invested)}</div>
+                  <div style={{ height: 6, background: T.lineSoft, borderRadius: 3, marginTop: 12, overflow: 'hidden' }} aria-hidden="true"><div style={{ width: greenW + '%', height: '100%', background: T.green, borderRadius: 3 }} /></div>
                 </div>
               </div>
-              {/* Pie · inflación como contexto (no es la balanza) */}
-              <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid ' + T.lineSoft }}>
-                <div style={{ fontFamily: T.serif, color: T.faint, fontSize: T.size.caption, lineHeight: T.lh.normal }}>
-                  Aparte, la inflación resta a tu salario ~{fmtEur(inflacionAnual)}/año de poder de compra — le pasa a cualquiera, actúes o no.
+              {/* Cierre */}
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.ink, fontSize: T.size.lead, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>
+                El mismo dinero. La diferencia la pone el tiempo.
+              </div>
+              {/* Inflación al pie */}
+              <div style={{ marginTop: 22, paddingTop: 16, borderTop: '1px solid ' + T.lineSoft }}>
+                <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal }}>
+                  Este año, la inflación resta <strong style={{ color: T.ink, fontStyle: 'normal' }}>~{fmtEur(sinPlanKPIs.lostFirstYear)}</strong> a tu salario — y más cada año que pasa.
                 </div>
                 <OnboardingHelp title="Supuestos">
-                  Promedio anual de la erosión acumulada ({fmtEur(sinPlanKPIs.lost)} en {sinPlanKPIs.yearsToRetire} años). Asumiendo que tu salario sube ~1% nominal al año (media española) y la inflación 2,5%.
+                  Pérdida de poder de compra del primer año: un año de inflación ({inflRate}%) sobre tu salario anual. A lo largo de {sinPlanKPIs.yearsToRetire} años, acumulada y compuesta, son {fmtEur(sinPlanKPIs.lost)} — pero esa cifra mezcla magnitudes; la honesta es la de un año concreto.
                 </OnboardingHelp>
               </div>
             </div>
@@ -2169,69 +2191,85 @@ export function ScreenHoy({ goTo }) {
           </div>
         </div>
 
-        {/* Sub-bloque 1.C · Reparto del ingreso (versión reducida, próximos 5 años) */}
-        <div style={{ marginTop: 18 }}>
-          <FlowTimelineCard plan={plan} profile={profile} maxYears={5} compact />
-        </div>
+        {/* Rediseño Plan · gráfica "Cómo se reparte tu ingreso" (FlowTimelineCard)
+            retirada de aquí. El componente sigue definido y se usa en otra pantalla. */}
 
       </section>
 
-      {/* ─────────────── Movimiento 2 · Hacia dónde puedes ir ─────────────── */}
+      {/* ─────────────── Movimiento 2 · Lo que podría ser ─────────────── */}
       <section>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
           <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.faint, letterSpacing: T.tracking.widest }}>02</span>
-          <h2 style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Hacia dónde puedes ir</h2>
+          <h2 style={{ fontFamily: T.display, fontSize: DISPLAY_MD, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Lo que podría ser</h2>
         </div>
 
-        {/* Prosa adaptativa según perfil del usuario (A: no aporta · B: aporta poco · C: razonable) */}
-        <div style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.relaxed, color: T.ink, maxWidth: 720, marginBottom: 18 }}>
-          {userProfile === 'A' && (
-            <>Actualmente <strong style={{ color: T.ink, fontStyle: 'normal' }}>no estás aportando</strong> a inversión. Esta gráfica te enseña qué podrías construir si apartaras un <strong style={{ color: T.accent, fontStyle: 'normal' }}>20% de tu neto</strong> cada mes (unos <strong style={{ color: T.accent, fontStyle: 'normal' }}>{fmtEur(standard.targetMonthly)}/mes</strong>) hacia un fondo indexado mundial con DCA mensual.</>
-          )}
-          {userProfile === 'B' && (
-            <>Estás aportando <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(planAporte)}/mes</strong> ({Math.round(savingRate * 100)}% de tu neto). Es un comienzo, pero un 20% de aporte cambiaría tu trayectoria sustancialmente.</>
-          )}
-          {userProfile === 'C' && (
-            <>Estás aportando <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(planAporte)}/mes</strong> ({Math.round(savingRate * 100)}% de tu neto), por encima del 15% recomendado como mínimo razonable. Tu plan es defendible.</>
-          )}
-        </div>
-
-        {/* Gráfica dual */}
-        <Card pad={mobile ? 14 : 20}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-            <Label>{userProfile === 'A' ? 'Plan estándar — referencia' : 'Tu trayectoria vs plan estándar'}</Label>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: 12, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', flexWrap: 'wrap' }}>
-                {userProfile !== 'A' && <LegendChip color={T.accent} label="Tu trayectoria" />}
-                <LegendChip color={userProfile === 'A' ? T.accent : T.faint} label="Plan estándar" dashed={userProfile !== 'A'} />
+        {/* "Lo que podría ser" · edad de libertad financiera (d.ageAtFiReal),
+            número FIRE (d.fiTarget) + progreso, y renta por la regla del 4%.
+            Tooltips al sistema Concept existente. Datos derivados solo se LEEN;
+            mensaje en CONDICIONAL (el plan de ahorro es lo que PODRÍAS aportar). */}
+        {income > 0 ? (() => {
+          // Datos ya derivados (solo lectura + derivación de display). CONDICIONAL.
+          const pen = plan.publicPension || {};
+          const penEnabled = !!pen.enabled && (pen.monthlyAmount || 0) > 0;
+          const penStartAge = penEnabled ? (pen.startAge || 67) : null;
+          const fiAgeRaw = d.ageAtFiReal;
+          const fiAge = fiAgeRaw != null ? Math.round(fiAgeRaw) : null;
+          const fiYear = fiAgeRaw != null ? Math.round(new Date().getFullYear() + (fiAgeRaw - profile.age)) : null;
+          const aheadObjetivo = fiAge != null ? (profile.retireAge - fiAge) : null;
+          const aheadPension = (fiAge != null && penEnabled) ? (penStartAge - fiAge) : null;
+          const fiTarget = d.fiTarget || 0;
+          const fiProgressPct = fiTarget > 0 ? Math.round((finalReal / fiTarget) * 100) : null;
+          const fiBarW = fiProgressPct != null ? Math.min(100, fiProgressPct) : 0;
+          const veredicto = sufficiency.kind === 'comfortable' ? 'te alcanzaría con margen'
+            : sufficiency.kind === 'tight' ? 'te alcanzaría, aunque justo'
+            : sufficiency.kind === 'short' ? 'no te alcanzaría' : 'faltan datos';
+          return (
+          <div style={{ maxWidth: 560 }}>
+            {/* HERO · la edad de libertad (el dato FIRE clave, en verde) */}
+            {fiAge != null ? (
+              <div>
+                <div style={{ fontFamily: T.mono, fontSize: T.size.caption, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>Serías <Concept id="libertad-financiera">libre</Concept> a los</div>
+                <div style={{ fontFamily: T.display, fontSize: DISPLAY_LG, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 4 }}>{fiAge}</div>
+                <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal, marginTop: 10 }}>
+                  Hacia <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fiYear}</strong>{aheadObjetivo > 0 && <> — <strong style={{ color: T.green, fontStyle: 'normal' }}>{aheadObjetivo} {aheadObjetivo === 1 ? 'año' : 'años'} antes</strong> de tu objetivo de retiro ({profile.retireAge}){aheadPension > 0 && <>, y {aheadPension} antes que la jubilación pública ({penStartAge})</>}</>}.
+                </div>
               </div>
-              <DisplayModeToggle />
+            ) : (
+              <div style={{ fontFamily: T.serif, fontSize: T.size.lead, color: T.ink, lineHeight: T.lh.normal }}>
+                Con tu ritmo actual, el dinero aún no llegaría a tu <Concept id="libertad-financiera">número FIRE</Concept> antes de jubilarte. Subir el aporte adelantaría esa fecha.
+              </div>
+            )}
+            {/* NÚMERO FIRE + progreso hacia la meta */}
+            <div style={{ marginTop: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 6, fontFamily: T.serif, fontSize: T.size.body, color: T.muted, marginBottom: 8 }}>
+                <span>Tu <Concept id="libertad-financiera">número FIRE</Concept> · 25× gasto</span>
+                <span style={{ color: T.ink, fontFamily: T.display, fontSize: T.size.subtitle }}>{fmtEur(fiTarget)}</span>
+              </div>
+              <div style={{ height: 12, background: T.lineSoft, borderRadius: 6, overflow: 'hidden' }} aria-hidden="true">
+                <div style={{ width: fiBarW + '%', height: '100%', background: T.green, borderRadius: 6 }} />
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal, marginTop: 10 }}>
+                {fiProgressPct != null && fiProgressPct >= 100
+                  ? <>Llegarías a <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong> — superas tu meta.</>
+                  : <>Llegarías a <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong>{fiProgressPct != null && <>, el <strong style={{ color: T.green, fontStyle: 'normal' }}>{fiProgressPct}%</strong> de tu meta</>}.</>}
+              </div>
             </div>
+            {/* RENTA · regla del 4% (condicional) */}
+            {monthlyLife > 0 && (
+              <div style={{ fontFamily: T.serif, fontSize: T.size.lead, color: T.ink, lineHeight: T.lh.normal, marginTop: 18 }}>
+                Que por la <Concept id="regla-4">regla del 4%</Concept> te daría <strong style={{ color: T.ink, fontStyle: 'normal' }}>~{fmtEur(retirementMonthlyReal)}/mes</strong> — <strong style={{ color: sufficiency.color, fontStyle: 'normal' }}>{veredicto}</strong> para tu gasto de hoy.
+              </div>
+            )}
+            <OnboardingHelp title="Supuestos">
+              Cifras en euros de hoy (ajustadas por inflación), asumiendo {planReturn}% de rentabilidad media anual y una tasa de retiro del {withdrawalRate}%. La edad de libertad sale de tu ritmo de ahorro real — todo configurable en Proyección.
+            </OnboardingHelp>
           </div>
-          <LifecycleChartDual
-            userSeries={userProfile === 'A' ? [] : (d.seriesPlan || [])}
-            standardSeries={standard.series}
-            profile={profile} realMode={realMode} inflRate={inflRate}
-            height={mobile ? 220 : 280} />
-        </Card>
-
-        {/* Limpieza · veredicto compacto en el cuerpo (el gráfico ya muestra la
-            curva); supuestos —rentabilidad, tasa de retiro— movidos al "+¿por qué?". */}
-        <div style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.relaxed, color: T.ink, marginTop: 18, maxWidth: 720 }}>
-          A los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{profile.retireAge}</strong>: <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(realMode ? finalReal : finalNominal)}</strong>{realMode ? ' (ajustado por inflación)' : ''} · <strong style={{ color: T.accent, fontStyle: 'normal' }}>{fmtEur(realMode ? retirementMonthlyReal : retirementMonthly)}/mes</strong>.
-          {monthlyLife > 0 && (
-            <>
-              {' '}<strong style={{ color: sufficiency.color, fontStyle: 'normal' }}>Tu plan {
-                sufficiency.kind === 'comfortable' ? 'es viable con margen' :
-                sufficiency.kind === 'tight' ? 'es viable, justo' :
-                sufficiency.kind === 'short' ? 'no llega' : 'necesita más datos'
-              }</strong>.
-            </>
-          )}
-        </div>
-        <OnboardingHelp title="Supuestos">
-          Si mantienes este ritmo y los mercados rinden de media un {planReturn}% anual (asumido, configurable en Proyección). Con una tasa de retiro del {withdrawalRate}%, esa cifra mensual{realMode ? ', ajustada por inflación,' : ''} se mantiene durante el resto de tu vida.
-        </OnboardingHelp>
+          );
+        })() : (
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal }}>
+            Define un ingreso en Ajustes para ver cuándo serías libre.
+          </div>
+        )}
 
         {/* CTA Proyección (Monte Carlo destilado vive en Proyección) */}
         <div style={{ marginTop: 20, paddingTop: 18, borderTop: '1px dashed ' + T.lineSoft, display: 'flex', justifyContent: 'flex-end' }}>
@@ -2243,7 +2281,7 @@ export function ScreenHoy({ goTo }) {
       <section>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
           <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.faint, letterSpacing: T.tracking.widest }}>03</span>
-          <h2 style={{ fontFamily: T.display, fontSize: T.size.displayMd, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Tu ruta</h2>
+          <h2 style={{ fontFamily: T.display, fontSize: DISPLAY_MD, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Tu ruta</h2>
         </div>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, maxWidth: 720, marginBottom: 18 }}>
           Cinco fases que estructuran el camino FIRE.
@@ -4771,7 +4809,9 @@ export function KpiPill({ onClick }) {
         {state.profile.retireAge}→
       </span>
       <span style={{ fontStyle: 'italic', fontSize: T.size.body }}>
-        {fmtEur(d.finalPace.portfolio)}
+        {/* Coherencia de cifras · patrimonio final AJUSTADO POR INFLACIÓN (real),
+            mismo valor que la balanza verde y "¿Te alcanzaría?" en la pantalla Plan. */}
+        {fmtEur(toRealEur(d.finalPlan.portfolio, Math.max(0, state.profile.retireAge - state.profile.age) * 12, state.plan.inflationRate != null ? state.plan.inflationRate : 2.5))}
       </span>
       <svg width="24" height="9" style={{ marginLeft: 2 }}>
         <path d={(() => {
@@ -4948,7 +4988,7 @@ export function Shell() {
         </div>
       </main>
       <footer style={{ padding: '14px 16px 80px', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, textTransform: 'uppercase', textAlign: 'center' }}>
-        Datos guardados en local · Mi Plan v1.4.0b
+        Datos guardados en local · Mi Plan v1.5.0a3
       </footer>
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: T.panel, borderTop: '1px solid ' + T.line, display: 'flex', zIndex: 100, paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {tabs.map(t => (
@@ -5014,7 +5054,7 @@ export function Shell() {
         </div>
       </main>
       <footer style={{ padding: '20px clamp(24px, 3vw, 48px)', borderTop: '1px solid ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, textTransform: 'uppercase' }}>
-        Datos guardados en local · Mi Plan v1.4.0b
+        Datos guardados en local · Mi Plan v1.5.0a3
       </footer>
     </div>
     {globalConceptId && <ConceptModal id={globalConceptId} onClose={() => setGlobalConceptId(null)} />}

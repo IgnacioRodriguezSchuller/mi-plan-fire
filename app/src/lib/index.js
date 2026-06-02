@@ -1118,7 +1118,7 @@ export function computeNextStep(state, d) {
 }
 
 // v1.2.0 · Cómputo destilado de los dos KPIs de "Sin un plan" en Movimiento 1.B.
-// Devuelve { lost, oppDifference, yearsToRetire, planReturn, hasData }.
+// Devuelve { lost, lostFirstYear, oppDifference, parkedFinalReal, investedFinalReal, yearsToRetire, planReturn, hasData }.
 // Pure function: sin estado local. Usa salaryGrowthAnnual = 1.0 como referencia
 // conservadora (en ScreenSinMiPlan el usuario puede modificar ese parámetro vía
 // slider; aquí lo fijamos para que los KPIs de Mi Plan sean estables).
@@ -1130,7 +1130,7 @@ export function computeSinPlanKPIs(plan, profile) {
   const inflRate = plan.inflationRate != null ? plan.inflationRate : 2.5;
   const planReturn = plan.annualReturn || 8;
   if (income <= 0) {
-    return { lost: 0, oppDifference: 0, yearsToRetire, planReturn, hasData: false };
+    return { lost: 0, lostFirstYear: 0, oppDifference: 0, parkedFinalReal: 0, investedFinalReal: 0, yearsToRetire, planReturn, hasData: false };
   }
   const hasMultipleIncomeSegments = (plan.incomeSegments || []).length > 1;
   const salaryGrowthAnnual = 1.0;
@@ -1148,6 +1148,10 @@ export function computeSinPlanKPIs(plan, profile) {
     sumReal += real;
   }
   const lost = sumNominal - sumReal;
+  // Erosión HONESTA del PRIMER AÑO (no el promedio del acumulado compuesto, que
+  // mezcla magnitudes): poder de compra que pierde tu salario anual con un año de
+  // inflación. = salario_anual − salario_anual / (1 + inflRate). Solo display.
+  const lostFirstYear = income * 12 - (income * 12) / (1 + inflRate / 100);
   // Coste de oportunidad (Verdad 2): aporcado vs invertido al planReturn anual.
   const planMo = Math.pow(1 + planReturn / 100, 1 / 12) - 1;
   const capital = plan.capital || 0;
@@ -1162,7 +1166,7 @@ export function computeSinPlanKPIs(plan, profile) {
   const parkedFinalReal = parkedNominal / deflator;
   const investedFinalReal = investedNominal / deflator;
   const oppDifference = investedFinalReal - parkedFinalReal;
-  return { lost, oppDifference, yearsToRetire, planReturn, hasData: true };
+  return { lost, lostFirstYear, oppDifference, parkedFinalReal, investedFinalReal, yearsToRetire, planReturn, hasData: true };
 }
 
 // ---------- Formatters (arrastrados Tanda final: fmtEurFull, fmtPct) ----------
