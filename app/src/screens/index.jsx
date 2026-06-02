@@ -2044,47 +2044,86 @@ export function ScreenHoy({ goTo }) {
           const fiYear = fiAgeRaw != null ? Math.round(new Date().getFullYear() + (fiAgeRaw - profile.age)) : null;
           const aheadObjetivo = fiAge != null ? (profile.retireAge - fiAge) : null;
           const aheadPension = (fiAge != null && penEnabled) ? (penStartAge - fiAge) : null;
+          // Hero de edad · CONDICIONAL (3 estados). diff = retireAge − round(FI):
+          // ≥1 libre antes (verde), ≤−1 libre después (aviso ámbar), 0 coinciden
+          // → oculto (repetiría la edad de retiro que el usuario metió). null
+          // (no se alcanza FI en el horizonte) → oculto. Mismo redondeo (fiAge)
+          // para diff y para el número, así 59,75 → 60 → diff 0 → oculto.
+          const showHero = aheadObjetivo != null && Math.abs(aheadObjetivo) >= 1;
+          const heroEarly = aheadObjetivo != null && aheadObjetivo >= 1;
+          const heroColor = heroEarly ? T.green : T.amber;
+          const heroDiffAbs = aheadObjetivo != null ? Math.abs(aheadObjetivo) : 0;
           const fiTarget = d.fiTarget || 0;
-          const fiProgressPct = fiTarget > 0 ? Math.round((finalReal / fiTarget) * 100) : null;
-          const fiBarW = fiProgressPct != null ? Math.min(100, fiProgressPct) : 0;
-          const veredicto = sufficiency.kind === 'comfortable' ? 'te alcanzaría con margen'
-            : sufficiency.kind === 'tight' ? 'te alcanzaría, aunque justo'
-            : sufficiency.kind === 'short' ? 'no te alcanzaría' : 'faltan datos';
+          // Meta (fiTarget = lo que NECESITAS) vs llegada (finalReal = lo que
+          // ALCANZARÍAS). Solo presentación; las cifras no se tocan.
+          const fiReached = fiTarget > 0 && finalReal >= fiTarget;
+          const fiSurpass = fiTarget > 0 && finalReal >= fiTarget * 1.05;
+          const fiReachedPct = fiTarget > 0 ? Math.round((finalReal / fiTarget) * 100) : 0;
+          const fiVerdictBox = fiSurpass ? 'Superas tu meta' : fiReached ? 'Llegas justo a tu meta' : `Te quedarías al ${fiReachedPct}% de tu meta`;
+          // Renta (regla 4%) vs gasto de hoy, a la misma escala (la mayor = 100%).
+          const rentaGastoMax = Math.max(retirementMonthlyReal, monthlyLife, 1);
+          const rentaW = Math.round((retirementMonthlyReal / rentaGastoMax) * 100);
+          const gastoW = Math.round((monthlyLife / rentaGastoMax) * 100);
+          const veredictoRenta = sufficiency.kind === 'comfortable' ? 'Te alcanzaría con margen.'
+            : sufficiency.kind === 'tight' ? 'Te alcanzaría, aunque justo.'
+            : sufficiency.kind === 'short' ? 'No llegaría a cubrir tu gasto.' : 'Faltan datos.';
           return (
           <div style={{ maxWidth: 560 }}>
-            {/* HERO · la edad de libertad (el dato FIRE clave, en verde) */}
-            {fiAge != null ? (
+            {/* HERO · edad de libertad — CONDICIONAL (3 estados; ver consts arriba).
+                Solo se muestra cuando aporta algo nuevo (|diff|≥1). Si la edad FIRE
+                coincide con el retiro o no se alcanza (null), se OCULTA y el bloque
+                empieza por las cajas meta/llegada (que ya cuentan el resultado). */}
+            {showHero && (
               <div>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.caption, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>Serías <Concept id="libertad-financiera">libre</Concept> a los</div>
-                <div style={{ fontFamily: T.display, fontSize: DISPLAY_LG, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 4 }}>{fiAge}</div>
+                <div style={{ fontFamily: T.mono, fontSize: T.size.caption, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>
+                  {heroEarly ? <>Serías <Concept id="libertad-financiera">libre</Concept> a los</> : <>A tu ritmo, serías <Concept id="libertad-financiera">libre</Concept> a los</>}
+                </div>
+                <div style={{ fontFamily: T.display, fontSize: DISPLAY_LG, color: heroColor, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 4 }}>{fiAge}</div>
                 <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal, marginTop: 10 }}>
-                  Hacia <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fiYear}</strong>{aheadObjetivo > 0 && <> — <strong style={{ color: T.green, fontStyle: 'normal' }}>{aheadObjetivo} {aheadObjetivo === 1 ? 'año' : 'años'} antes</strong> de tu objetivo de retiro ({profile.retireAge}){aheadPension > 0 && <>, y {aheadPension} antes que la jubilación pública ({penStartAge})</>}</>}.
+                  Hacia <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fiYear}</strong> — <strong style={{ color: heroColor, fontStyle: 'normal' }}>{heroDiffAbs} {heroDiffAbs === 1 ? 'año' : 'años'} {heroEarly ? 'antes' : 'después'}</strong> de tu objetivo de retiro ({profile.retireAge}){heroEarly && aheadPension > 0 && <>, y {aheadPension} antes que la jubilación pública ({penStartAge})</>}.
                 </div>
               </div>
-            ) : (
-              <div style={{ fontFamily: T.serif, fontSize: T.size.lead, color: T.ink, lineHeight: T.lh.normal }}>
-                Con tu ritmo actual, el dinero aún no llegaría a tu <Concept id="libertad-financiera">número FIRE</Concept> antes de jubilarte. Subir el aporte adelantaría esa fecha.
-              </div>
             )}
-            {/* NÚMERO FIRE + progreso hacia la meta */}
-            <div style={{ marginTop: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 6, fontFamily: T.serif, fontSize: T.size.body, color: T.muted, marginBottom: 8 }}>
-                <span>Tu <Concept id="libertad-financiera">número FIRE</Concept> · 25× gasto</span>
-                <span style={{ color: T.ink, fontFamily: T.display, fontSize: T.size.subtitle }}>{fmtEur(fiTarget)}</span>
+            {/* META vs LLEGADA · dos cajas enfrentadas (mismo patrón visual que la
+                bifurcación del bloque 1) + veredicto de una línea. */}
+            {fiTarget > 0 && (
+            <div style={{ marginTop: showHero ? 24 : 0 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: mobile ? 12 : 20 }}>
+                {/* Caja META · neutra */}
+                <div style={{ border: '1px solid ' + T.lineSoft, borderTop: '3px solid ' + T.line, borderRadius: 8, padding: mobile ? '14px' : '16px 18px' }}>
+                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>Tu meta · <Concept id="libertad-financiera">FIRE</Concept></div>
+                  <div style={{ fontFamily: T.display, fontSize: DISPLAY_MD, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }}>{fmtEur(fiTarget)}</div>
+                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, marginTop: 8 }}>lo que necesitas para vivir de tus rentas</div>
+                </div>
+                {/* Caja LLEGADA · verde si alcanza, ámbar si no */}
+                <div style={{ border: '1px solid ' + T.lineSoft, borderTop: '3px solid ' + (fiReached ? T.green : T.amber), borderRadius: 8, padding: mobile ? '14px' : '16px 18px' }}>
+                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: fiReached ? T.green : T.amber }}>Llegarías a</div>
+                  <div style={{ fontFamily: T.display, fontSize: DISPLAY_MD, color: fiReached ? T.green : T.amber, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }}>{fmtEur(finalReal)}</div>
+                  <div style={{ height: 6, background: T.lineSoft, borderRadius: 3, marginTop: 12, overflow: 'hidden' }} aria-hidden="true"><div style={{ width: Math.min(100, fiReachedPct) + '%', height: '100%', background: fiReached ? T.green : T.amber, borderRadius: 3 }} /></div>
+                </div>
               </div>
-              <div style={{ height: 12, background: T.lineSoft, borderRadius: 6, overflow: 'hidden' }} aria-hidden="true">
-                <div style={{ width: fiBarW + '%', height: '100%', background: T.green, borderRadius: 6 }} />
-              </div>
-              <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal, marginTop: 10 }}>
-                {fiProgressPct != null && fiProgressPct >= 100
-                  ? <>Llegarías a <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong> — superas tu meta.</>
-                  : <>Llegarías a <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong>{fiProgressPct != null && <>, el <strong style={{ color: T.green, fontStyle: 'normal' }}>{fiProgressPct}%</strong> de tu meta</>}.</>}
-              </div>
+              {/* Veredicto meta · una línea itálica centrada */}
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: fiReached ? T.green : T.amber, fontSize: T.size.lead, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 16 }}>{fiVerdictBox}.</div>
             </div>
-            {/* RENTA · regla del 4% (condicional) */}
+            )}
+            {/* RENTA vs GASTO · dos barras a la misma escala + veredicto. El "justo"
+                se VE (barras casi iguales), no se lee. Condicional. */}
             {monthlyLife > 0 && (
-              <div style={{ fontFamily: T.serif, fontSize: T.size.lead, color: T.ink, lineHeight: T.lh.normal, marginTop: 18 }}>
-                Que por la <Concept id="regla-4">regla del 4%</Concept> te daría <strong style={{ color: T.ink, fontStyle: 'normal' }}>~{fmtEur(retirementMonthlyReal)}/mes</strong> — <strong style={{ color: sufficiency.color, fontStyle: 'normal' }}>{veredicto}</strong> para tu gasto de hoy.
+              <div style={{ marginTop: 18, border: '1px solid ' + T.lineSoft, borderRadius: 8, padding: mobile ? '14px' : '16px 18px' }}>
+                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted, marginBottom: 14 }}>Tu renta al retirarte · <Concept id="regla-4">regla 4%</Concept></div>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, marginBottom: 4 }}>
+                    <span>Tu renta</span><span style={{ color: T.ink }}>~{fmtEur(retirementMonthlyReal)}/mes</span>
+                  </div>
+                  <div style={{ height: 10, background: T.lineSoft, borderRadius: 5, overflow: 'hidden' }} aria-hidden="true"><div style={{ width: rentaW + '%', height: '100%', background: T.green, borderRadius: 5 }} /></div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, marginBottom: 4 }}>
+                    <span>Tu gasto de hoy</span><span style={{ color: T.ink }}>{fmtEur(monthlyLife)}/mes</span>
+                  </div>
+                  <div style={{ height: 10, background: T.lineSoft, borderRadius: 5, overflow: 'hidden' }} aria-hidden="true"><div style={{ width: gastoW + '%', height: '100%', background: T.line, borderRadius: 5 }} /></div>
+                </div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: sufficiency.color, fontSize: T.size.lead, lineHeight: T.lh.snug, marginTop: 14 }}>{veredictoRenta}</div>
               </div>
             )}
             <OnboardingHelp title="Supuestos">

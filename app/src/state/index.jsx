@@ -6,7 +6,7 @@ import {
   computePlannedFor, computeEffectiveCapitalReturn, computeCurrentPortfolio,
   currentMonthlyAporte, currentMonthlyIncome, computeIncomeFor, sumExpenses,
   projectV2, projectDecumulation, compareKeys, todayKey, addMonthsKey, uid,
-  normalizeSegments, parseKeyMonths,
+  normalizeSegments, parseKeyMonths, toRealEur,
 } from '../lib/index.js'
 import { ConfirmModal } from '../modals/index.jsx'
 import {
@@ -258,10 +258,26 @@ export function useDerived() {
     const wdr = (plan.withdrawalRate != null ? plan.withdrawalRate : 4.0) / 100;
     const fiTarget = monthlyGapNow > 0 ? monthlyGapNow * 12 / wdr : 0;
 
+    // Edad de independencia financiera · comparación REAL vs REAL.
+    // Vía (a): fiTarget está en euros de HOY (se deriva del gasto actual), pero
+    // las series (seriesPlanFromStart / seriesRealFromStart) están en NOMINAL
+    // —projectV2 no deflacta—. Comparar cartera_nominal ≥ fiTarget_real mezclaba
+    // unidades y adelantaba la edad FIRE varios años (la curva nominal cruza el
+    // umbral antes que la real). Deflactamos cada punto de la cartera a euros de
+    // hoy ANTES de comparar; NO tocamos fiTarget ni las series (otras vistas las
+    // usan en nominal), solo el punto de comparación. Los años-desde-hoy salen de
+    // (row.age - profile.age), la misma base con la que la pantalla calcula
+    // finalReal → así la edad FIRE y la caja "llegarías a" quedan en idéntica
+    // base real y dejan de contradecirse.
     const ageHittingTarget = (s, target) => {
       if (target <= 0) return null;
       for (let i = 0; i < s.length; i++) {
-        if ((s[i].portfolio || 0) >= target) return s[i].age;
+        const realPortfolio = toRealEur(
+          s[i].portfolio || 0,
+          (s[i].age - profile.age) * 12,
+          plan.inflationRate,
+        );
+        if (realPortfolio >= target) return s[i].age;
       }
       return null;
     };
