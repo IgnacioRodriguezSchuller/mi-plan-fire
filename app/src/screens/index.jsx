@@ -4453,6 +4453,10 @@ export function ScreenAprende() {
   const [searchTerm, setSearchTerm] = useState('');
   // v5.11 (F2.3) · Filter for the "Conceptos" tab by level.
   const [level, setLevel] = useState('esencial');
+  // Las tres "puertas" de nivel tienen mismo tamaño y color; el ÚNICO
+  // diferenciador es la opacidad (activa = 1, inactivas = INACTIVE_OPACITY).
+  // Súbelo (p.ej. a 0.40) si quedan poco legibles como clicables en device real.
+  const INACTIVE_OPACITY = 0.35;
 
   const allConcepts = Object.entries(LEARN_CORPUS).map(([id, c]) => ({ id, ...c }));
   // For the Conceptos tab, surface every entry of LEARN_CORPUS as a card —
@@ -4468,7 +4472,6 @@ export function ScreenAprende() {
     esencial: allConcepts.filter(c => LEARN_LEVEL_BY_ID[c.id] === 'esencial'),
     profundizando: allConcepts.filter(c => LEARN_LEVEL_BY_ID[c.id] === 'profundizando'),
     avanzado: allConcepts.filter(c => LEARN_LEVEL_BY_ID[c.id] === 'avanzado'),
-    todos: allConcepts,
   };
 
   // Agrupar por categoría (para el glosario)
@@ -4552,28 +4555,40 @@ export function ScreenAprende() {
 
       {section === 'conceptos' && (
         <div>
-          {/* F2.3 · Level tabs */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 22, flexWrap: 'wrap' }}>
+          {/* F2.3 · Selector de nivel · tres "puertas" apiladas en vertical.
+              Mismo tamaño y color en las tres; el único diferenciador es la opacidad
+              (activa = 1, inactivas = INACTIVE_OPACITY). Sin "Todos" — esa vista la
+              cubre ya la pestaña Glosario. "Empieza aquí" marca el punto de entrada. */}
+          <div style={{ marginBottom: 22 }}>
             {[
               { id: 'esencial', label: 'Esencial' },
               { id: 'profundizando', label: 'Profundizando' },
               { id: 'avanzado', label: 'Avanzado' },
-              { id: 'todos', label: 'Todos' },
             ].map((lvl) => (
-              <button key={lvl.id} onClick={() => setLevel(lvl.id)} style={{
-                fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '8px 14px', borderRadius: 999,
-                background: level === lvl.id ? T.ink : 'transparent',
-                color: level === lvl.id ? T.bg : T.muted,
-                border: '1px solid ' + (level === lvl.id ? T.ink : T.line),
-                cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase',
-              }}>{lvl.label}</button>
+              <button
+                key={lvl.id}
+                onClick={() => setLevel(lvl.id)}
+                style={{
+                  width: '100%', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 3,
+                  border: '1px solid ' + T.line, borderRadius: 12, background: 'transparent',
+                  padding: '14px 16px', marginBottom: 8, cursor: 'pointer', transition: 'opacity 0.16s',
+                  opacity: level === lvl.id ? 1 : INACTIVE_OPACITY,
+                }}>
+                <div style={{ fontFamily: T.display, fontSize: 22, lineHeight: 1.05, color: T.ink, letterSpacing: T.tracking.display }}>
+                  {LEARN_LEVEL_LABELS[lvl.id]}
+                </div>
+                <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted }}>
+                  {LEARN_LEVEL_SUB[lvl.id]}
+                </div>
+                {lvl.id === 'esencial' && (
+                  <Pill color={T.accent} bg={T.accentSoft} border="rgba(194,65,12,0.28)"
+                    style={{ alignSelf: 'flex-start', marginTop: 5, padding: '3px 9px', fontSize: 11, letterSpacing: T.tracking.wider }}>
+                    Empieza aquí
+                  </Pill>
+                )}
+              </button>
             ))}
           </div>
-          {level !== 'todos' && (
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginBottom: 22, lineHeight: T.lh.normal }}>
-              {LEARN_LEVEL_SUB[level]}.
-            </div>
-          )}
           {/* F2.2 · Card grid (3 cols desktop, 2 tablet, 1 mobile) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
             {(conceptsByLevel[level] || []).map(c => {
