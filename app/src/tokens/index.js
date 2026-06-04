@@ -24,8 +24,11 @@ export const T = {
   amber: '#b45309',
   red: '#b91c1c',
   ink2: '#0f0f10',
-  display: 'Instrument Serif, serif',
-  serif: 'Fraunces, serif',
+  // Serif única del producto. display = registro de titulares/cifras (peso 600
+  // en uso), serif = prosa (peso 400). Misma familia (Fraunces) → las cifras
+  // hero y los números inline comparten formas. Instrument Serif jubilada (v1.5.0).
+  display: "'Fraunces', Georgia, serif",
+  serif: "'Fraunces', Georgia, serif",
   mono: 'DM Mono, monospace',
   sans: 'Inter, system-ui, sans-serif',
 };

@@ -84,7 +84,7 @@ export default function Gallery() {
 
   return (
     <div style={{ background: T.bg, color: T.ink, padding: '2rem', fontFamily: T.sans }}>
-      <h1 style={{ fontFamily: T.display, fontSize: T.size.displayLg, lineHeight: T.lh.tight, margin: '0 0 4px' }}>
+      <h1 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, margin: '0 0 4px' }}>
         Galería de componentes · <code>ui/</code>
       </h1>
       <p style={{ fontFamily: T.sans, fontSize: T.size.caption, color: T.muted, marginTop: 0, marginBottom: 28 }}>

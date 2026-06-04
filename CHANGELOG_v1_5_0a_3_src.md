@@ -185,3 +185,192 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   12 / Profundizando 13 / Avanzado 10 cards = `LEARN_LEVELS`); Glosario y El Tablón
   intactos; móvil 375 sin desborde; consola limpia; sin dependencias nuevas; build
   OK; hash baseline intacto `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`.
+
+### 2026-06 · Pantalla Plan · disciplina cromática (regla A2) + ruta R1
+- **Causa raíz**: el color (verde/rojo/acento) estaba repartido por toda la pantalla
+  Plan sin criterio — patrimonio en acento, meta/llegada/rentas en verde/ámbar,
+  cajas con bordes de color, fases sobre panel gris — diluyendo la carga semántica.
+  No había un único punto donde el color "significara" algo.
+- **Cambio** (solo color/estilo/caja en `ScreenHoy` + `RutaCincoFases`; cero copy,
+  fuentes, cifras ni lógica):
+  - **Regla maestra**: verde/rojo se quedan SOLO en la bifurcación del bloque 01
+    (cifra + barra + fork de "si lo dejas parado" rojo / "si lo inviertes" verde);
+    el acento solo en marca, enlaces de acción, tooltips y el foco de la fase actual;
+    todo lo demás en `T.ink` / `T.muted` / `T.faint`.
+  - **Bloque 01**: patrimonio acento→tinta (icono→faint); barra de reparto sin los %
+    impresos encima (segmento ahorro a `T.ink`), el % movido a la leyenda
+    ("Ahorras · 432€ (18%)" en tinta); cajas de bifurcación a borde neutro `T.line`
+    (conservan cifra/barra en rojo/verde); "El mismo dinero…" a muted; inflación a tinta.
+  - **Bloque 02**: META/LLEGADA y panel de rentas a borde neutro `T.line` radius 12;
+    cifra LLEGADA y barra renta verde/ámbar→`T.ink`; veredictos ("Llegas justo…",
+    "Te alcanzaría…") a muted; hero "Serías libre a los X" verde/ámbar→tinta.
+  - **Bloque 03 (R1)**: fases sin fondo panel gris → transparente + borde `1px T.line`
+    radius 12 (actual: `1.5px T.accent`); nodos = verde+check (completada/no aplica),
+    acento+nº (actual), borde line + nº faint (futura), acento+estrella (destino);
+    estados = verde / acento / faint; checks de items hechos en verde; Destinos
+    conserva borde punteado.
+- **Decisiones flageadas** (interpretación de la regla maestra, no en la lista
+  por-elemento del encargo): (a) hero de edad FIRE neutralizado a tinta (perdía su
+  verde/ámbar; oculto para el perfil justo); (b) checkboxes manuales unificados a
+  verde (antes acento). Ambas revertibles si se prefiere lo previo.
+- **No tocado**: copy, fuentes, cifras/lógica, tooltips, enlaces de acción (siguen en
+  acento), modal "Cálculo completo", baseline.
+- **Doctrina**: `DOCTRINA_DISENO.md` §2 (Disciplina cromática · regla A2) + revisión
+  1.4 (2026-06).
+- **Verificación** (DOM + build): único rojo/verde = bifurcación; bloque 02 todo
+  tinta (sin verde ni naranja); bloque 03 fases sin panel gris, actual con borde
+  acento, nodos/estados según R1; consola limpia; sin dependencias nuevas; build OK
+  (~1,01 MB); hash baseline intacto `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`.
+
+### 2026-06 · Tipografía · serif unificada en Fraunces (Instrument Serif jubilada)
+- **Causa raíz** (dos problemas): (1) `T.display` = Instrument Serif se veía
+  demasiado fina a tamaño display y, además, **ni se cargaba** — la migración del
+  monolito a `/src` dejó fuera el `<link>` de Google Fonts (igual que el `<style>`
+  global), así que todo el serif caía al fallback del sistema. (2) Las cifras vivían
+  en **dos familias**: las hero en `T.display` (Instrument Serif) y los números de
+  prosa en `T.serif` (Fraunces), con formas distintas en la misma pantalla.
+- **Cambio** (sistema queda en 2 familias: Fraunces + DM Mono):
+  - `src/tokens/index.js`: `T.display` de `'Instrument Serif, serif'` →
+    `"'Fraunces', Georgia, serif"`. Token NO fusionado: sigue nombrando el registro
+    de titulares/cifras. `T.serif` también con fallback Georgia (Fraunces 400).
+  - **Peso display**: Fraunces es variable y cae a 400 (fino) por defecto. Los **134
+    usos de `fontFamily: T.display`** (en `ui/`, `modals/`, `screens/`, `flows/`,
+    `gallery/`) reciben `fontWeight: 600` + `fontOpticalSizing: 'auto'`. La prosa
+    (`T.serif`) se mantiene en 400. Sin helper central previo → aplicado en cada uso.
+  - **Carga de fuentes** restaurada en `index.html`: `<link>` a Google Fonts con
+    `Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400` +
+    `DM+Mono:wght@400;500`. Preconnect a googleapis/gstatic. `font-optical-sizing:
+    auto` también en `body` (index.css).
+  - **Instrument Serif jubilada**: fuera del `<link>` y del token; sin referencias de
+    fuente residuales (solo comentarios de documentación + la palabra "instrumento"
+    en prosa de contenido, sin relación).
+- **Inter**: se conserva en el `<link>` SOLO porque la **galería dev** (`?gallery`,
+  `Gallery.jsx`) la usa vía `T.sans`; el producto no la renderiza, así que su woff2
+  **no se descarga** (coste cero). Anotado por si se quiere retirar también — la
+  galería caería a `system-ui` sin romperse.
+- **No tocado**: `T.serif`/`T.mono` como registros, copy, cifras, lógica, contrato
+  localStorage (`schemaVersion 2`), baseline.
+- **Verificación** (runtime + Network): `document.fonts` carga Fraunces 400/500/600
+  (+ital 400) y DM Mono 400/500; **Instrument Serif ausente** por todos lados;
+  woff2 de Fraunces 600 descargado (`loaded`), Inter declarada pero no descargada;
+  título y cifra hero computan `Fraunces, Georgia, serif` peso **600** opsz auto;
+  consola sin 404 de fuentes; `miplan.accounts.v1` con `schemaVersion 2` intacto;
+  sin dependencias nuevas; build OK (~1,01 MB); hash baseline intacto
+  `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`.
+
+### 2026-06 · Pantalla Plan · rediseño de los tres movimientos (presentación)
+- **Causa raíz**: Plan presentaba los datos de forma plana y densa — jerarquía
+  débil, cifras sin protagonista, color sin sistema, bloques sin aire. El rediseño
+  da a cada movimiento un protagonista grande, color racionado y respiración.
+- **Cambio** (solo presentación de `ScreenHoy` + `RutaCincoFases`; cifras, copy
+  adaptativo y lógica de fases INTACTOS, todo derivado de variables existentes):
+  - **M1 "Dónde estás"**: dos cards NEUTRAS (`T.paper` + borde line + sombra suave,
+    sin tinte). Card A = patrimonio (`d.currentPortfolio`, `T.ink` ~44px). Card B =
+    el eje: ahorro mensual (`planAporte`) ~60px + subtítulo (`savingRate`% ·
+    `monthlyLife`) + fork SVG (rojo/verde) a dos fbox (parado `parkedFinalReal` rojo
+    / invertido `finalReal` verde) + cierre. Se conservan la inflación y el CTA
+    "Ver el cálculo completo".
+  - **M2 "Hacia dónde puedes ir"** (anclaje renombrado): cards con fondo verde
+    difuminado. Gancho (todos los perfiles): "El tiempo trabaja para ti / Hoy
+    decides cambiar tu futuro". Cuerpo (perfiles B y C que aportan): "casi
+    cuadruplica" + monedas (aportado = `planAporte × monthsToRetire` → final =
+    `finalReal`; 4 monedas verdes fijas) + cierre con la renta de retiro
+    (`retirementMonthlyReal`, ámbar) adaptado al veredicto de suficiencia
+    (comfortable/tight/short). **Perfil A (no aporta): solo el gancho, sin monedas.**
+    Se conserva la ramificación `userProfile` (A/B/C) y el CTA "Profundizar en
+    Proyección".
+  - **M3 "Tu ruta"** (`RutaCincoFases` reescrito): card naranja difuminada con
+    encabezado "Fase {activePhase} de 5 · {nombre}", barra de 5 tramos por estado,
+    5 pestañas clicables (reemplazan el acordeón; `setSelected` en vez de
+    `togglePhase`) y panel de detalle INTEGRADO (pasos + checkboxes con `toggleManual`
+    + estimación). Hitos fuera de la card: edad de libertad (`d.ageAtFiReal`, **verde**
+    · excepción), jubilación (`publicPension.startAge || 67`), y un hito
+    "tu dinero te adelanta" marcado **pendiente** (ver reportes).
+- **Reportes pedidos**:
+  1. **Hito edad-rendimiento (~42): el cálculo NO existe** en el código (no hay
+     ninguna derivada del año en que el rendimiento anual supera al aporte anual).
+     No se inventó: el hito se renderiza con "—" + "cálculo pendiente". A resolver aparte.
+  2. **DisplayModeToggle / LifecycleChartDual**: NO estaban en el M2 de ScreenHoy
+     (solo importado el chart, nunca renderizado). El `<DisplayModeToggle>` vive en
+     ScreenProyección y controla cifras de ESA pantalla → fuera de scope, conservado.
+  3. **Copy del perfil A**: el M2 actual (rediseños previos) no tenía un mensaje
+     distinto para A; mostraba el mismo diseño meta/llegada. Para A se renderiza solo
+     el gancho (que ya es la invitación "empieza a invertir"); no se inventó copy.
+- **Decisiones anotadas**: `T.greenSoft`/`T.accentSoft` (tokens) usados en los
+  gradientes en vez de `rgba(verde,.06)` literal, por la regla "siempre tokens".
+- **Verificación** (runtime · perfiles A/B/C): cifras dinámicas correctas (patrimonio
+  7.9k, aporta 432€/18%, parado 113k, invertido 592k, aportado 156k → final 592k
+  ≈3,8×, renta 2.0k, fase 3 Colchón, libertad 60, pensión 67); A sin monedas, B
+  (86k→351k ≈4×) y C con monedas; las 5 pestañas abren su detalle; móvil 375 sin
+  desborde; consola limpia; sin dependencias nuevas; build OK; `schemaVersion 2`
+  intacto; hash baseline intacto `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`.
+
+### 2026-06 · Plan · veracidad de las monedas M2 + hito edad-rendimiento + encuadre
+- **(1) Monedas del M2 — veracidad.** **Diagnóstico**: el final (`finalReal`) usa
+  projectV2 = aporte CRECIENTE (subidas por segmentos de ingreso + IPC). El aportado
+  con ese modelo es 357k nominal y el final nominal 1,24M → **3,47× (sin bug)**: el
+  final SÍ crece con las subidas. El "1,65×" que se sospechaba era comparar aportado
+  **nominal** (357k) con final **real** (592k) — desajuste de unidades, no bug de
+  proyección. **Defecto real**: la versión anterior pareaba aportado constante
+  (`planAporte×meses` = 156k) con final real (592k) → 3,81× **falso** (modelo y
+  unidades distintos). **Arreglo**: `aportadoReal` = suma de cada aporte mensual de
+  `d.seriesPlan` deflactado a hoy (mismo modelo creciente, mismas unidades reales que
+  `finalReal`). El ratio mostrado = `finalReal / aportadoReal`, verdadero. Para el
+  demo C da **2,53×** (< 3×) → se muestra un **caso estándar** etiquetado ("Un
+  ejemplo · 300 €/mes · 30 años · 8% → 108k → 420k", disclaimer "no son tus cifras"),
+  separado de la renta de cierre que sí es la real. Con horizonte largo (ratio ≥ 3,5×)
+  se muestran TUS cifras ("casi cuadruplica", p.ej. 330k → 1,24M = 3,76×, coherente
+  con el "Invertido" del M1). Umbral propuesto: **3×** (3,0–3,5 → "más que triplica";
+  ≥3,5 → "casi cuadruplica"). Perfil A (no aporta): sin cuerpo.
+- **(2) Hito "tu dinero te adelanta".** Implementado (sustituye el "cálculo
+  pendiente"): primera edad en que `capital_inicio_año × retorno` supera al aporte de
+  ese año, recorriendo `d.seriesPlan` (mismo modelo creciente). Comparación
+  like-with-like en € nominales del año → demo C = **40** (con tasa real daría 43).
+  Si no aporta o no cruza → fallback honesto ("—" + "necesita aporte"), nunca una
+  cifra inventada.
+- **(3) Encuadre.** M1 y M2 usaban `maxWidth 620`; M3, `720`. Igualados a **720** →
+  los tres movimientos comparten margen lateral exacto (medido: left 100 · right 820
+  · width 720 los tres).
+- **No tocado**: `projectV2`, `computeActivePhase`, lógica de fases, suficiencia,
+  copy adaptativo por perfil, contrato localStorage (`schemaVersion 2`), baseline.
+- **Verificación** (runtime, perfiles A/B/C): ratio mostrado = final/aportado del
+  modelo único (sin ajustes); caso estándar < 3× y personal ≥ 3× (coherente con M1);
+  hito 40 (B/C) / "—" (A); tres movimientos alineados; sin roturas; consola limpia;
+  sin deps nuevas; build OK; hash baseline intacto
+  `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`.
+
+### 2026-06 · Plan M2 · monedas = múltiplo real abstracto (sin umbral ni caso estándar)
+- **Cambio**: las monedas del M2 representan el MÚLTIPLO REAL del caso de forma
+  abstracta, sin tope arriba ni abajo, y la frase de encabezado se adapta al MISMO
+  ratio sin contradecirlo. **Sustituye** la lógica de umbral 3× + caso estándar
+  (1.7), eliminada por completo (sin copy huérfano: fuera "Un ejemplo · 300 €/mes…",
+  el 108k→420k y el disclaimer).
+- **Un solo número**: `ratio = finalReal / aportadoReal` (reusa el del header, mismo
+  modelo creciente y unidades reales, coherente con el "Invertido" del M1). Monedas
+  y frase derivan SIEMPRE de ese ratio → jamás se contradicen.
+- **Monedas (bucle, sin tope)**: izq 1 moneda `T.ink` (aportadoReal) → der
+  `floor(ratio)` monedas `T.green` llenas + 1 de fracción con `opacity = max(decimal,
+  0.15)` (finalReal). Genera N monedas con un bucle (soporta ×5/×8/×12…), con
+  `flex-wrap` a varias filas + reescala del disco (34→24 px) si hay >8 → no desborda
+  en 375 ni desktop. **Guarda de dato degenerado** (`ratio` no-finito o ≥ 30, p.ej.
+  aportadoReal≈0): se oculta el bloque de monedas (como perfil sin aporte),
+  preservando la renta; nunca cientos de monedas ni NaN en pantalla.
+- **Frase por tramos** (copy final): `≥4.5` → "multiplica por {round(ratio)} lo que
+  pones." (número real; nunca "casi cuadruplica" cuando es más); `3.5–4.5` → "casi
+  cuadruplica lo que pones."; `2.5–3.5` → "casi triplica lo que pones."; `1.8–2.5` →
+  "más que duplica lo que pones."; `1.3–1.8` → "multiplica lo que pones por {X,X}.";
+  `<1.3` → línea 1 "Esto no ha hecho más que empezar:" / línea 2 "cada año que pase,
+  multiplica más." (ángulo-futuro, sin desinflar ni mentir). Cierre de renta intacto.
+- **No tocado**: `aportadoReal`/`crecimientoRatio` (header), modelo de cálculo,
+  resto del M2/M1/M3, contrato localStorage.
+- **Verificación** (los 4 extremos, cifras reales = final/aportado, nada hardcodeado):
+  · **C** 2,53× → 2 llenas + 1 a 0.53, "casi triplica" (234k→594k).
+  · **alto** 5,0× → "multiplica por 5", 5 monedas; **muy alto** 7,78× → "multiplica
+    por 8", 8 monedas con WRAP a 2 filas, `overflowX 0` en 375 (NO "casi cuadruplica").
+  · **bajo** 1,03× → "Esto no ha hecho más que empezar / cada año que pase, multiplica
+    más", 1 llena + 1 a 0.15; (1,5× → "multiplica por 1,5").
+  · **degenerado** (capital 5M + aporte 1% → ratio gigante) → 0 monedas, sin NaN,
+    gancho + renta preservados, `overflowX 0`.
+  · móvil 375 sin desborde en todos; consola limpia; sin deps nuevas; build OK;
+    `schemaVersion 2` intacto; hash baseline intacto
+    `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`.

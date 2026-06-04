@@ -54,7 +54,7 @@ export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro',
       <div style={{ width: '100%', maxWidth: 600, display: 'flex', flexDirection: 'column', gap: mobile ? 28 : 36 }}>
         {/* Title */}
         <div>
-          <div style={{ fontFamily: T.display, fontSize: mobile ? 'clamp(40px, 12vw, 56px)' : 72, letterSpacing: T.tracking.display, lineHeight: 1, color: T.ink }}>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 'clamp(40px, 12vw, 56px)' : 72, letterSpacing: T.tracking.display, lineHeight: 1, color: T.ink }}>
             Mi <em style={{ color: T.accent }}>Plan</em> <span style={{ color: T.accent }}>FIRE</span>
           </div>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: mobile ? 15 : 17, color: T.muted, marginTop: 10, lineHeight: T.lh.normal }}>
@@ -115,7 +115,7 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: mobile ? 24 : 40 }}>
-        <div style={{ fontFamily: T.display, fontSize: mobile ? 26 : 30, letterSpacing: T.tracking.tight }}>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 26 : 30, letterSpacing: T.tracking.tight }}>
           Mi <em style={{ color: T.accent }}>Plan</em>
         </div>
         {isView ? (
@@ -135,7 +135,7 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
       {/* Hero */}
       <div style={{ marginBottom: mobile ? 28 : 50, maxWidth: 760 }}>
         <div style={{
-          fontFamily: T.display, fontSize: mobile ? 'clamp(38px, 11vw, 56px)' : 'clamp(54px, 5.5vw, 88px)',
+          fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 'clamp(38px, 11vw, 56px)' : 'clamp(54px, 5.5vw, 88px)',
           lineHeight: T.lh.tight, letterSpacing: T.tracking.display, textWrap: 'balance',
         }}>
           Tu dinero,<br />
@@ -167,7 +167,7 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
             <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, marginBottom: 6 }}>
               {p.n}
             </div>
-            <div style={{ fontFamily: T.display, fontSize: mobile ? 22 : 26, letterSpacing: T.tracking.tight, marginBottom: 8 }}>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 22 : 26, letterSpacing: T.tracking.tight, marginBottom: 8 }}>
               {p.t}
             </div>
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal }}>

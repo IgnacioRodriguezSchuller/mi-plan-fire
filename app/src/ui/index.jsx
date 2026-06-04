@@ -58,7 +58,7 @@ export function Slider({ label, value, onChange, min, max, step = 1, suffix = ''
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
         <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>{label}</span>
-        <span style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: accent, letterSpacing: T.tracking.tight, lineHeight: 1 }}>{display}</span>
+        <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: accent, letterSpacing: T.tracking.tight, lineHeight: 1 }}>{display}</span>
       </div>
       <input type="range" min={min} max={max} value={value} step={step} onChange={(e) => onChange(+e.target.value)}
         style={{ width: '100%', accentColor: accent }} />
@@ -152,7 +152,7 @@ export function Stat({ label, value, muted, good, bad }) {
   return (
     <div>
       <Label style={{ marginBottom: 6 }}>{label}</Label>
-      <div style={{ fontFamily: T.display, fontSize: T.size.displayLg, letterSpacing: T.tracking.display, lineHeight: 1, color: bad ? T.red : good ? T.green : muted ? T.faint : T.ink }}>{value}</div>
+      <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, lineHeight: 1, color: bad ? T.red : good ? T.green : muted ? T.faint : T.ink }}>{value}</div>
     </div>
   );
 }
@@ -161,7 +161,7 @@ export function Row({ label, children }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px dashed ' + T.lineSoft, paddingBottom: 8 }}>
       <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>{label}</span>
-      <span style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: T.ink }}>{children}</span>
+      <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink }}>{children}</span>
     </div>
   );
 }
@@ -172,7 +172,7 @@ export function RowWithWarning({ label, warning, children }) {
     <div style={{ borderBottom: '1px dashed ' + T.lineSoft, paddingBottom: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>{label}</span>
-        <span style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: T.ink }}>{children}</span>
+        <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink }}>{children}</span>
       </div>
       {warning && (
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.amber, fontSize: T.size.caption, marginTop: 6, lineHeight: T.lh.normal }}>
@@ -187,7 +187,7 @@ export function SmallStat({ label, value, sub, accent, good, bad }) {
   return (
     <div style={{ minWidth: 0 }}>
       <Label style={{ marginBottom: 4 }}>{label}</Label>
-      <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, color: good ? T.green : bad ? T.amber : accent ? T.accent : T.ink, lineHeight: T.lh.tight, wordBreak: 'break-word' }}>{value}</div>
+      <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, color: good ? T.green : bad ? T.amber : accent ? T.accent : T.ink, lineHeight: T.lh.tight, wordBreak: 'break-word' }}>{value}</div>
       <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, marginTop: 2, fontStyle: 'italic', lineHeight: T.lh.snug }}>{sub}</div>
     </div>
   );

@@ -24,7 +24,7 @@ export function ConfirmModal({ open, title, body, confirmLabel = 'Confirmar', ca
         padding: 22, maxWidth: 400, width: '100%',
         boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
       }}>
-        <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, marginBottom: 10, lineHeight: T.lh.snug }}>{title}</div>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, marginBottom: 10, lineHeight: T.lh.snug }}>{title}</div>
         <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal, marginBottom: 18 }}>{body}</div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button onClick={onCancel} style={{
@@ -98,7 +98,7 @@ export function ProgressionWizard({ onClose, onApply }) {
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <Label>Asistente</Label>
-            <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, marginTop: 2 }}>Rellenar progresión</div>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, marginTop: 2 }}>Rellenar progresión</div>
           </div>
           <button onClick={onClose} aria-label="Cerrar" style={{
             background: T.ink, color: '#fff', border: 'none', width: 36, height: 36, borderRadius: 999,
@@ -207,7 +207,7 @@ export function WhyDifferentModal({ onClose }) {
           style={{ position: 'absolute', top: 14, right: 14, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, padding: 8, letterSpacing: T.tracking.wider }}>
           ✕ CERRAR
         </button>
-        <div style={{ fontFamily: T.display, fontSize: mobile ? 30 : 36, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, color: T.ink, marginBottom: 22 }}>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 30 : 36, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, color: T.ink, marginBottom: 22 }}>
           <em style={{ color: T.accent }}>Mi Plan FIRE</em> · qué es esto
         </div>
 
@@ -275,7 +275,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
           ✕ CERRAR
         </button>
         <Label>Calendario completo</Label>
-        <div style={{ fontFamily: T.display, fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, marginTop: 4, marginBottom: 18 }}>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, marginTop: 4, marginBottom: 18 }}>
           Tu año en aportaciones.
         </div>
         {/* Legend */}
@@ -300,7 +300,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
           return (
             <div key={year} style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 10 }}>
-                <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: T.muted, letterSpacing: T.tracking.tight }}>{year}</div>
+                <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.muted, letterSpacing: T.tracking.tight }}>{year}</div>
                 <div style={{ flex: 1, height: 1, background: T.line }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(78px, 1fr))', gap: 8 }}>
@@ -330,7 +330,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
                         fontFamily: T.serif,
                       }}>
                       <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color }}>{monthNames[idx]}</span>
-                      <span style={{ fontFamily: T.display, fontSize: T.size.lead, color: T.ink, letterSpacing: T.tracking.tight }}>
+                      <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.ink, letterSpacing: T.tracking.tight }}>
                         {actual != null ? fmtEur(actual) : '—'}
                       </span>
                     </button>
@@ -347,11 +347,11 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
             <div style={{ display: 'flex', gap: 22, marginTop: 10, flexWrap: 'wrap', alignItems: 'baseline' }}>
               <div>
                 <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Plan</div>
-                <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(computePlannedFor(plan, activeMonth.key))}</div>
+                <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(computePlannedFor(plan, activeMonth.key))}</div>
               </div>
               <div>
                 <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Real</div>
-                <div style={{ fontFamily: T.display, fontSize: T.size.subtitle, color: activeMonth.actual != null ? T.accent : T.faint, letterSpacing: T.tracking.tight }}>
+                <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: activeMonth.actual != null ? T.accent : T.faint, letterSpacing: T.tracking.tight }}>
                   <EditableNumber
                     value={activeMonth.actual != null ? activeMonth.actual : 0}
                     onChange={(v) => setMonth(activeMonth.key, { actual: v })}
@@ -414,7 +414,7 @@ export function PublicPensionDisclaimerModal({ open, onCancel, onConfirm }) {
           padding: 28, maxWidth: 560, width: '100%',
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
         }}>
-        <div style={{ fontFamily: T.display, fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8, color: T.ink }}>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8, color: T.ink }}>
           Activar pensión pública
         </div>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, color: T.muted, marginBottom: 18, lineHeight: T.lh.normal }}>
@@ -587,7 +587,7 @@ export function ConceptModal({ id, onClose }) {
 
         {article ? (
           <>
-            <h1 style={{ fontFamily: T.display, fontSize: T.size.displayXl, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, margin: 0, color: T.ink }}>
+            <h1 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXl, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, margin: 0, color: T.ink }}>
               {article.heading}
             </h1>
             <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, marginTop: 6, fontStyle: 'italic' }}>
@@ -599,7 +599,7 @@ export function ConceptModal({ id, onClose }) {
                 <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.accent, marginBottom: 8 }}>
                   Lección clave
                 </div>
-                <div style={{ fontFamily: T.display, fontSize: T.size.lead, lineHeight: T.lh.snug, color: T.ink, fontStyle: 'italic' }}>
+                <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, lineHeight: T.lh.snug, color: T.ink, fontStyle: 'italic' }}>
                   "{article.lesson}"
                 </div>
               </div>
@@ -608,7 +608,7 @@ export function ConceptModal({ id, onClose }) {
             <div style={{ marginTop: 28, fontSize: T.size.lead, lineHeight: T.lh.relaxed, color: T.ink }}>
               {article.body.split('\n\n').map((para, i) => {
                 if (para.startsWith('**') && para.endsWith('**')) {
-                  return <h3 key={i} style={{ fontFamily: T.display, fontSize: T.size.subtitle, marginTop: 28, marginBottom: 4, color: T.ink, fontStyle: 'normal' }}>{para.replace(/\*\*/g, '')}</h3>;
+                  return <h3 key={i} style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, marginTop: 28, marginBottom: 4, color: T.ink, fontStyle: 'normal' }}>{para.replace(/\*\*/g, '')}</h3>;
                 }
                 return <p key={i} style={{ margin: '0 0 16px' }} dangerouslySetInnerHTML={{ __html: para.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>') }} />;
               })}
@@ -638,7 +638,7 @@ export function ConceptModal({ id, onClose }) {
           </>
         ) : (
           <>
-            <h1 style={{ fontFamily: T.display, fontSize: T.size.displayXl, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, margin: 0, color: T.ink }}>
+            <h1 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXl, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, margin: 0, color: T.ink }}>
               {concept.title}
             </h1>
             <div style={{ marginTop: 24, fontSize: T.size.lead, lineHeight: T.lh.relaxed, color: T.ink, whiteSpace: 'pre-line' }}>
@@ -713,7 +713,7 @@ export function AboutModal({ onClose }) {
           style={{ position: 'absolute', top: 14, right: 14, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, padding: 8, letterSpacing: T.tracking.wider }}>
           ✕ CERRAR
         </button>
-        <div style={{ fontFamily: T.display, fontSize: mobile ? 28 : 34, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, color: T.ink, marginBottom: 6 }}>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 34, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, color: T.ink, marginBottom: 6 }}>
           <em style={{ color: T.accent }}>Mi Plan FIRE</em>
         </div>
         <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint, marginBottom: 22 }}>
