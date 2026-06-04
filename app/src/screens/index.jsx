@@ -1932,7 +1932,7 @@ export function ScreenHoy({ goTo }) {
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 36, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }}>{fmtEur(invested)}</div>
                   </div>
                 </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>El mismo dinero. La diferencia la pone el tiempo.</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>El mismo tiempo. La diferencia la pone el interés compuesto.</div>
               </div>
               );
             })() : (
@@ -1947,7 +1947,7 @@ export function ScreenHoy({ goTo }) {
                   Este año, la inflación resta <strong style={{ color: T.ink, fontStyle: 'normal' }}>~{fmtEur(sinPlanKPIs.lostFirstYear)}</strong> a tu salario — y más cada año que pasa.
                 </div>
                 <OnboardingHelp title="Supuestos">
-                  Pérdida de poder de compra del primer año: un año de inflación ({inflRate}%) sobre tu salario anual. A lo largo de {sinPlanKPIs.yearsToRetire} años, acumulada y compuesta, son {fmtEur(sinPlanKPIs.lost)} — pero esa cifra mezcla magnitudes; la honesta es la de un año concreto.
+                  Pérdida de poder de compra del primer año: un año de inflación ({inflRate}%) sobre tu salario anual.
                 </OnboardingHelp>
               </div>
             )}

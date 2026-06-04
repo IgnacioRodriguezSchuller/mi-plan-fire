@@ -398,3 +398,21 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   lateral móvil intacto, pill compacto; consola limpia; sin deps nuevas; build OK;
   `schemaVersion 2` intacto; hash baseline intacto
   `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`.
+
+### 2026-06 · Plan M1 · pulido de copy (cierre + supuesto de inflación)
+- **Cierre del M1**: "El mismo dinero. La diferencia la pone el tiempo." →
+  **"El mismo tiempo. La diferencia la pone el interés compuesto."** Más preciso: lo
+  que comparten los dos escenarios del fork (parado / invertido) es el horizonte, no
+  el dinero.
+- **Supuesto de inflación del M1** (nota "Supuestos"): recortado a solo "Pérdida de
+  poder de compra del primer año: un año de inflación ({inflRate}%) sobre tu salario
+  anual." Eliminada la coletilla "A lo largo de N años… son {lost} — pero esa cifra
+  mezcla magnitudes; la honesta es la de un año concreto", que se autocontradecía. El
+  `%` sigue dinámico.
+- **No tocado**: lógica, cifras, baseline. Sin deps nuevas; build OK; hash intacto.
+- **Diagnóstico anotado (sin arreglar, pendiente de decisión)**: el ratio de las
+  monedas del M2 (`finalReal/aportadoReal`) está **algo inflado** — el final parte del
+  patrimonio inicial (`currentPortfolio`) y crece con él, pero el aportado NO cuenta
+  ese inicial. Demo: ratio 2,53× → 2,45× (incluir inicial en ambos) / 2,37× (excluir
+  de ambos). Bias pequeño aquí (inicial 7,9k→38k del final) pero grande para
+  patrimonios iniciales altos. A decidir la base honesta antes de tocar.
