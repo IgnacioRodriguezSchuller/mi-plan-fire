@@ -374,3 +374,27 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   · móvil 375 sin desborde en todos; consola limpia; sin deps nuevas; build OK;
     `schemaVersion 2` intacto; hash baseline intacto
     `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`.
+
+### 2026-06 · Encuadre lateral global unificado + pill superior mayor en escritorio
+- **(1) Encuadre centralizado**: el ancho/centrado del contenido lo define ahora
+  UNA vez el `Shell` (`CONTENT_MAX = 720`, columna centrada en el `<main>` de
+  escritorio). Eliminados los `maxWidth` por-pantalla que producían desnivel:
+  `ScreenHoy` (era `READING_MAX 720`, borrado el const), `ScreenAprende` (880) y
+  `ScreenAjustes` (880) → todas heredan el encuadre del Shell; Proyección /
+  Seguimiento / MesAMes (que eran full-width) también. Solo cambia el contenedor
+  exterior, no el contenido. Móvil intacto (full-width con padding lateral del
+  shell, `20px 12px`). Verificado en escritorio 1280: las 5 secciones (Plan /
+  Proyección / Seguimiento / Aprende / Datos) idénticas — **left 280 · right 1000 ·
+  width 720**. (Aprende: su grid de cards pasa de 3 a 2 columnas por el ancho menor,
+  reflow responsive automático.)
+- **(2) `KpiPill` mayor en escritorio**: responsive vía `useIsMobile`. Escritorio
+  `padding 8px 16px` (antes 5/11), valor **20px** (antes `T.size.body` 15), eyebrow
+  11 (antes 9), sparkline 34×12 (antes 24×9); móvil compacto sin cambios (5/11, 15,
+  24×9). Tipografía/colores por tokens, solo escala.
+- **No tocado**: contenido/diseño interno de las pantallas, lógica, contrato
+  localStorage.
+- **Verificación**: 5 secciones alineadas idénticas (escritorio); pill visiblemente
+  mayor sin romper la barra; móvil 375 `overflowX 0` en las 5 secciones, padding
+  lateral móvil intacto, pill compacto; consola limpia; sin deps nuevas; build OK;
+  `schemaVersion 2` intacto; hash baseline intacto
+  `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`.

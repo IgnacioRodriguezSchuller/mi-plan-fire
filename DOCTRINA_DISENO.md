@@ -50,6 +50,8 @@ Regla maestra de color, **gobierna toda la pantalla**: el color (verde/rojo) se 
 
 ### Scope página
 
+**Encuadre lateral · columna de contenido compartida** · El ancho y el centrado del contenido los define UNA sola vez el Shell (`CONTENT_MAX = 720`, columna centrada en escritorio dentro del padding lateral del `<main>`); en móvil el contenido es full-width con el padding lateral del shell. **Ninguna pantalla define su propio `maxWidth`/centrado de página** — todas heredan el mismo encuadre para que las secciones queden alineadas idénticas (mismo margen izquierdo/derecho). Antes cada pantalla repetía el suyo (Plan 720, Aprende/Ajustes 880, resto full-width), lo que producía desnivel entre secciones.
+
 **Address "Hola, {nombre}"** · `fontFamily: T.display`, `T.size.displayLg` (clamp 28-44), `letterSpacing: T.tracking.display`, `T.lh.tight`, `color: T.ink`. **Excepción declarada del techo de scope:** deliberadamente mayor que los anclajes de sección como toque de atención medido. Una sola aparición por carga de página, solo en contextos de bienvenida personal (pantalla Mi Plan). No replicar este tamaño en otros saludos del producto.
 
 **Footer legal** · `fontFamily: T.mono`, `T.size.eyebrow` (11), uppercase, `T.tracking.widest`, `color: T.faint`. Una línea informativa por pantalla. Sin CTA. Sin acento. Patrón: `datos guardados en local · mi plan v{x.y.z}`.

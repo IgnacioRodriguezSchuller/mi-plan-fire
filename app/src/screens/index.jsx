@@ -1856,9 +1856,8 @@ export function ScreenHoy({ goTo }) {
   const sinPlanKPIs = useMemo(() => computeSinPlanKPIs(plan, profile), [plan, profile]);
   const [showSinPlanModal, setShowSinPlanModal] = useState(false);
 
-  // ── Layout · columna de lectura (BASE; el layout de 2 columnas en escritorio
-  //    llega en la fase siguiente). Variables fáciles de iterar a ojo. ──
-  const READING_MAX = 720;               // ancho máx. de la columna centrada (px)
+  // ── Layout · el ancho/centrado de la columna lo da ahora el Shell (CONTENT_MAX),
+  //    compartido por todas las pantallas. Aquí solo el aire vertical. ──
   const SECTION_GAP = mobile ? 40 : 56;  // aire ENTRE secciones grandes (01/02/03)
   const BLOCK_GAP = mobile ? 16 : 20;    // aire DENTRO de cada sección (título → contenido)
   // Tamaños display LOCALES y estables (los tokens displayMd/displayLg son clamp()
@@ -1868,7 +1867,7 @@ export function ScreenHoy({ goTo }) {
   const DISPLAY_MD = mobile ? 24 : 32;   // títulos de sección, "Sin un plan", cifras clave
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: SECTION_GAP, paddingBottom: 40, width: '100%', maxWidth: READING_MAX, margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: SECTION_GAP, paddingBottom: 40, width: '100%' }}>
       {/* Header · saludo a la izquierda; fecha (metadato) a la derecha, asentada en
           la BASELINE del saludo para que se relacione con él (no flote suelta). */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
@@ -3347,7 +3346,7 @@ export function ScreenAjustes() {
   const mobile = useIsMobile();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 880, paddingBottom: 40 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
       <div>
         <Label>Datos</Label>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4 }}>
@@ -4412,7 +4411,7 @@ export function ScreenAprende() {
   });
 
   return (
-    <div style={{ maxWidth: 880, margin: '0 auto' }}>
+    <div>
       <header style={{ marginBottom: 32 }}>
         <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>
           Aprende
@@ -4607,23 +4606,27 @@ export function ScreenAprende() {
 export function KpiPill({ onClick }) {
   const d = useDerived();
   const { state } = useStore();
+  const mobile = useIsMobile();
+  // Más presencia en escritorio (tamaño/padding/sparkline mayores); en móvil se
+  // mantiene compacto. Usa el breakpoint del proyecto (useIsMobile).
+  const sw = mobile ? 24 : 34, sh = mobile ? 9 : 12;
   return (
     <button onClick={onClick} style={{
-      display: 'inline-flex', alignItems: 'center', gap: 8,
-      padding: '5px 11px',
+      display: 'inline-flex', alignItems: 'center', gap: mobile ? 8 : 10,
+      padding: mobile ? '5px 11px' : '8px 16px',
       background: T.ink, color: T.bg, borderRadius: 999,
       border: 'none', cursor: onClick ? 'pointer' : 'default',
       fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto',
     }}>
-      <span style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: '0.12em', color: 'rgba(245,240,230,0.6)' }}>
+      <span style={{ fontFamily: T.mono, fontSize: mobile ? 9 : 11, letterSpacing: '0.12em', color: 'rgba(245,240,230,0.6)' }}>
         {state.profile.retireAge}→
       </span>
-      <span style={{ fontStyle: 'italic', fontSize: T.size.body }}>
+      <span style={{ fontStyle: 'italic', fontSize: mobile ? T.size.body : 20 }}>
         {/* Coherencia de cifras · patrimonio final AJUSTADO POR INFLACIÓN (real),
             mismo valor que la balanza verde y "¿Te alcanzaría?" en la pantalla Plan. */}
         {fmtEur(toRealEur(d.finalPlan.portfolio, Math.max(0, state.profile.retireAge - state.profile.age) * 12, state.plan.inflationRate != null ? state.plan.inflationRate : 2.5))}
       </span>
-      <svg width="24" height="9" style={{ marginLeft: 2 }}>
+      <svg width={sw} height={sh} style={{ marginLeft: 2 }}>
         <path d={(() => {
           const pts = d.seriesActualPace.filter((_, i) => i % 12 === 0);
           if (pts.length < 2) return '';
@@ -4631,8 +4634,8 @@ export function KpiPill({ onClick }) {
           const min = Math.min(...pts.map(p => p.portfolio));
           const range = max - min || 1;
           return pts.map((p, i) => {
-            const x = (i / (pts.length - 1)) * 24;
-            const y = 8 - ((p.portfolio - min) / range) * 7;
+            const x = (i / (pts.length - 1)) * sw;
+            const y = (sh - 1) - ((p.portfolio - min) / range) * (sh - 2);
             return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1);
           }).join(' ');
         })()} stroke={T.bg} strokeWidth="1.4" fill="none" />
@@ -4677,6 +4680,11 @@ export function AccountMenu({ open, anchor, onClose, onGoToAjustes, onShowAbout 
     </div>
   );
 }
+
+// Encuadre lateral compartido por TODAS las pantallas (columna centrada en
+// escritorio). Fuente única del ancho de contenido; antes cada pantalla repetía el
+// suyo (Plan 720 centrado, Aprende/Ajustes 880, resto full-width → desnivel).
+const CONTENT_MAX = 720;
 
 export function Shell() {
   const { state, update, seedDemo } = useStore();
@@ -4857,7 +4865,7 @@ export function Shell() {
         </div>
       </header>
       <main style={{ flex: 1, padding: '40px clamp(24px, 3vw, 48px)', overflowX: 'hidden', minWidth: 0 }}>
-        <div key={tab} className="tab-enter" style={{ minWidth: 0 }}>
+        <div key={tab} className="tab-enter" style={{ minWidth: 0, maxWidth: CONTENT_MAX, margin: '0 auto' }}>
           {tab === 'hoy' && <ScreenHoy goTo={setTab} />}
           {tab === 'sinplan' && <ScreenHoy goTo={setTab} />}
           {tab === 'proy' && <ScreenProyeccion />}
