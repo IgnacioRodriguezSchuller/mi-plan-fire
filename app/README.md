@@ -1,33 +1,25 @@
-# Mi Plan FIRE — build (Vite, single-file)
+# Mi Plan FIRE — app (Vite, single-file)
 
-Andamiaje de build de la **Etapa 1 · Paso 2**. Reemplaza el monolito
-`mi_plan_v1_5_0a_3.html` (React + Babel-standalone vía CDN) por un proyecto
-Vite que transpila en disco y emite **un único HTML autocontenido**.
+Codebase de la app: módulos ES en `app/src/` que **Vite** compila a un **único HTML autocontenido** (`dist/index.html`), sin scripts CDN ni Babel-in-browser. Reemplazó al monolito `mi_plan_v1_5_0a_3.html`, que queda **congelado en la raíz del repo** como red de regresión.
 
-> Este subdirectorio `app/` es el root de Vite, aislado del histórico de
-> `mi_plan_*.html` que vive en la raíz del repo. En este paso solo está el
-> esqueleto + un placeholder; los componentes reales se migran en el Paso 3.
+> `app/src` nació funcionalmente idéntico al baseline (migración byte-a-byte, Etapa 1) y **diverge a propósito** desde entonces con sprints de producto/diseño. El estado actual y los pendientes viven en `ESTADO.md` (raíz); las reglas de trabajo, en `CLAUDE.md` (raíz).
 
 ## Requisitos
-- Node **22 LTS** (ver `.nvmrc`). Con nvm: `nvm use` dentro de `app/`.
+- Node **22 LTS** (`.nvmrc`). Con nvm: `nvm use` dentro de `app/`.
 
 ## Comandos
-
 ```bash
 cd app
-npm install        # instala dependencias (versiones fijadas en package.json)
-npm run dev        # servidor de desarrollo (http://localhost:5173)
-npm run build      # genera el lead magnet single-file en dist/index.html
-npm run preview    # sirve la build de dist/ para comprobarla
+npm install        # deps con versiones fijadas (package.json)
+npm run dev        # desarrollo · http://localhost:5173
+npm run build      # genera el lead magnet single-file · dist/index.html
+npm run preview    # sirve la build de dist/
 ```
+- `http://localhost:5173/?gallery` → **galería de componentes** (cada primitiva/gráfico/modal con datos de ejemplo).
+- Verificadores deterministas: `node scripts/verify-tokens.mjs` (y `verify-lib`, `verify-content`, `verify-state`).
+- `dist/` y `node_modules/` están en `.gitignore`.
 
-**El lead magnet se genera con `npm run build`** → produce `dist/index.html`,
-un único fichero con JS y CSS inline (sin scripts CDN ni babel-standalone).
-`dist/` y `node_modules/` están en el `.gitignore` del repo.
-
-## Versiones (contrato del baseline)
-Runtime fijado exacto, igual que `docs/etapa1-baseline.md` §4:
-
+## Versiones del runtime (contrato del baseline)
 | Dependencia | Versión |
 |---|---|
 | react | 18.2.0 |
@@ -35,17 +27,25 @@ Runtime fijado exacto, igual que `docs/etapa1-baseline.md` §4:
 | recharts | 2.10.3 |
 | prop-types | 15.8.1 |
 
-Tooling de build (no fijado por el baseline): Vite 6 + `@vitejs/plugin-react` +
-`vite-plugin-singlefile`. Versiones exactas resueltas en `package.json` /
-`package-lock.json`.
+Tooling de build: Vite 6 + `@vitejs/plugin-react` + `vite-plugin-singlefile`.
 
-## Estructura `src/` (según baseline)
-Carpetas vacías (con `.gitkeep`) listas para recibir los símbolos en el Paso 3:
+## Estructura `src/`
+Símbolos agrupados por capa (de hojas a raíz):
 
 ```
 src/
-  tokens/  content/  state/  lib/  hooks/
-  ui/      charts/   modals/ screens/ flows/
-  main.jsx   # punto de entrada
-  App.jsx    # placeholder "Hola" (no es componente real migrado)
+  tokens/    # T, WEB_URL
+  lib/       # funciones puras: projectV2, runMonteCarlo, estimateSpanishPension, …
+  hooks/     # hooks compartidos (useIsMobile)
+  content/   # TABLON, corpus editorial (LEARN_CORPUS / LEARN_LEVELS)
+  ui/        # primitivas
+  charts/    # gráficos (Recharts)
+  modals/    # ConfirmModal, AboutModal, …
+  flows/     # landings / onboarding
+  screens/   # ScreenHoy, ScreenProyeccion, … + Shell + App
+  state/     # StateProvider, load/save, migrateToV2 (se carga el último)
+  gallery/   # galería de componentes (dev · render con ?gallery)
+  App.jsx    # entrada: app real o galería de componentes según ?gallery
+  main.jsx   # punto de entrada (monta App.jsx)
+  index.css  # reset / estilos globales
 ```
