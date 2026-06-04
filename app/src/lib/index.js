@@ -1130,7 +1130,7 @@ export function computeSinPlanKPIs(plan, profile) {
   const inflRate = plan.inflationRate != null ? plan.inflationRate : 2.5;
   const planReturn = plan.annualReturn || 8;
   if (income <= 0) {
-    return { lost: 0, lostFirstYear: 0, oppDifference: 0, parkedFinalReal: 0, investedFinalReal: 0, yearsToRetire, planReturn, hasData: false };
+    return { lost: 0, lostFirstYear: 0, oppDifference: 0, parkedFinalReal: 0, investedFinalReal: 0, parkedFinalNominal: 0, investedFinalNominal: 0, yearsToRetire, planReturn, hasData: false };
   }
   const hasMultipleIncomeSegments = (plan.incomeSegments || []).length > 1;
   const salaryGrowthAnnual = 1.0;
@@ -1166,7 +1166,9 @@ export function computeSinPlanKPIs(plan, profile) {
   const parkedFinalReal = parkedNominal / deflator;
   const investedFinalReal = investedNominal / deflator;
   const oppDifference = investedFinalReal - parkedFinalReal;
-  return { lost, lostFirstYear, oppDifference, parkedFinalReal, investedFinalReal, yearsToRetire, planReturn, hasData: true };
+  // Versiones NOMINALES (sin deflactar) — la app muestra cifras futuras en nominal
+  // por defecto; el real queda para recordatorios de aterrizaje. Aditivo.
+  return { lost, lostFirstYear, oppDifference, parkedFinalReal, investedFinalReal, parkedFinalNominal: parkedNominal, investedFinalNominal: investedNominal, yearsToRetire, planReturn, hasData: true };
 }
 
 // ---------- Formatters (arrastrados Tanda final: fmtEurFull, fmtPct) ----------

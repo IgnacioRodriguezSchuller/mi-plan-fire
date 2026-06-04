@@ -416,3 +416,98 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   ese inicial. Demo: ratio 2,53× → 2,45× (incluir inicial en ambos) / 2,37× (excluir
   de ambos). Bias pequeño aquí (inicial 7,9k→38k del final) pero grande para
   patrimonios iniciales altos. A decidir la base honesta antes de tocar.
+
+### 2026-06 · Plan M2 · reestructura en 3 piezas + cifras nominales con aclaración real + base del ratio
+- **Causa raíz**: (1) el cuerpo del M2 mezclaba gancho, monedas y renta sin una lectura
+  clara de tres tiempos; (2) las cifras se mostraban en **real** (592k), que es honesto
+  pero pequeño y poco motivador, sin enseñar el número nominal "wow" (1,24M); (3) el
+  ratio de las monedas estaba **inflado** (diagnóstico de la entrada anterior): el final
+  incluye el patrimonio inicial pero el aportado no.
+- **Cambio (todo en `ScreenHoy`, cuerpo del M2; todas las cifras en vivo)**:
+  - **Pieza 1 · gancho** (card propia, todos los perfiles): texto nuevo "Si pones el
+    tiempo y el interés compuesto de tu lado… / **hoy cambias tu futuro.**", la 2ª línea
+    en `T.green` (antes el gancho era otro y la 2ª línea iba en `T.accent`).
+  - **Pieza 2 · monedas + renta**: el `headL1` enlaza con el gancho ("Esta decisión no
+    solo trabaja para ti:"); la lógica por tramos del múltiplo se conserva intacta. La
+    etiqueta **derecha de las monedas pasa a NOMINAL** (`finalNominal`, ~1,24M; antes
+    `finalReal`). El **cierre de renta** muestra la **nominal del primer año de
+    jubilación** en `T.amber` + su aclaración real en la misma frase: "Y te dan
+    {nominal}/mes cuando te jubiles — es decir, {real} de hoy: {veredicto}".
+  - **Pieza 3 · recordatorio (nuevo)**: línea subordinada `T.serif` `T.muted` 16px que
+    aterriza el patrimonio nominal a € de hoy — "Recuerda: ajustado por la inflación, ese
+    patrimonio equivale a {finalReal} de hoy." Gated en `ratioValido`.
+  - **Base del ratio corregida**: `aportadoBase = aportadoReal + currentPortfolio` (lo
+    que pones = patrimonio inicial + todos los aportes). El ratio se sigue calculando en
+    **real** (numerador `finalReal` y denominador `aportadoBase`, ambos en € de hoy —
+    misma unidad). Etiqueta izquierda de las monedas = `aportadoBase`. Demo: 2,53× →
+    **2,45×** ("más que duplica"). Eliminado el const muerto `renta`.
+- **Decisión de unidad (coherencia)**: el **ratio/monedas viven en real** (2,45×,
+  242k→592k conceptual), pero la **etiqueta derecha muestra el nominal** (1,24M) por
+  motivación; la **pieza 3 reconcilia** ese nominal con su real, así el dibujo y los
+  números no se contradicen. La renta tiene un real **por año** (Bengen mantiene poder
+  de compra constante), por eso el ancla real es el **primer año de jubilación**.
+- **Perfil A** (`monthlyAporte === 0`): conserva solo la **pieza 1 (gancho)** como
+  invitación condicional; sin piezas 2 ni 3 (no hay patrimonio que mostrar/deflactar).
+  Verificado en runtime forzando aporte 0.
+- **No tocado**: motor (`projectV2`/`runMonteCarlo` sin cambios de firma), la lógica de
+  tramos del múltiplo, las monedas (dibujo/wrap/reescala/guarda degenerada), claves
+  localStorage / `schemaVersion 2` / `isPro`, baseline. Sin deps nuevas.
+- **Verificación**: build OK; los 4 verificadores en su estado conocido (tokens y lib
+  marcan las divergencias **intencionales** preexistentes —`T.serif` con fallback
+  Georgia y `lostFirstYear` aditivo—, no tocadas hoy); consola limpia; hash baseline
+  intacto. Runtime (demo Alex, 375 y 1280): 3 piezas en orden; **prueba en vivo**
+  cambiando inflación 2,5%→5%: recordatorio 592k→**382k** y renta real 2,0k→**1,3k** se
+  mueven (derivados, no hardcoded); ratio recalcula a 1,58× ("multiplica por 1,6"); el
+  M2 no desborda en 375 (el único overflow horizontal es el stepper de fases del M3,
+  preexistente). Demo restaurado a su estado original tras las pruebas.
+
+### 2026-06 · Plan · unificación en NOMINAL (pill + M1 + M2) + ratio nominal + reorden M2 + fix M3
+- **Causa raíz**: incoherencia de unidades en la misma pantalla — el pill (`KpiPill`) y el
+  M1 "invertido" mostraban el patrimonio a los 60 en **real** (594k) mientras las monedas
+  del M2 lo mostraban en **nominal** (1,24M): la misma magnitud en dos unidades. Además el
+  ratio/monedas del M2 se calculaba en real (2,45×) pero las cifras a su lado eran nominales
+  → el nº de monedas no cuadraba con las etiquetas. Y el stepper de 5 fases del M3 desbordaba
+  en móvil (la 5ª fase quedaba cortada). Decisión de producto: **nominal por defecto** (los €
+  que tendrás), real solo como recordatorios de aterrizaje.
+- **Cambio**:
+  - **Pill (`KpiPill`)**: de `toRealEur(d.finalPlan.portfolio, …)` → **`d.finalPlan.portfolio`**
+    (nominal). Mismo nº que el "invertido" del M1, las monedas del M2 y el hero de Proyección.
+  - **M1 fork**: "invertido" → `finalNominal` (= pill = monedas); "parado" → nuevo
+    `sinPlanKPIs.parkedFinalNominal`. Ambas cajas en nominal (comparación justa, misma unidad).
+    Patrimonio actual (7,9k) y ahorro mensual (432) intactos (presente: real = nominal).
+  - **`computeSinPlanKPIs` (lib)**: devuelve además `parkedFinalNominal` / `investedFinalNominal`
+    (campos **aditivos**; ya calculaba `parkedNominal`/`investedNominal` internamente).
+  - **M2 ratio sobre nominal**: `ratio = finalNominal / aportadoBaseNominal`, ambos en €
+    corrientes. `aportadoBaseNominal` = suma de aportes **sin deflactar** + `currentPortfolio`.
+    Etiquetas de monedas: izq `aportadoBaseNominal`, der `finalNominal`. Guarda `ratioValido`
+    pasa a `aportadoNominal > 0`. Eliminados `aportadoReal`/`aportadoBase` (reales) del ratio;
+    `finalReal` se conserva SOLO para el recordatorio.
+  - **Reorden del cuerpo M2**: frase → monedas → **recordatorio (real, sube aquí)** → renta
+    (antes el recordatorio iba al final). La nota "Supuestos" del M2 pasa de "Cifras en euros
+    de hoy" → "Cifras en euros nominales… el recordatorio las ajusta a € de hoy".
+  - **M3 stepper**: `gridTemplateColumns` de `repeat(5, 1fr)` → **`repeat(5, minmax(0, 1fr))`**
+    + `minWidth: 0` en el botón + `overflowWrap: break-word` / `hyphens: auto` en el nombre.
+    Las 5 fases caben SIEMPRE en 375 (el nombre largo silabea a 2 líneas: "Optimi-zación").
+    Pestañas clicables y panel de detalle intactos.
+- **Coherencia de cifras (verificado en runtime, demo Alex)**: pill = M1 invertido = M2
+  monedas-final = **1,24M€** nominal (coinciden). M1 parado = 236k€ nominal (deflactado ≈113k).
+  Ratio nominal = 1,24M / 357k ≈ **3,47×** → "casi triplica" (3 monedas llenas + 0,47); las
+  monedas y la frase cuadran con las etiquetas 357k→1,24M.
+- **Nominal vs inflación (hallazgo honesto, IMPORTANTE)**: la premisa "las cifras nominales no
+  se mueven con la inflación" **NO se sostiene con este motor**. `projectV2` modela el salario
+  creciendo con el IPC (`salaryInflationFactor = 1.0`), así que más inflación → más euros
+  nominales. Prueba (inflación 2,5%→5%): pill/invertido/monedas-final 1,24M→**1,65M** (suben),
+  aportadoNominal 357k→547k, ratio 3,47→3,02, recordatorio 592k→**382k**, renta real 2,0k→**1,3k**.
+  Es decir, **nominal y real se mueven ambos, por mecanismos distintos** (nominal por el salario
+  IPC; real por el deflactor). El "parado" no se mueve (236k) porque `computeSinPlanKPIs` usa
+  aportes sin crecimiento IPC. La distinción nominal/real es de **presentación**, no de
+  invariancia — conviene que Nacho lo sepa (ver Reporte).
+- **No tocado**: firmas de `projectV2`/`runMonteCarlo`; semántica del motor; la lógica por tramos
+  de la frase (solo cambia la magnitud de entrada de real→nominal); `migrateToV2`; claves
+  localStorage / `schemaVersion 2` / `isPro`; baseline. Sin deps nuevas.
+- **Verificación**: build OK; verificadores `content`/`state` en verde; `tokens`/`lib` con sus
+  divergencias **intencionales** preexistentes (los campos nominales nuevos de
+  `computeSinPlanKPIs` son aditivos, no añaden FAIL — el verificador reporta antes el
+  `lostFirstYear` ya conocido); consola limpia; hash baseline intacto. 375: sin overflowX en
+  NINGÚN bloque (M3 ya no desborda, las 5 fases completas); 1280 sin desborde. Perfil A: solo
+  gancho. Demo restaurado a su estado original.

@@ -1685,8 +1685,11 @@ export function RutaCincoFases({ state, d, mobile }) {
           })}
         </div>
 
-        {/* 5 pestañas · marcador circular + nombre corto. Clic selecciona la fase. */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: mobile ? 5 : 10, marginTop: mobile ? 18 : 22 }}>
+        {/* 5 pestañas · marcador circular + nombre corto. Clic selecciona la fase.
+            minmax(0,1fr): los tracks pueden encoger bajo el min-content del nombre más
+            largo ("Optimización"/"Saneamiento") → las 5 caben SIEMPRE en 375 sin desbordar
+            (el nombre largo parte de línea si hace falta). */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: mobile ? 5 : 10, marginTop: mobile ? 18 : 22 }}>
           {phases.map(p => {
             const st = stateOf(p);
             const isSel = p.num === selectedNum;
@@ -1701,9 +1704,10 @@ export function RutaCincoFases({ state, d, mobile }) {
                 border: '1px solid ' + (isSel ? T.accent : 'transparent'),
                 borderRadius: 12, padding: mobile ? '8px 3px' : '10px 6px', cursor: 'pointer',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+                minWidth: 0,
               }}>
                 <div style={{ width: 34, height: 34, borderRadius: '50%', background: circleBg, border: circleBorder, color: circleColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, flexShrink: 0 }}>{glyph}</div>
-                <div style={{ fontFamily: T.serif, fontSize: mobile ? 13 : 16, color: nameColor, textAlign: 'center', lineHeight: 1.15 }}>{p.title.split(' ')[0]}</div>
+                <div style={{ fontFamily: T.serif, fontSize: mobile ? 13 : 16, color: nameColor, textAlign: 'center', lineHeight: 1.15, maxWidth: '100%', overflowWrap: 'break-word', hyphens: 'auto' }}>{p.title.split(' ')[0]}</div>
               </button>
             );
           })}
@@ -1832,12 +1836,16 @@ export function ScreenHoy({ goTo }) {
   // Movimiento 2 · Where you're going
   const monthsToRetire = yearsToRetire * 12;
   const finalNominal = d.finalPlan ? d.finalPlan.portfolio : 0;
+  // Real SOLO para el recordatorio de aterrizaje del M2 (la app muestra nominal por
+  // defecto; el patrimonio futuro va en € corrientes salvo ese recordatorio explícito).
   const finalReal = toRealEur(finalNominal, monthsToRetire, inflRate);
-  // Aportado REAL (€ de hoy) con el MISMO modelo de aporte que el final
-  // (projectV2: creciente con subidas/IPC). Suma de cada aporte mensual deflactado
-  // a hoy. Mismo modelo + mismas unidades que finalReal → el ratio es verdadero.
-  const aportadoReal = (d.seriesPlan || []).reduce((acc, row) => row.monthIndex > 0 ? acc + toRealEur(row.monthlyAporte || 0, row.monthIndex, inflRate) : acc, 0);
-  const crecimientoRatio = aportadoReal > 0 ? finalReal / aportadoReal : 0;
+  // App en NOMINAL · ratio de las monedas en euros CORRIENTES (numerador y denominador
+  // en nominal, misma unidad — no se mezcla). "Lo que pones" en nominal = patrimonio
+  // inicial (currentPortfolio) + suma de los aportes SIN deflactar (lo que el usuario
+  // realmente irá metiendo). Mismo modelo de aporte (projectV2) que el final.
+  const aportadoNominal = (d.seriesPlan || []).reduce((acc, row) => row.monthIndex > 0 ? acc + (row.monthlyAporte || 0) : acc, 0);
+  const aportadoBaseNominal = aportadoNominal + (d.currentPortfolio || 0);
+  const crecimientoRatio = aportadoBaseNominal > 0 ? finalNominal / aportadoBaseNominal : 0;
   const withdrawalRate = plan.withdrawalRate != null ? plan.withdrawalRate : 4.0;
   const retirementMonthly = d.retirementMonthlyIncome || 0;
   const retirementMonthlyReal = toRealEur(retirementMonthly, monthsToRetire, inflRate);
@@ -1890,8 +1898,8 @@ export function ScreenHoy({ goTo }) {
         {/* Rediseño Plan v2 · M1 en dos cards NEUTRAS (presente sobrio, sin tinte;
             el futuro de M2/M3 sí lleva color). Card A = patrimonio (tinta, KPI hero
             descriptivo). Card B = el eje: ahorro mensual protagonista + fork
-            parado/invertido. Cifras 100% derivadas (currentPortfolio, planAporte,
-            savingRate, monthlyLife, parkedFinalReal, finalReal). */}
+            parado/invertido. Cifras 100% derivadas y en NOMINAL (currentPortfolio,
+            planAporte, savingRate, monthlyLife, parkedFinalNominal, finalNominal). */}
         {(() => {
           const cardStyle = { background: T.paper, border: '1px solid ' + T.line, borderRadius: 14, boxShadow: '0 1px 3px rgba(26,22,18,.06)', padding: mobile ? 20 : 28 };
           const ahorroPct = Math.round(savingRate * 100);
@@ -1907,8 +1915,11 @@ export function ScreenHoy({ goTo }) {
             </div>
             {/* Card B · el eje (protagonista del bloque) */}
             {income > 0 && sinPlanKPIs.hasData ? (() => {
-              const parked = sinPlanKPIs.parkedFinalReal;
-              const invested = finalReal;
+              // App en NOMINAL · ambas cajas del fork en euros corrientes (comparación
+              // justa, misma unidad): parado = capital+aportes sin invertir (nominal);
+              // invertido = finalNominal del plan (mismo nº que el pill y las monedas M2).
+              const parked = sinPlanKPIs.parkedFinalNominal;
+              const invested = finalNominal;
               return (
               <div style={cardStyle}>
                 <div style={{ textAlign: 'center' }}>
@@ -1972,20 +1983,20 @@ export function ScreenHoy({ goTo }) {
             capital final (finalReal), renta (retirementMonthlyReal), userProfile. */}
         {income > 0 ? (() => {
           const aportas = userProfile !== 'A';            // B y C aportan; A no
-          const renta = retirementMonthlyReal;
-          // UN SOLO NÚMERO · ratio = finalReal/aportadoReal (header): mismo modelo
-          // (creciente) y unidades (€ de hoy) que el M1. Las monedas Y la frase
-          // derivan SIEMPRE de este ratio → jamás se contradicen. Sin tope arriba/abajo.
+          // UN SOLO NÚMERO · ratio = finalNominal/aportadoBaseNominal (header): mismo
+          // modelo (creciente) y MISMA unidad (€ corrientes/nominal) en numerador y
+          // denominador. Las monedas Y la frase derivan SIEMPRE de este ratio → jamás se
+          // contradicen. Nominal por defecto; el real solo en el recordatorio. Sin tope.
           const ratio = crecimientoRatio;
-          // Guarda de dato DEGENERADO (NaN/Infinity, o aportadoReal≈0 → ratio gigante):
+          // Guarda de dato DEGENERADO (NaN/Infinity, o aportadoNominal≈0 → ratio gigante):
           // no se pintan decenas de monedas; se trata como perfil sin aporte (fallback),
           // preservando la renta. NO es un tope al mensaje real, es robustez de datos.
           const RATIO_DEGEN = 30;
-          const ratioValido = aportas && aportadoReal > 0 && Number.isFinite(ratio) && ratio > 0 && ratio < RATIO_DEGEN;
+          const ratioValido = aportas && aportadoNominal > 0 && Number.isFinite(ratio) && ratio > 0 && ratio < RATIO_DEGEN;
           // Frase adaptada al MISMO ratio (línea 1 muted / línea 2 con color). Nunca
           // afirma un múltiplo que las monedas no dibujen: >4.5 usa el número real
           // redondeado; <1.3 mira al futuro en vez de presumir un múltiplo pobre.
-          let headL1 = 'El tiempo no solo trabaja para ti:';
+          let headL1 = 'Esta decisión no solo trabaja para ti:';
           let headL2 = '';
           if (ratio >= 4.5) headL2 = `multiplica por ${Math.round(ratio)} lo que pones.`;
           else if (ratio >= 3.5) headL2 = 'casi cuadruplica lo que pones.';
@@ -1999,10 +2010,11 @@ export function ScreenHoy({ goTo }) {
             : sufficiency.kind === 'tight' ? 'lo mismo que gastas hoy'
             : 'según tu gasto de hoy';
           const greenCard = { background: 'linear-gradient(180deg, ' + T.greenSoft + ', transparent)', border: '1px solid ' + T.green, borderRadius: 14, padding: mobile ? 20 : 28 };
-          // Monedas ABSTRACTAS del ratio: izq 1 moneda (lo que pones = aportadoReal)
-          // → der el ratio dibujado: floor(ratio) llenas + 1 fracción (opacity =
-          // decimal, mín 0.15). Sin tope: bucle sobre la parte entera + flex-wrap a
-          // varias filas + reescala del disco si hay muchas → no desborda en 375.
+          // Monedas ABSTRACTAS del ratio (NOMINAL): izq 1 moneda = lo que pones
+          // (aportadoBaseNominal = inicial + aportes, € corrientes) → der el ratio
+          // dibujado: floor(ratio) llenas + 1 fracción (opacity = decimal, mín 0.15);
+          // etiqueta der = patrimonio NOMINAL (finalNominal). Ambas en la misma unidad
+          // que el ratio. Sin tope: bucle + flex-wrap + reescala → no desborda en 375.
           const monedas = () => {
             const full = Math.floor(ratio);
             const frac = ratio - full;
@@ -2016,14 +2028,14 @@ export function ScreenHoy({ goTo }) {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: mobile ? 14 : 22, marginTop: mobile ? 22 : 28, flexWrap: 'wrap' }}>
                 <div style={{ textAlign: 'center', flexShrink: 0 }}>
                   <div style={{ width: disc, height: disc, borderRadius: '50%', background: T.ink, margin: '0 auto' }} aria-hidden="true" />
-                  <div style={{ fontFamily: T.serif, fontSize: 17, color: T.ink, marginTop: 8 }}>{fmtEur(aportadoReal)}</div>
+                  <div style={{ fontFamily: T.serif, fontSize: 17, color: T.ink, marginTop: 8 }}>{fmtEur(aportadoBaseNominal)}</div>
                 </div>
                 <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 24 : 28, color: T.amber, lineHeight: 1, flexShrink: 0 }} aria-hidden="true">→</div>
                 <div style={{ textAlign: 'center', flex: '1 1 auto', minWidth: 0 }}>
                   <div style={{ display: 'flex', gap: cgap, justifyContent: 'center', flexWrap: 'wrap' }} aria-hidden="true">
                     {ops.map((op, i) => <div key={i} style={{ width: disc, height: disc, borderRadius: '50%', background: T.green, opacity: op, flexShrink: 0 }} />)}
                   </div>
-                  <div style={{ fontFamily: T.serif, fontSize: 17, color: T.ink, marginTop: 8 }}>{fmtEur(finalReal)}</div>
+                  <div style={{ fontFamily: T.serif, fontSize: 17, color: T.ink, marginTop: 8 }}>{fmtEur(finalNominal)}</div>
                 </div>
               </div>
             );
@@ -2032,13 +2044,14 @@ export function ScreenHoy({ goTo }) {
           <div style={{ maxWidth: 720, display: 'flex', flexDirection: 'column', gap: mobile ? 16 : 20 }}>
             {/* GANCHO · común a TODOS los perfiles (incl. A, que aún no aporta) */}
             <div style={greenCard}>
-              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 21 : 24, color: T.muted, letterSpacing: T.tracking.tight, lineHeight: 1.15 }}>El tiempo trabaja para ti.</div>
-              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 34, color: T.accent, letterSpacing: T.tracking.display, lineHeight: 1.1, marginTop: 4 }}>Hoy decides cambiar tu futuro.</div>
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 21 : 24, color: T.muted, letterSpacing: T.tracking.tight, lineHeight: 1.15 }}>Si pones el tiempo y el interés compuesto de tu lado…</div>
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 33, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1.1, marginTop: 4 }}>hoy cambias tu futuro.</div>
             </div>
             {/* CUERPO · perfiles que aportan (B y C). Monedas abstractas del ratio
-                REAL + frase derivada del MISMO ratio (jamás se contradicen). Dato
-                degenerado (ratio no-finito o ≥30) → sin monedas, preservando la
-                renta. Perfil A (no aporta): sin cuerpo. */}
+                NOMINAL + frase derivada del MISMO ratio (jamás se contradicen). Orden:
+                frase → monedas (nominal) → recordatorio (real, aterrizaje) → renta. Dato
+                degenerado (ratio no-finito o ≥30) → sin monedas, preservando la renta.
+                Perfil A (no aporta): sin cuerpo. */}
             {aportas && (
               <div style={greenCard}>
                 {ratioValido && (
@@ -2046,16 +2059,24 @@ export function ScreenHoy({ goTo }) {
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 21 : 24, color: T.muted, letterSpacing: T.tracking.tight, lineHeight: 1.15 }}>{headL1}</div>
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 27 : 33, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1.1, marginTop: 4 }}>{headL2}</div>
                     {monedas()}
+                    {/* Recordatorio (real) EN VIVO · aterriza el patrimonio nominal de las
+                        monedas a € de hoy, justo debajo y antes de la renta. Si cambia la
+                        inflación, finalReal se recalcula solo (las cifras nominales no). */}
+                    <div style={{ fontFamily: T.serif, color: T.muted, fontSize: 16, lineHeight: T.lh.normal, marginTop: mobile ? 14 : 16 }}>
+                      Recuerda: ajustado por la inflación, ese patrimonio equivale a <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong> de hoy.
+                    </div>
                   </>
                 )}
-                {/* Cierre · TU renta real (ámbar) + veredicto. borderTop solo si hay monedas arriba. */}
+                {/* Cierre · renta NOMINAL del primer año de jubilación + su aclaración en
+                    € de hoy (real) + veredicto de suficiencia. Ambas cifras EN VIVO.
+                    borderTop solo si hay monedas+recordatorio arriba. */}
                 <div style={{ ...(ratioValido ? { borderTop: '1px solid ' + T.lineSoft, marginTop: mobile ? 20 : 26, paddingTop: mobile ? 18 : 22 } : {}), fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 21 : 24, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: 1.3 }}>
-                  Y te dan <span style={{ color: T.amber }}>{fmtEur(renta)}</span> al mes de por vida: {rentaTail}.
+                  Y te dan <span style={{ color: T.amber }}>{fmtEur(retirementMonthly)}</span>/mes cuando te jubiles — es decir, {fmtEur(retirementMonthlyReal)} de hoy: {rentaTail}.
                 </div>
               </div>
             )}
             <OnboardingHelp title="Supuestos">
-              Cifras en euros de hoy (ajustadas por inflación), asumiendo {planReturn}% de rentabilidad media anual y una tasa de retiro del {withdrawalRate}%. La edad de libertad sale de tu ritmo de ahorro real — todo configurable en Proyección.
+              Cifras en euros nominales (los que tendrás en el futuro); el recordatorio las ajusta a € de hoy por la inflación. Asumiendo {planReturn}% de rentabilidad media anual y una tasa de retiro del {withdrawalRate}%. La edad de libertad sale de tu ritmo de ahorro real — todo configurable en Proyección.
             </OnboardingHelp>
           </div>
           );
@@ -4622,9 +4643,10 @@ export function KpiPill({ onClick }) {
         {state.profile.retireAge}→
       </span>
       <span style={{ fontStyle: 'italic', fontSize: mobile ? T.size.body : 20 }}>
-        {/* Coherencia de cifras · patrimonio final AJUSTADO POR INFLACIÓN (real),
-            mismo valor que la balanza verde y "¿Te alcanzaría?" en la pantalla Plan. */}
-        {fmtEur(toRealEur(d.finalPlan.portfolio, Math.max(0, state.profile.retireAge - state.profile.age) * 12, state.plan.inflationRate != null ? state.plan.inflationRate : 2.5))}
+        {/* Coherencia de cifras · patrimonio final en NOMINAL (sin deflactar): la app
+            muestra cifras futuras en euros corrientes por defecto. Mismo valor que el
+            "invertido" del M1, las monedas del M2 y el hero de Proyección. */}
+        {fmtEur(d.finalPlan.portfolio)}
       </span>
       <svg width={sw} height={sh} style={{ marginLeft: 2 }}>
         <path d={(() => {
