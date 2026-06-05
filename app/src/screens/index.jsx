@@ -630,21 +630,7 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
       {ResponsiveContainer && chartData.length > 1 && (
         <div style={{ width: '100%', height: 220, marginBottom: 6 }}>
           <ResponsiveContainer>
-            <ComposedChart data={chartData} margin={{ top: 6, right: 8, left: 8, bottom: 22 }}>
-              <defs>
-                {/* Two stacked-area ribbons sharing the accent colour but with
-                    different opacities. The inner one (p25-p75) is the "probable
-                    range" — 50% of futures live here. The outer one (p10-p90) is
-                    the "plausible range" — 80% of futures. */}
-                <linearGradient id="mcbandOuter" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={T.accent} stopOpacity={0.10} />
-                  <stop offset="100%" stopColor={T.accent} stopOpacity={0.04} />
-                </linearGradient>
-                <linearGradient id="mcbandInner" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={T.accent} stopOpacity={0.26} />
-                  <stop offset="100%" stopColor={T.accent} stopOpacity={0.14} />
-                </linearGradient>
-              </defs>
+            <ComposedChart data={chartData} margin={{ top: 6, right: 8, left: 18, bottom: 22 }}>
               <CartesianGrid stroke={T.lineSoft} strokeDasharray="2 4" vertical={false} />
               <XAxis
                 dataKey="age"
@@ -662,7 +648,7 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
                 axisLine={false}
                 tickLine={false}
                 width={64}
-                label={{ value: realMode ? 'Patrimonio (ajustado por inflación)' : 'Patrimonio (€)', angle: -90, position: 'insideLeft', offset: 10, fill: T.muted, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, style: { textAnchor: 'middle' } }}
+                label={{ value: realMode ? 'Patrimonio (€ de hoy)' : 'Patrimonio (€)', angle: -90, position: 'insideLeft', offset: 10, fill: T.muted, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, style: { textAnchor: 'middle' } }}
               />
               <Tooltip
                 formatter={(value, name) => {
@@ -690,9 +676,10 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
                 strokeDasharray="4 4"
                 label={{ value: 'jubilación', position: 'top', fill: T.accent, fontFamily: T.mono, fontSize: T.size.eyebrow }}
               />
-              {/* Outer band (p10-p90): two stacked invisible+filled areas. */}
+              {/* Banda p10–p90 (rango plausible) · relleno plano T.accentSoft (token, no
+                  rgba literal): dos áreas apiladas, la base invisible + el span coloreado. */}
               <Area type="monotone" dataKey="outerLow" stackId="outer" stroke="transparent" fill="transparent" isAnimationActive={false} />
-              <Area type="monotone" dataKey="outerSpan" stackId="outer" stroke="transparent" fill="url(#mcbandOuter)" isAnimationActive={false} />
+              <Area type="monotone" dataKey="outerSpan" stackId="outer" stroke="transparent" fill={T.accentSoft} isAnimationActive={false} />
               {/* Inner band (p25-p75) eliminada con el colapso a versión free. Solo banda externa. */}
               {/* Faint p10/p90 outline lines — they mark the edges of the plausible range without dominating. */}
               <Line type="monotone" dataKey="p10" stroke={T.accent} strokeOpacity={0.35} strokeWidth={1} dot={false} isAnimationActive={false} />
@@ -711,7 +698,7 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
           Mediana (p50)
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 18, height: 10, background: 'rgba(194,65,12,0.10)', display: 'inline-block', borderRadius: 2 }} />
+          <span style={{ width: 18, height: 10, background: T.accentSoft, display: 'inline-block', borderRadius: 2 }} />
           Rango plausible (p10–p90)
         </span>
       </div>
@@ -726,8 +713,8 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.accent, letterSpacing: T.tracking.tight }}>{fmtEur(retireRow ? retireRow.p50 : 0)}</div>
         </div>
         <div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.green, letterSpacing: T.tracking.wider, textTransform: 'uppercase', marginBottom: 4 }}>p90 · {profile.retireAge}</div>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.green, letterSpacing: T.tracking.tight }}>{fmtEur(retireRow ? retireRow.p90 : 0)}</div>
+          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.ink, letterSpacing: T.tracking.wider, textTransform: 'uppercase', marginBottom: 4 }}>p90 · {profile.retireAge}</div>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(retireRow ? retireRow.p90 : 0)}</div>
         </div>
       </div>
 
@@ -2626,11 +2613,12 @@ export function ScreenProyeccion() {
   const scenarios = useMemo(() => {
     const arr = [];
     if (d.firstRegisteredKey && d.realPortfolioAtLastReg != null && d.planPortfolioAtLastReg != null) {
-      const inLine = d.realVsPlanRatio != null && Math.abs(d.realVsPlanRatio - 1) < 0.01;
-      const ahead = !inLine && d.realVsPlanDelta != null && d.realVsPlanDelta > 0;
-      const realColor = inLine ? T.accent : ahead ? T.green : T.red;
+      // A2 · disciplina cromática: la "curva real" es la trayectoria del usuario, NO una
+      // oposición-con-consecuencia (esa es el fork de Plan). Su protagonista va en T.accent
+      // (dato del usuario), no en verde/rojo según ahead/behind. El "vas por delante/detrás"
+      // se cuenta en texto, no tiñendo la línea. "Plan original" = referencia (faint dashed).
       arr.push({ label: 'Plan original', color: T.faint, series: seriesPlanFromStart, dashed: true });
-      arr.push({ label: 'Curva real', color: realColor, series: seriesRealFromStart, bold: true });
+      arr.push({ label: 'Curva real', color: T.accent, series: seriesRealFromStart, bold: true });
       if (finalReal.portfolio !== seriesRealWithHypo[seriesRealWithHypo.length - 1].portfolio) {
         arr.push({ label: 'Con eventos posibles', color: T.amber, series: seriesRealWithHypo, dashed: true });
       }
