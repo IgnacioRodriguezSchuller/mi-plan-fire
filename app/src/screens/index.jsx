@@ -33,6 +33,16 @@ import {
 import { StateProvider, useStore, useDerived, usePlanMutators } from '../state/index.jsx'
 import { LandingPreOnboarding, Landing } from '../flows/index.jsx'
 
+// ── Plan BASE = solo eventos CONFIRMADOS ─────────────────────────────────────
+// Fuente ÚNICA de verdad de si el TITULAR (curva hero de Proyección + Monte Carlo)
+// cuenta los eventos POSIBLES (hipotéticos). Doctrina del producto: el plan base no
+// se infla con lo que "podría pasar" (p.ej. una herencia escenario). Lo posible se
+// muestra aparte —la línea "Con eventos posibles" del chart y el recordatorio bajo el
+// hero—, nunca dentro de la cifra base. Un solo flag para que curva y MC NO se
+// separen (vive a nivel de módulo porque MonteCarloCard y ScreenProyeccion son
+// componentes distintos). Futuro: estado/toggle de usuario.
+const INCLUDE_POSSIBLE = false;
+
 export function TramoRow({ tramo, kind, hasOverlap, onChange, onDelete, onSplit }) {
   const [expanded, setExpanded] = useState(false);
   const isSaving = kind === 'saving';
@@ -518,6 +528,7 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
         const mc = runMonteCarlo(plan, profile, {
           trials: 500,
           startCapital: d.currentPortfolio,
+          includeHypothetical: INCLUDE_POSSIBLE,   // base = solo confirmado, igual que la curva hero
         });
         if (!cancelled) {
           setResult(mc);
@@ -2584,7 +2595,7 @@ export function ScreenProyeccion() {
   // Curva activa con eventos hipotéticos incluidos.
   const seriesActiveNominal = useMemo(() => projectV2(plan, profile, {
     capital: d.currentPortfolio,
-    includeHypothetical: true,
+    includeHypothetical: INCLUDE_POSSIBLE,   // base = solo confirmado (doctrina)
   }), [plan, profile, d.currentPortfolio]);
   const seriesActive = useMemo(() => applyRealMode(seriesActiveNominal), [seriesActiveNominal, applyRealMode]);
 
@@ -2608,6 +2619,11 @@ export function ScreenProyeccion() {
 
   const finalActive = seriesActive[seriesActive.length - 1];
   const finalReal = seriesReal[seriesReal.length - 1];
+  // Recordatorio (sin toggle): patrimonio CON los eventos posibles incluidos. El hero
+  // (finalActive) es el plan base (solo confirmado); esta línea enseña aparte lo que
+  // sumaría lo posible. seriesRealWithHypo = misma curva con includeHypothetical: true.
+  const finalConPosible = seriesRealWithHypo[seriesRealWithHypo.length - 1];
+  const hayPosibles = finalConPosible && Math.abs(finalConPosible.portfolio - finalActive.portfolio) > 1;
 
   // Build scenarios array for the chart.
   const scenarios = useMemo(() => {
@@ -2648,6 +2664,11 @@ export function ScreenProyeccion() {
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 4 }}>
             A los <em style={{ color: T.accent }}>{profile.retireAge}</em>: <span style={{ color: T.accent }}>{fmtEur(finalActive.portfolio)}</span>
           </div>
+          {hayPosibles && (
+            <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.caption, marginTop: 6, lineHeight: T.lh.normal }}>
+              Con los eventos posibles incluidos, a los {profile.retireAge} llegarías a {fmtEur(finalConPosible.portfolio)}.
+            </div>
+          )}
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal, maxWidth: 640 }}>
             Aquí está tu curva. Edita tramos, ahorro, eventos y asunciones más abajo — cada cambio se refleja al instante.
           </div>

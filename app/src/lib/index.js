@@ -655,9 +655,26 @@ export function runMonteCarlo(plan, profile, opts = {}) {
   // This keeps the mean simple-return correct
   const muLog = Math.log(1 + mu) - 0.5 * sigma * sigma;
 
-  // Current monthly aporte (assumed constant for MC simplicity — annual aggregated)
-  const monthlyAporte = currentMonthlyAporte(plan) || 0;
-  const annualAporte = monthlyAporte * 12;
+  // Calendario ANUAL de aporte derivado de projectV2 — el MISMO flujo que la curva
+  // determinista de Proyección: salario creciente con IPC, progresión de tramos y
+  // eventos. Antes el MC usaba un aporte PLANO (currentMonthlyAporte, solo el mes
+  // actual) en todos los años → mediana ~2,4–2,8× por debajo de la curva en la misma
+  // pantalla. El flag de eventos POSIBLES lo decide quien llama (opts.includeHypothetical),
+  // igual que la curva hero — así MC y curva nunca se separan. Base = false (solo
+  // confirmado, doctrina): no se da por seguro lo que solo "podría pasar".
+  const includeHyp = (opts.includeHypothetical != null) ? opts.includeHypothetical : false;
+  const accumYears = retireAge - fromAge;
+  const detSeries = projectV2(plan, profile, { includeHypothetical: includeHyp }) || [];
+  const annualAporteByYear = new Array(Math.max(0, accumYears)).fill(0);
+  for (const pt of detSeries) {
+    if (!pt || pt.monthIndex < 1) continue;            // m=0 es estado inicial, sin aporte
+    const yIdx = Math.floor((pt.monthIndex - 1) / 12);
+    if (yIdx >= 0 && yIdx < accumYears) annualAporteByYear[yIdx] += (pt.monthlyAporte || 0);
+  }
+  // Guarda: si la serie es más corta que los años de acumulación, replica el último año conocido.
+  for (let i = 1; i < accumYears; i++) {
+    if (annualAporteByYear[i] === 0 && annualAporteByYear[i - 1] > 0) annualAporteByYear[i] = annualAporteByYear[i - 1];
+  }
 
   // Withdrawal during decumulation
   const withdrawalRate = (plan.withdrawalRate != null ? plan.withdrawalRate : 4.0) / 100;
@@ -735,8 +752,8 @@ export function runMonteCarlo(plan, profile, opts = {}) {
 
       const isAccum = y < yearsAccum;
       if (isAccum) {
-        // Accumulation: grow + contribute
-        portfolio = portfolio * (1 + yearReturn) + annualAporte;
+        // Accumulation: grow + contribute (aporte creciente del calendario projectV2)
+        portfolio = portfolio * (1 + yearReturn) + (annualAporteByYear[y] || 0);
       } else {
         // Decumulation: lock in first-year withdrawal at retirement value
         if (firstYearWithdrawal === null) {
