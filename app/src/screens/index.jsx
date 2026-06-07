@@ -612,6 +612,13 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
   // Highlight values at retire age
   const retireRow = chartData.find(row => row.age === profile.retireAge) || chartData[result.yearsAccum];
 
+  // Tope del eje Y · la cola extrema (P90 a los 90, ~14M) aplasta la zona útil (acumulación
+  // + inicio de retiro): mediana y P10 quedan pegados al suelo. Capamos el dominio al MAYOR de
+  // {P90 a la jubilación, mediana final} × 1,3; lo que se salga por arriba se clippea
+  // (allowDataOverflow) — la cola extrema no es la información. Solo rango visual, no toca datos.
+  const lastRow = chartData[chartData.length - 1] || {};
+  const yAxisMax = Math.max(retireRow ? retireRow.p90 : 0, lastRow.p50 || 0) * 1.3 || 'auto';
+
   const R = window.Recharts || {};
   const { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Line, ComposedChart, ReferenceLine } = R;
 
@@ -655,6 +662,8 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
               />
               <YAxis
                 tickFormatter={fmtEur}
+                domain={[0, yAxisMax]}
+                allowDataOverflow
                 tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
                 axisLine={false}
                 tickLine={false}
@@ -2625,6 +2634,29 @@ export function ScreenProyeccion() {
   const finalConPosible = seriesRealWithHypo[seriesRealWithHypo.length - 1];
   const hayPosibles = finalConPosible && Math.abs(finalConPosible.portfolio - finalActive.portfolio) > 1;
 
+  // ── Hero "amanecer": DOS estados sobre el MISMO dato base (serie includeHypothetical=false).
+  // Estado y edad SON ageAtFiReal —el mismo que alimenta el ★ de Plan—, NO un recomputo
+  // paralelo: si la serie base alcanza el número FIRE en horizonte hay edad (LLEGA), si no,
+  // ageAtFiReal es null (NO LLEGA). El número FIRE es d.fiTarget (€ de hoy).
+  const reachesFreedom = d.ageAtFiReal != null;
+  const libertadAge = reachesFreedom ? Math.round(d.ageAtFiReal) : null;   // misma fórmula que Plan
+  const fireTarget = d.fiTarget || 0;                                        // € de hoy
+  const pensionAge = (plan.publicPension && plan.publicPension.startAge) || 67;
+  // Brecha (estado NO LLEGA) en € de HOY (like-with-like vs fiTarget, que ya es real):
+  // deflactamos el patrimonio NOMINAL del hero (no el de la serie real-mode → no doble-deflactar).
+  const monthsToRetireHero = Math.max(0, profile.retireAge - profile.age) * 12;
+  const finalActiveNom = seriesActiveNominal[seriesActiveNominal.length - 1].portfolio;
+  const finalActiveHoy = toRealEur(finalActiveNom, monthsToRetireHero, inflRate);
+  const fireGap = Math.max(0, fireTarget - finalActiveHoy);
+  // Coherencia de unidad de la fila KPI · "Tu número" y el patrimonio van SIEMPRE en la MISMA
+  // unidad (gobernada por realMode), nunca una nominal y otra real. fiTarget vive en € de hoy;
+  // para el modo NOMINAL lo llevamos al año de jubilación con el MISMO inflRate y horizonte
+  // (inverso de toRealEur). El recordatorio "≈ X de hoy" solo aparece en modo nominal. El gap
+  // de NO LLEGA sigue la misma unidad que el número para no contradecirlo.
+  const fireTargetNom = fireTarget * Math.pow(1 + inflRate / 100, profile.retireAge - profile.age);
+  const numeroDisplay = realMode ? fireTarget : fireTargetNom;
+  const gapDisplay = realMode ? fireGap : Math.max(0, fireTargetNom - finalActiveNom);
+
   // Build scenarios array for the chart.
   const scenarios = useMemo(() => {
     const arr = [];
@@ -2661,17 +2693,55 @@ export function ScreenProyeccion() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ flex: 1, minWidth: 200 }}>
           <Label>Proyección</Label>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 4 }}>
-            A los <em style={{ color: T.accent }}>{profile.retireAge}</em>: <span style={{ color: T.accent }}>{fmtEur(finalActive.portfolio)}</span>
+          {reachesFreedom ? (
+            <>
+              {/* ESTADO LLEGA · la EDAD es la protagonista. Verde = excepción doctrinal
+                  documentada (la edad de libertad, igual que el ★ de Plan). Fondo claro. */}
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 4, color: T.ink }}>
+                Eres libre a los <span style={{ color: T.green }}>{libertadAge}</span>.
+              </div>
+              <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.body, marginTop: 8, lineHeight: T.lh.normal, maxWidth: 560 }}>
+                A esa edad las rentas de tu cartera cubren tu gasto: dejas de depender de un sueldo.
+              </div>
+            </>
+          ) : (
+            <>
+              {/* ESTADO NO LLEGA · la BRECHA, con la misma calma. La cifra a actuar va en
+                  T.accent; el gap sigue la MISMA unidad que el número de la fila KPI (realMode). */}
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 4, color: T.ink }}>
+                Con tu plan actual, todavía no llegas.
+              </div>
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, lineHeight: T.lh.snug, letterSpacing: T.tracking.tight, marginTop: 6, color: T.accent }}>
+                Te faltan {fmtEur(gapDisplay)} para tu número.
+              </div>
+              <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.body, marginTop: 8, lineHeight: T.lh.normal, maxWidth: 560 }}>
+                Ajusta tu aporte o tu horizonte ahí abajo y verás cómo esa distancia se acorta — el interés compuesto premia cada euro que adelantes.
+              </div>
+            </>
+          )}
+          {/* KPIs de contexto (idénticos en ambos estados, sin competir con el héroe) */}
+          <div style={{ display: 'flex', gap: mobile ? 18 : 32, flexWrap: 'wrap', marginTop: 18 }}>
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>A los {profile.retireAge}</div>
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, marginTop: 2 }}>{fmtEur(finalActive.portfolio)}</div>
+            </div>
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>Tu número{realMode ? ' (hoy)' : ''}</div>
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, marginTop: 2 }}>{fmtEur(numeroDisplay)}</div>
+              {!realMode && (
+                <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.faint, marginTop: 2, lineHeight: T.lh.snug }}>≈ {fmtEur(fireTarget)} de hoy</div>
+              )}
+            </div>
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>Pensión pública</div>
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, marginTop: 2 }}>desde los {pensionAge}</div>
+            </div>
           </div>
           {hayPosibles && (
-            <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.caption, marginTop: 6, lineHeight: T.lh.normal }}>
+            <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.caption, marginTop: 14, lineHeight: T.lh.normal }}>
               Con los eventos posibles incluidos, a los {profile.retireAge} llegarías a {fmtEur(finalConPosible.portfolio)}.
             </div>
           )}
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal, maxWidth: 640 }}>
-            Aquí está tu curva. Edita tramos, ahorro, eventos y asunciones más abajo — cada cambio se refleja al instante.
-          </div>
         </div>
       </div>
 
