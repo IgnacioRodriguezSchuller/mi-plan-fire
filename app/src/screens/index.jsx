@@ -568,19 +568,6 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
     });
   }, [result, realMode, inflRate, profile.age]);
 
-  // Build clean 5- or 10-year ticks for the X axis.
-  // Must run before any early return so hook order stays stable across renders.
-  const ageTicks = useMemo(() => {
-    if (chartData.length === 0) return [];
-    const ageMin = chartData[0].age;
-    const ageMax = chartData[chartData.length - 1].age;
-    const range = ageMax - ageMin;
-    const step = range > 40 ? 10 : 5;
-    const out = [];
-    for (let a = Math.ceil(ageMin / step) * step; a <= ageMax; a += step) out.push(a);
-    return out;
-  }, [chartData]);
-
   if (running && !result) {
     return (
       <Card>
@@ -612,23 +599,21 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
   // Highlight values at retire age
   const retireRow = chartData.find(row => row.age === profile.retireAge) || chartData[result.yearsAccum];
 
-  // Tope del eje Y · la cola extrema (P90 a los 90, ~14M) aplasta la zona útil (acumulación
-  // + inicio de retiro): mediana y P10 quedan pegados al suelo. Capamos el dominio al MAYOR de
-  // {P90 a la jubilación, mediana final} × 1,3; lo que se salga por arriba se clippea
-  // (allowDataOverflow) — la cola extrema no es la información. Solo rango visual, no toca datos.
-  const lastRow = chartData[chartData.length - 1] || {};
-  const yAxisMax = Math.max(retireRow ? retireRow.p90 : 0, lastRow.p50 || 0) * 1.3 || 'auto';
-
-  const R = window.Recharts || {};
-  const { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Line, ComposedChart, ReferenceLine } = R;
+  // Rejilla "¿Y te dura?" · la MISMA simulación en su forma legible: 100 futuros, los que
+  // aguantan hasta la esperanza de vida (verde) vs los que se agotan antes (ámbar). Cuenta
+  // derivada de successRate (round × 100) — no recalcula nada, coincide con el % mostrado.
+  // Invariante al realMode (las cifras P10/50/90 sí lo siguen).
+  const survivors = Math.round(result.successRate * 100);
+  const depleted = 100 - survivors;
+  const lifeExp = plan.lifeExpectancy || 90;
 
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <Label>Probabilidad de éxito</Label>
+          <Label>¿Y te dura?</Label>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 4, lineHeight: T.lh.normal }}>
-            {result.trials} <Concept id="monte-carlo">simulaciones</Concept> de tu plan completo, con volatilidad de mercado. El % de éxito resume el resultado pero esconde la asimetría: las bandas del gráfico te enseñan el rango plausible de futuros.
+            {result.trials} <Concept id="monte-carlo">simulaciones</Concept> de tu plan completo, con volatilidad de mercado real. Cada futuro es uno posible: la pregunta es en cuántos tu dinero aguanta hasta los {lifeExp}.
           </div>
         </div>
         <div style={{
@@ -640,87 +625,17 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
         </div>
       </div>
 
-      {/* Intro phrase — sets reading frame for the chart */}
-      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal, marginBottom: 12 }}>
-        Cada línea es un futuro posible. Cada futuro asume retornos aleatorios año a año en torno a tu media histórica. Lo importante no es la línea exacta, sino en qué porcentaje de futuros tu patrimonio cubre la meta.
+      {/* Encabezado de la rejilla · misma simulación, forma legible */}
+      <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal, marginBottom: 14 }}>
+        De cada 100 futuros, <strong style={{ color: T.green, fontStyle: 'normal' }}>{survivors}</strong> aguantan hasta los {lifeExp} · <strong style={{ color: T.amber, fontStyle: 'normal' }}>{depleted}</strong> se agotan antes.
       </div>
 
-      {ResponsiveContainer && chartData.length > 1 && (
-        <div style={{ width: '100%', height: 220, marginBottom: 6 }}>
-          <ResponsiveContainer>
-            <ComposedChart data={chartData} margin={{ top: 6, right: 8, left: 18, bottom: 22 }}>
-              <CartesianGrid stroke={T.lineSoft} strokeDasharray="2 4" vertical={false} />
-              <XAxis
-                dataKey="age"
-                type="number"
-                domain={['dataMin', 'dataMax']}
-                ticks={ageTicks.length > 0 ? ageTicks : undefined}
-                tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
-                axisLine={{ stroke: T.line }}
-                tickLine={false}
-                label={{ value: 'Edad', position: 'insideBottom', offset: -6, fill: T.muted, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider }}
-              />
-              <YAxis
-                tickFormatter={fmtEur}
-                domain={[0, yAxisMax]}
-                allowDataOverflow
-                tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
-                axisLine={false}
-                tickLine={false}
-                width={64}
-                label={{ value: realMode ? 'Patrimonio (€ de hoy)' : 'Patrimonio (€)', angle: -90, position: 'insideLeft', offset: 10, fill: T.muted, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, style: { textAnchor: 'middle' } }}
-              />
-              <Tooltip
-                formatter={(value, name) => {
-                  const labels = {
-                    p10: 'p10 (10% peor)',
-                    p25: 'p25',
-                    p50: 'Mediana (p50)',
-                    p75: 'p75',
-                    p90: 'p90 (10% mejor)',
-                  };
-                  // Suppress the band ribbons in the tooltip — they would show
-                  // confusing "outerLow / outerSpan / innerLow / innerSpan" rows.
-                  if (name === 'outerLow' || name === 'outerSpan' || name === 'innerLow' || name === 'innerSpan') return null;
-                  return [fmtEur(value), labels[name] || name];
-                }}
-                labelFormatter={(age) => `${Math.round(age)} años`}
-                contentStyle={{ background: T.ink, border: 'none', borderRadius: 6, fontFamily: T.mono, fontSize: T.size.eyebrow, color: '#fff', padding: '6px 10px' }}
-                labelStyle={{ color: 'rgba(255,255,255,0.6)', fontSize: T.size.eyebrow, marginBottom: 4 }}
-                itemStyle={{ color: '#fff' }}
-              />
-              <ReferenceLine
-                x={profile.retireAge}
-                stroke={T.accent}
-                strokeWidth={1}
-                strokeDasharray="4 4"
-                label={{ value: 'jubilación', position: 'top', fill: T.accent, fontFamily: T.mono, fontSize: T.size.eyebrow }}
-              />
-              {/* Banda p10–p90 (rango plausible) · relleno plano T.accentSoft (token, no
-                  rgba literal): dos áreas apiladas, la base invisible + el span coloreado. */}
-              <Area type="monotone" dataKey="outerLow" stackId="outer" stroke="transparent" fill="transparent" isAnimationActive={false} />
-              <Area type="monotone" dataKey="outerSpan" stackId="outer" stroke="transparent" fill={T.accentSoft} isAnimationActive={false} />
-              {/* Inner band (p25-p75) eliminada con el colapso a versión free. Solo banda externa. */}
-              {/* Faint p10/p90 outline lines — they mark the edges of the plausible range without dominating. */}
-              <Line type="monotone" dataKey="p10" stroke={T.accent} strokeOpacity={0.35} strokeWidth={1} dot={false} isAnimationActive={false} />
-              <Line type="monotone" dataKey="p90" stroke={T.accent} strokeOpacity={0.35} strokeWidth={1} dot={false} isAnimationActive={false} />
-              {/* Median: the protagonist line. */}
-              <Line type="monotone" dataKey="p50" stroke={T.accent} strokeWidth={2} dot={false} isAnimationActive={false} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Band legend. */}
-      <div style={{ display: 'flex', gap: 14, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', flexWrap: 'wrap', paddingTop: 8, marginBottom: 14 }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 18, height: 2, background: T.accent, display: 'inline-block', borderRadius: 1 }} />
-          Mediana (p50)
-        </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 18, height: 10, background: T.accentSoft, display: 'inline-block', borderRadius: 2 }} />
-          Rango plausible (p10–p90)
-        </span>
+      {/* Rejilla 10×10 · los primeros {survivors} verdes (aguantan), el resto ámbar (se agotan).
+          Verde SOLO para los supervivientes; ámbar T.amber para los que se agotan. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 6, maxWidth: 360, marginBottom: 16 }} aria-hidden="true">
+        {Array.from({ length: 100 }, (_, i) => (
+          <div key={i} style={{ aspectRatio: '1', borderRadius: 3, background: i < survivors ? T.green : T.amber }} />
+        ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, paddingTop: 12, borderTop: '1px dashed ' + T.lineSoft }}>
@@ -2564,6 +2479,177 @@ export function MonthRow({ month, isCurrent, onChange }) {
   );
 }
 
+// ── "El motor" de Proyección · línea de vida (curva de patrimonio año a año) + dial de
+// aporte. Reemplaza "Curva de patrimonio" (3 líneas) y "Tu yo del futuro" (tarjetas): UNA
+// sola curva legible. El dial solo aparece con gasto declarado — sin él, el aporte está
+// acoplado al número FIRE (subirlo baja la meta Y sube la curva: doble efecto que sobrevende),
+// así que en su lugar va una invitación calmada a declarar el gasto. La línea de vida siempre
+// se muestra (solo lectura, no engaña). Todo deriva de `d` → el hero reacciona en vivo.
+function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyRealMode, fiTargetReal, updateSaving, updatePlan }) {
+  const [scrub, setScrub] = useState(null);
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const currentAge = profile.age;
+  const retireAge = profile.retireAge;
+
+  // Línea de vida: d.seriesPlan (nominal) deflactada por realMode igual que el resto de la
+  // pantalla. Muestreo anual. Meta por edad: en real es plana (fiTarget en € de hoy); en
+  // nominal sube con el IPC (el número que necesitas crece) → la curva cruza la meta en el
+  // MISMO punto en ambas unidades, alineado con ageAtFiReal.
+  const lifeData = useMemo(() => {
+    const life = applyRealMode(d.seriesPlan || []);
+    return life
+      .filter((r) => r && r.monthIndex % 12 === 0)
+      .map((r) => {
+        const yearsFromNow = r.age - currentAge;
+        const meta = realMode ? fiTargetReal : fiTargetReal * Math.pow(1 + inflRate / 100, yearsFromNow);
+        return { age: Math.round(r.age), portfolio: Math.round(r.portfolio || 0), meta: Math.round(meta) };
+      });
+  }, [d.seriesPlan, applyRealMode, realMode, inflRate, fiTargetReal, currentAge]);
+
+  const ageAtFi = d.ageAtFiReal;                                   // null = no llega (el ★)
+  const declared = !!(plan.actualLife && plan.actualLife.completed);
+  const activeSeg = findActiveSegment(plan.savingSegments, todayKey());
+
+  const R = window.Recharts || {};
+  const { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceDot } = R;
+
+  const xticks = [];
+  for (let a = Math.ceil(currentAge / 10) * 10; a <= retireAge; a += 10) xticks.push(a);
+  const lastPoint = lifeData.length ? lifeData[lifeData.length - 1] : { age: retireAge, portfolio: 0 };
+  const reading = scrub || lastPoint;
+
+  // Punto del ★ SOBRE la curva en la edad de libertad (interpolado entre puntos anuales).
+  // Así la etiqueta puede respirar lejos del cúmulo de la esquina (tick de meta superior +
+  // final de la curva + eje Y) en vez de pisarse contra él. ageAtFi viene de d.ageAtFiReal
+  // (no se recalcula); solo se posiciona la marca + etiqueta.
+  let fiDot = null;
+  if (ageAtFi != null && lifeData.length > 1) {
+    for (let i = 1; i < lifeData.length; i++) {
+      if (lifeData[i].age >= ageAtFi) {
+        const a0 = lifeData[i - 1], a1 = lifeData[i];
+        const t = (ageAtFi - a0.age) / ((a1.age - a0.age) || 1);
+        fiDot = { age: ageAtFi, portfolio: Math.round(a0.portfolio + t * (a1.portfolio - a0.portfolio)) };
+        break;
+      }
+    }
+    if (!fiDot) fiDot = { age: ageAtFi, portfolio: lifeData[lifeData.length - 1].portfolio };
+  }
+  // Si la edad de libertad cae pegada al borde derecho, anclamos la etiqueta a la izquierda
+  // del punto (hacia el interior del plot) para que no se corte; si no, debajo del punto.
+  const fiLabelPos = fiDot && (retireAge - ageAtFi) <= 3 ? 'left' : 'bottom';
+
+  return (
+    <Card pad={mobile ? 16 : 26} style={{ minWidth: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
+        <div>
+          <Label>Tu línea de vida</Label>
+          {realMode && (
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, marginTop: 2 }}>ajustado por inflación {inflRate}% anual</div>
+          )}
+        </div>
+        <DisplayModeToggle />
+      </div>
+
+      {/* Lectura del año recorrido (scrub) · por defecto el punto a la jubilación */}
+      <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.body, marginBottom: 10 }}>
+        A los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{reading.age}</strong>: <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(reading.portfolio)}</strong>
+      </div>
+
+      {/* Leyenda mínima (una curva, no tres) */}
+      <div style={{ display: 'flex', gap: 16, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', marginBottom: 6, flexWrap: 'wrap' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 18, height: 2, background: T.accent, display: 'inline-block' }} />patrimonio</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 18, borderTop: '1.5px dashed ' + T.faint, display: 'inline-block' }} />tu número</span>
+        {ageAtFi != null && <span style={{ color: T.green }}>★ libre a los {Math.round(ageAtFi)}</span>}
+      </div>
+
+      {ResponsiveContainer && lifeData.length > 1 ? (
+        <div style={{ width: '100%', height: mobile ? 240 : 300 }}>
+          <ResponsiveContainer>
+            <ComposedChart data={lifeData} margin={{ top: 16, right: 34, left: 18, bottom: 22 }}
+              onMouseMove={(s) => { if (s && s.activePayload && s.activePayload.length) { const p = s.activePayload.find((x) => x.dataKey === 'portfolio'); if (p) setScrub({ age: s.activeLabel, portfolio: p.value }); } }}
+              onMouseLeave={() => setScrub(null)}>
+              <CartesianGrid stroke={T.lineSoft} strokeDasharray="2 4" vertical={false} />
+              <XAxis dataKey="age" type="number" domain={['dataMin', 'dataMax']} ticks={xticks}
+                tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
+                axisLine={{ stroke: T.line }} tickLine={false}
+                label={{ value: 'Edad', position: 'insideBottom', offset: -6, fill: T.muted, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider }} />
+              <YAxis tickFormatter={fmtEur} tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
+                axisLine={false} tickLine={false} width={64}
+                label={{ value: realMode ? 'Patrimonio (€ de hoy)' : 'Patrimonio (€)', angle: -90, position: 'insideLeft', offset: 10, fill: T.muted, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, style: { textAnchor: 'middle' } }} />
+              <Tooltip cursor={{ stroke: T.ink, strokeWidth: 1, opacity: 0.3 }} content={() => null} />
+              <Line dataKey="meta" stroke={T.faint} strokeWidth={1.5} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
+              <Line dataKey="portfolio" stroke={T.accent} strokeWidth={2} dot={false} isAnimationActive={false} activeDot={{ r: 4, fill: T.accent }} />
+              {fiDot && (
+                <ReferenceDot x={fiDot.age} y={fiDot.portfolio} r={5} fill={T.green} stroke={T.paper} strokeWidth={2} isFront
+                  label={{ value: '★ ' + Math.round(ageAtFi), position: fiLabelPos, offset: 12, fill: T.green, fontFamily: T.mono, fontSize: T.size.eyebrow, fontWeight: 700 }} />
+              )}
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div style={{ height: mobile ? 240 : 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.muted, fontFamily: T.mono, fontSize: T.size.eyebrow }}>Cargando gráfico…</div>
+      )}
+
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal, marginTop: 8 }}>
+        {ageAtFi != null
+          ? 'Asume el promedio histórico del mercado; habrá años mejores y peores. Recorre la línea para ver cualquier año.'
+          : `Con este aporte, tu patrimonio no cruza tu número antes de los ${retireAge}. Ajusta el aporte abajo para acercar la línea a la meta.`}
+      </div>
+
+      {/* ── DIAL (gasto declarado) · INVITACIÓN (sin declarar) ── */}
+      <div style={{ marginTop: mobile ? 18 : 22, paddingTop: mobile ? 18 : 22, borderTop: '1px solid ' + T.lineSoft }}>
+        {declared && activeSeg ? (() => {
+          const isPercent = activeSeg.type === 'percent';
+          const income = d.currentIncome || 0;
+          const eurFromPct = (pct) => Math.round(income * pct / 100);
+          return (
+            <>
+              <Slider
+                label="Cada mes apartas"
+                value={Number(activeSeg.value) || 0}
+                onChange={(v) => updateSaving(activeSeg.id, { value: v })}
+                min={0}
+                max={isPercent ? 50 : Math.max(500, Math.round(income))}
+                step={isPercent ? 1 : 50}
+                fmt={isPercent ? (v) => `${v}% · ${fmtEur(eurFromPct(v))}/mes` : (v) => `${fmtEur(v)}/mes`}
+              />
+              <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.caption, marginTop: 12, lineHeight: T.lh.normal }}>
+                Tu número no cambia: arrastrar solo mueve <em>cuándo</em> llegas.
+              </div>
+            </>
+          );
+        })() : (
+          <>
+            {/* Copy condicional según d.ageAtFiReal: si LLEGA, el dial es para ver "cuándo
+                llegas"; si NO LLEGA, el enfoque pasa a "qué puedes mejorar". Misma estructura,
+                mismo botón; sin culpa, sin prometer resultados. */}
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug }}>
+              {ageAtFi != null
+                ? 'Para mover tu plan con seguridad, dinos cuánto gastas al mes.'
+                : 'Dinos cuánto gastas al mes y verás qué puedes mejorar.'}
+            </div>
+            <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal, maxWidth: 560 }}>
+              {ageAtFi != null
+                ? 'Así tu número FIRE es real y no un efecto de cuánto ahorras: con tu gasto fijo, el dial te deja ver cuándo llegas según lo que apartas.'
+                : 'Con tu gasto real, el dial te enseña cuánto te acerca cada cambio: cuánto baja tu número si gastas menos, cuántos años ganas si aportas más.'}
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <Btn variant="ghost" onClick={() => setShowExpenseModal(true)}>Declarar mi gasto →</Btn>
+            </div>
+          </>
+        )}
+      </div>
+
+      {showExpenseModal && (
+        <ActualLifeOnboarding
+          onClose={() => setShowExpenseModal(false)}
+          onComplete={(payload) => { updatePlan({ actualLife: payload }); setShowExpenseModal(false); }}
+        />
+      )}
+    </Card>
+  );
+}
+
 export function ScreenProyeccion() {
   // Pantalla proyecta directamente con los parámetros del plan.
   // v1.4.0c · BIG-A · ScreenProyeccion ahora también edita tramos (income,
@@ -2679,15 +2765,6 @@ export function ScreenProyeccion() {
     return arr;
   }, [seriesReal, seriesRealWithHypo, finalReal, d.firstRegisteredKey, d.realPortfolioAtLastReg, d.planPortfolioAtLastReg, d.realVsPlanRatio, d.realVsPlanDelta, seriesPlanFromStart, seriesRealFromStart]);
 
-  const yearMilestones = useMemo(() => {
-    const years = [1, 5, 10, 20, 30, profile.retireAge - profile.age]
-      .filter((v, i, a) => a.indexOf(v) === i && v > 0 && v <= profile.retireAge - profile.age);
-    return years.map(yr => {
-      const idx = Math.min(yr * 12, seriesActive.length - 1);
-      return { years: yr, ...seriesActive[idx] };
-    });
-  }, [seriesActive, profile]);
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
@@ -2745,46 +2822,19 @@ export function ScreenProyeccion() {
         </div>
       </div>
 
-      {/* Main chart */}
-      <Card pad={mobile ? 16 : 26} style={{ minWidth: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
-          <div>
-            <Label>Curva de patrimonio</Label>
-            {realMode && (
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, marginTop: 2 }}>
-                ajustado por inflación {inflRate}% anual
-              </div>
-            )}
-          </div>
-          <DisplayModeToggle />
-          <div style={{ display: 'flex', gap: 10, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', flexWrap: 'wrap' }}>
-            {scenarios.map((sc, i) => <LegendChip key={i} color={sc.color} label={sc.label} dashed={sc.dashed} />)}
-          </div>
-        </div>
-        <MultiLineChart scenarios={scenarios} height={mobile ? 240 : 360} />
-        <div style={{ marginTop: 12, fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal }}>
-          Esta curva asume que el mercado se comporta según la media histórica. La realidad rara vez sigue una línea: habrá años mejores y peores. Lo que importa es el promedio a tu horizonte, no la cifra exacta de un año concreto.
-        </div>
-      </Card>
-
-      {/* Year-by-year breakdown */}
-      <Card pad={mobile ? 18 : 28}>
-        <Label style={{ marginBottom: 14 }}>Tu yo del futuro</Label>
-        <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
-          {yearMilestones.map((m) => (
-            <div key={m.years} style={{ borderLeft: '2px solid ' + T.accent, paddingLeft: 12, paddingTop: 4, paddingBottom: 4 }}>
-              <Label>En {m.years} año{m.years === 1 ? '' : 's'}</Label>
-              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: T.ink, letterSpacing: T.tracking.tight, marginTop: 4, lineHeight: T.lh.tight }}>{fmtEur(m.portfolio)}</div>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, marginTop: 4 }}>
-                {Math.round(m.age)} años · {fmtEur(m.aportado)} aportados
-              </div>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.green, marginTop: 2 }}>
-                +{fmtEur(m.growth)} de interés
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+      {/* "El motor" · línea de vida + dial de aporte (reemplaza Curva de patrimonio + Tu yo del futuro) */}
+      <ProyeccionEngine
+        d={d}
+        plan={plan}
+        profile={profile}
+        mobile={mobile}
+        realMode={realMode}
+        inflRate={inflRate}
+        applyRealMode={applyRealMode}
+        fiTargetReal={d.fiTarget || 0}
+        updateSaving={m.updateSaving}
+        updatePlan={updatePlan}
+      />
 
       {/* v1.4.0d BIG-B · INGRESOS unificada (Salario base + Complementos en una sola Card) */}
       <Card>
