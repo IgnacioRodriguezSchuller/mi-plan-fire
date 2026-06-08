@@ -2694,13 +2694,6 @@ export function ScreenProyeccion() {
   }), [plan, profile, d.currentPortfolio]);
   const seriesActive = useMemo(() => applyRealMode(seriesActiveNominal), [seriesActiveNominal, applyRealMode]);
 
-  // Referencia: plan real sin eventos hipotéticos.
-  const seriesRealNominal = useMemo(() => projectV2(plan, profile, {
-    capital: d.currentPortfolio,
-    includeHypothetical: false,
-  }), [plan, profile, d.currentPortfolio]);
-  const seriesReal = useMemo(() => applyRealMode(seriesRealNominal), [seriesRealNominal, applyRealMode]);
-
   // Línea "con eventos posibles".
   const seriesRealWithHypoNominal = useMemo(() => projectV2(plan, profile, {
     capital: d.currentPortfolio,
@@ -2708,12 +2701,7 @@ export function ScreenProyeccion() {
   }), [plan, profile, d.currentPortfolio]);
   const seriesRealWithHypo = useMemo(() => applyRealMode(seriesRealWithHypoNominal), [seriesRealWithHypoNominal, applyRealMode]);
 
-  // Dual curves: plan original vs real reconstructed.
-  const seriesPlanFromStart = useMemo(() => applyRealMode(d.seriesPlanFromStart), [d.seriesPlanFromStart, applyRealMode]);
-  const seriesRealFromStart = useMemo(() => applyRealMode(d.seriesRealFromStart), [d.seriesRealFromStart, applyRealMode]);
-
   const finalActive = seriesActive[seriesActive.length - 1];
-  const finalReal = seriesReal[seriesReal.length - 1];
   // Recordatorio (sin toggle): patrimonio CON los eventos posibles incluidos. El hero
   // (finalActive) es el plan base (solo confirmado); esta línea enseña aparte lo que
   // sumaría lo posible. seriesRealWithHypo = misma curva con includeHypothetical: true.
@@ -2742,28 +2730,6 @@ export function ScreenProyeccion() {
   const fireTargetNom = fireTarget * Math.pow(1 + inflRate / 100, profile.retireAge - profile.age);
   const numeroDisplay = realMode ? fireTarget : fireTargetNom;
   const gapDisplay = realMode ? fireGap : Math.max(0, fireTargetNom - finalActiveNom);
-
-  // Build scenarios array for the chart.
-  const scenarios = useMemo(() => {
-    const arr = [];
-    if (d.firstRegisteredKey && d.realPortfolioAtLastReg != null && d.planPortfolioAtLastReg != null) {
-      // A2 · disciplina cromática: la "curva real" es la trayectoria del usuario, NO una
-      // oposición-con-consecuencia (esa es el fork de Plan). Su protagonista va en T.accent
-      // (dato del usuario), no en verde/rojo según ahead/behind. El "vas por delante/detrás"
-      // se cuenta en texto, no tiñendo la línea. "Plan original" = referencia (faint dashed).
-      arr.push({ label: 'Plan original', color: T.faint, series: seriesPlanFromStart, dashed: true });
-      arr.push({ label: 'Curva real', color: T.accent, series: seriesRealFromStart, bold: true });
-      if (finalReal.portfolio !== seriesRealWithHypo[seriesRealWithHypo.length - 1].portfolio) {
-        arr.push({ label: 'Con eventos posibles', color: T.amber, series: seriesRealWithHypo, dashed: true });
-      }
-    } else {
-      arr.push({ label: 'Confirmados', color: T.accent, series: seriesReal, bold: true });
-      if (finalReal.portfolio !== seriesRealWithHypo[seriesRealWithHypo.length - 1].portfolio) {
-        arr.push({ label: 'Con eventos posibles', color: T.amber, series: seriesRealWithHypo, dashed: true });
-      }
-    }
-    return arr;
-  }, [seriesReal, seriesRealWithHypo, finalReal, d.firstRegisteredKey, d.realPortfolioAtLastReg, d.planPortfolioAtLastReg, d.realVsPlanRatio, d.realVsPlanDelta, seriesPlanFromStart, seriesRealFromStart]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
