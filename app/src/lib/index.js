@@ -5,7 +5,7 @@
 // versión original del HTML, valor-a-valor, con reloj y RNG mockeados.
 //
 // Dependencias arrastradas (decisión del usuario):
-//  - fmtEur (formateador puro, L147)        -> usado por computeActivePhase / computeNextStep
+//  - fmtEur (formateador puro, L147)        -> usado por computeActivePhase
 //  - STANDARD_PLAN_REFERENCE (constante, L5001) -> usado por projectStandardPlan
 //  - getSavingsTier depende de T (tokens, ya migrados en Tanda 1) -> import abajo
 import { T } from '../tokens/index.js'
@@ -1076,79 +1076,6 @@ export function _withinYear(isoDate) {
   const t = new Date(isoDate).getTime();
   if (!t) return false;
   return (Date.now() - t) < 365 * 24 * 60 * 60 * 1000;
-}
-
-// Returns the first rule whose condition is met. Each rule provides title,
-// editorial body, optional CTA label and the tab the CTA navigates to.
-export function computeNextStep(state, d) {
-  const { plan, goals, profile } = state;
-  const tk = todayKey();
-  const income = computeIncomeFor(plan, tk);
-  const planAporte = computePlannedFor(plan, tk);
-  const al = plan.actualLife || { completed: false };
-  const monthlyLife = al.completed
-    ? sumExpenses(al)
-    : Math.max(0, income - planAporte);
-  const yearsToRetire = Math.max(1, profile.retireAge - profile.age);
-
-  // Rule 1 · No liquidity cushion (no hito named like "emergencia"/"liquidez"/"colchón")
-  const hasLiquidityGoal = (goals || []).some(g => /(emergencia|liquidez|colchón|colchon)/i.test(g.name || ''));
-  if (!hasLiquidityGoal) {
-    const low = Math.round(monthlyLife * 3);
-    const high = Math.round(monthlyLife * 6);
-    return {
-      ruleId: 'liquidity',
-      title: 'Asegura tu colchón de liquidez',
-      body: monthlyLife > 0
-        ? `Antes de optimizar tu allocation o aportar más, asegura un colchón de liquidez de 3-6 meses de gastos (entre ${fmtEur(low)} y ${fmtEur(high)} en tu caso). Es lo que te permite afrontar imprevistos sin tener que vender inversiones en mal momento.`
-        : 'Antes de optimizar tu allocation o aportar más, asegura un colchón de liquidez de 3-6 meses de gastos. Es lo que te permite afrontar imprevistos sin tener que vender inversiones en mal momento.',
-      ctaLabel: 'Aprende sobre fondo de emergencia →',
-      ctaTab: 'aprender',
-    };
-  }
-  // Rule 2 · No consistent monthly contributions
-  if (planAporte <= 0) {
-    return {
-      ruleId: 'dca',
-      title: 'Establece un aporte mensual',
-      body: 'Define un aporte mensual automático a tu inversión. El DCA (aportar lo mismo cada mes independientemente de cómo vaya el mercado) reduce el impacto del momento de entrar.',
-      ctaLabel: 'Aprende sobre DCA →',
-      ctaTab: 'aprender',
-    };
-  }
-  // Rule 3 · Saving rate < 15%
-  const savingRate = income > 0 ? planAporte / income : 0;
-  if (savingRate < 0.15) {
-    return {
-      ruleId: 'saving-rate',
-      title: 'Sube tu tasa de ahorro',
-      body: `Tu tasa de ahorro actual es del ${Math.round(savingRate * 100)}% (ahorro sobre neto). Cada punto porcentual extra de ahorro acelera tu camino a FIRE en aproximadamente 1-2 años. Considera revisar tus gastos en Seguimiento.`,
-      ctaLabel: 'Aprende sobre la regla de ahorro →',
-      ctaTab: 'aprender',
-    };
-  }
-  // Rule 4 · Conservative allocation (RV < 30%) with long horizon (>15 yrs)
-  if (al.completed && yearsToRetire > 15) {
-    const a = al.allocation || {};
-    const rv = (a.fundsEtfs || 0) + (a.pensionPlan || 0);
-    if (rv < 30) {
-      return {
-        ruleId: 'allocation',
-        title: 'Tu allocation es muy conservadora para tu horizonte',
-        body: `Tu horizonte es de ${yearsToRetire} años. Tu allocation actual tiene solo un ${rv}% en renta variable. Históricamente, en plazos largos, una mayor exposición a renta variable ha dado mejor resultado, aunque con más volatilidad.`,
-        ctaLabel: 'Aprende sobre asset allocation →',
-        ctaTab: 'aprender',
-      };
-    }
-  }
-  // Rule 5 · Everything basic looks healthy
-  return {
-    ruleId: 'fiscal',
-    title: 'Tu plan es robusto en sus parámetros básicos',
-    body: 'El siguiente paso sería profundizar en optimización fiscal: aprovechar deducciones, planes de pensiones del cónyuge, compensación de pérdidas y ganancias.',
-    ctaLabel: null,
-    ctaTab: null,
-  };
 }
 
 // v1.2.0 · Cómputo destilado de los dos KPIs de "Sin un plan" en Movimiento 1.B.

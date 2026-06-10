@@ -5,14 +5,14 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { T, WEB_URL } from '../tokens/index.js'
 import {
-  project, timeToGoal, monthlyForGoal, uid, todayKey, monthKeyFromDate, addMonthsKey,
+  project, monthlyForGoal, uid, todayKey, addMonthsKey,
   compareKeys, isKeyInSegment, findActiveSegment, sumActiveSegments, detectSegmentOverlaps,
-  segmentHasOverlap, normalizeSegments, readableMonth, projectV2, sumExpenses, sumAllocation,
-  computeEffectiveCapitalReturn, buildMortgageSchedule, currentMonthlyAporte, computePlannedFor,
-  computeIncomeFor, currentMonthlyIncome, toRealEur, projectDecumulation, estimateSpanishPension,
-  computeCurrentPortfolio, randomNormal, inferVolatility, percentile, runMonteCarlo, parseKeyMonths,
+  readableMonth, projectV2, sumExpenses,
+  buildMortgageSchedule, currentMonthlyAporte, computePlannedFor,
+  computeIncomeFor, toRealEur, estimateSpanishPension,
+  runMonteCarlo,
   getSavingsTier, seedMonths, defaultGoals, computeUserProfile, projectStandardPlan, computeActivePhase,
-  _withinYear, computeNextStep, computeSinPlanKPIs, fmtEur, fmtEurFull, fmtPct, STANDARD_PLAN_REFERENCE,
+  computeSinPlanKPIs, fmtEur, fmtEurFull,
 } from '../lib/index.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import {
@@ -3195,17 +3195,6 @@ export function HitosEditor() {
             }}>Añadir meta</Btn>
           </div>
         </Card>
-      </div>
-    </div>
-  );
-}
-
-export function ScreenPlan() {
-  return (
-    <div style={{ padding: 24, fontFamily: T.serif, color: T.muted }}>
-      <Label>Plan</Label>
-      <div style={{ marginTop: 12, fontStyle: 'italic', fontSize: T.size.body, lineHeight: T.lh.normal }}>
-        La configuración y el seguimiento de hitos viven ahora en <strong style={{ color: T.ink, fontStyle: 'normal' }}>Seguimiento</strong>. La edición de tramos, eventos y asunciones del plan vive en <strong style={{ color: T.ink, fontStyle: 'normal' }}>Proyección</strong>.
       </div>
     </div>
   );

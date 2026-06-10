@@ -49,7 +49,12 @@ const partParse = slice('function parseKeyMonths(key) {', '// In-app confirm dia
 const partSeed = slice('function seedMonths(monthlyPlanned) {', 'Object.assign(window, { Onboarding });', 'seedMonths/defaultGoals')
 const partStd = slice('const STANDARD_PLAN_REFERENCE = {', '// v1.1.1 · Gráfica dual', 'STANDARD_PLAN_REFERENCE')
 const partCluster = slice('function computeUserProfile(state) {', '// v1.1.1 · Componente visual de las 5 fases', 'cluster')
-const partNext = slice('function computeNextStep(state, d) {', '// v1.2.0 · Modal con vista completa de Sin Mi Plan', 'nextStep')
+// computeNextStep se BORRÓ de src/lib (muerto: cero consumidores desde el
+// rediseño de Plan; pendiente 6 de ESTADO). Sin contraparte viva no hay
+// regresión que vigilar, así que su slice/EXPORT/casos salen del examen.
+// computeSinPlanKPIs (que vivía dentro del antiguo rango de esa slice) sigue
+// vivo y conserva su slice propia:
+const partSinPlan = slice('function computeSinPlanKPIs(plan, profile) {', '// v1.2.0 · Modal con vista completa de Sin Mi Plan', 'sinPlanKPIs')
 const partTier = slice('function getSavingsTier(pct) {', 'function Onboarding() {', 'getSavingsTier')
 
 const EXPORTS = [
@@ -63,10 +68,10 @@ const EXPORTS = [
   'estimateSpanishPension', 'computeCurrentPortfolio', 'randomNormal',
   'inferVolatility', 'percentile', 'runMonteCarlo', 'parseKeyMonths',
   'getSavingsTier', 'seedMonths', 'defaultGoals', 'computeUserProfile',
-  'projectStandardPlan', 'computeActivePhase', '_withinYear', 'computeNextStep',
+  'projectStandardPlan', 'computeActivePhase', '_withinYear',
   'computeSinPlanKPIs', 'fmtEur', 'STANDARD_PLAN_REFERENCE',
 ]
-const body = [partFmt, partStd, partMain, partParse, partSeed, partCluster, partNext, partTier].join('\n\n')
+const body = [partFmt, partStd, partMain, partParse, partSeed, partCluster, partSinPlan, partTier].join('\n\n')
   + `\n\nreturn { ${EXPORTS.join(', ')} };`
 const orig = new Function('T', body)(htmlT)
 
@@ -312,13 +317,6 @@ const SPEC = [
     [{ plan: { ...basePlan, phaseManualChecks: { '4.3': '2026-03-01', '2.1': '2026-01-01' } }, profile, goals: [{ name: 'préstamo', category: 'otro' }] }, { currentPortfolio: 100000 }],
   ]},
   { name: '_withinYear', kind: 'clock', cases: [['2025-08-01'], ['2024-01-01'], [null], ['no-fecha'], ['2026-05-01']] },
-  { name: 'computeNextStep', kind: 'clock', cases: [
-    [{ ...baseState, goals: [] }, {}],                                                          // rule1
-    [stateGoals([], [{ name: 'colchón' }], null), {}],                                          // rule2
-    [stateGoals([{ id: 's', from: '2020-01', to: null, type: 'fixed', value: 200 }], [{ name: 'colchón' }], null), {}], // rule3
-    [stateGoals([{ id: 's', from: '2020-01', to: null, type: 'fixed', value: 400 }], [{ name: 'colchón' }], { cash: 80, fundsEtfs: 10, pensionPlan: 10 }), {}], // rule4
-    [stateGoals([{ id: 's', from: '2020-01', to: null, type: 'fixed', value: 400 }], [{ name: 'colchón' }], { cash: 10, fundsEtfs: 60, pensionPlan: 15, deposits: 10, other: 5 }), {}], // rule5
-  ]},
   { name: 'computeSinPlanKPIs', kind: 'clock', cases: [
     [basePlan, profile],
     [{ ...basePlan, incomeSegments: [], bonusSegments: [] }, profile],   // hasData false
