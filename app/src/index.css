@@ -1,17 +1,15 @@
-/* Reset global de layout — portado byte-a-byte del baseline
- * mi_plan_v1_5_0a_3.html (<style> de cabecera, líneas 28-31).
+/* Bloque <style> global — portado del baseline mi_plan_v1_5_0a_3.html
+ * (<style> de cabecera). La migración del monolito a /src no lo portó; el reset
+ * de layout se restauró primero (sin él, el `margin: 8px` por defecto del <body>
+ * provocaba scroll horizontal con los contenedores `width: 100vw`), y el resto
+ * del bloque (estilado de inputs, fadeUp/.tab-enter, overrides de recharts) se
+ * restauró después con el visto bueno del dueño.
  *
- * La migración del monolito a /src no portó el bloque <style> global. Sin él,
- * el <body> conservaba el `margin: 8px` por defecto del navegador; como los
- * contenedores raíz (Onboarding, Landing) usan `width: 100vw`, sobresalían 8px
- * por la derecha y el documento ganaba scroll horizontal. La causa raíz es esa
- * ausencia del reset, no el layout del onboarding: el arreglo correcto es
- * restaurar el reset (`margin: 0`), no tapar el desbordamiento.
- *
- * NOTA: el baseline tenía más reglas globales en ese mismo <style> (estilado de
- * inputs, @keyframes fadeUp/.tab-enter, overrides de recharts) que la migración
- * también dejó fuera. No se restauran aquí porque afectan a apariencia, no al
- * scroll; quedan pendientes de decisión del dueño. */
+ * El estilado de inputs es INVARIANTE (CLAUDE.md): `appearance: none` +
+ * `-webkit-appearance: none` evitan que el modo oscuro de macOS/iOS pinte los
+ * fondos crema en casi-negro (bug documentado, v1.4.0e BIG-C · P3 doctrina).
+ * Los inputs estilo "subrayado dashed" con style inline `background: transparent`
+ * ganan a este reset por especificidad. */
 
 html, body {
   margin: 0;
@@ -33,6 +31,89 @@ html, body {
 
 * {
   box-sizing: border-box;
+}
+
+/* Inputs — reset cross-browser (modo oscuro macOS/iOS) + estilo base del baseline. */
+input, select, textarea {
+  max-width: 100%;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #faf3e4;
+  color: #6e6253;
+  border: 1px solid #d4c9b0;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 2px rgba(26, 22, 18, 0.04);
+  font-family: 'Fraunces', 'Georgia', 'Times New Roman', serif;
+  outline: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #c2410c;
+  box-shadow: inset 0 1px 2px rgba(26, 22, 18, 0.04), 0 0 0 2px rgba(194, 65, 12, 0.15);
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+input[type=month] {
+  font-family: 'DM Mono', monospace;
+  color: #1a1612;
+}
+input[type=range] {
+  -webkit-appearance: auto;
+  appearance: auto;
+  width: 100%;
+  accent-color: #c2410c;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+input[type=checkbox] {
+  -webkit-appearance: auto;
+  appearance: auto;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+input::placeholder {
+  color: #968874;
+  opacity: 1;
+  font-style: italic;
+}
+
+button:hover { opacity: 0.92; }
+button:active { transform: scale(0.97); }
+
+::selection {
+  background: #c2410c;
+  color: #fff;
+}
+
+/* Entrada de pestaña (el Shell usa .tab-enter en cada cambio de tab). */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tab-enter {
+  animation: fadeUp 0.18s ease-out both;
+}
+
+/* Recharts — ticks en DM Mono y contención horizontal de los contenedores. */
+.recharts-cartesian-axis-tick text {
+  font-family: 'DM Mono', monospace !important;
+}
+.recharts-responsive-container {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+.recharts-wrapper {
+  max-width: 100% !important;
 }
 
 /* Sol del hero de Proyección · el sol se COLOCA en el arco según la edad de libertad; cuando la
