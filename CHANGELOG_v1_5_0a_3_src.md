@@ -511,3 +511,77 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   `lostFirstYear` ya conocido); consola limpia; hash baseline intacto. 375: sin overflowX en
   NINGÚN bloque (M3 ya no desborda, las 5 fases completas); 1280 sin desborde. Perfil A: solo
   gancho. Demo restaurado a su estado original.
+### 2026-06 · Proyección · sprint "al lenguaje de Plan" (6 commits sin entrada — registro retroactivo)
+
+> Registro consolidado de la auditoría 2026-06-10: los commits `87e9e12` → `ec1e4b6`
+> entraron sin entrada en este changelog. Resumen por commit; el detalle vive en
+> los cuerpos de commit.
+
+- **`87e9e12` charts al lenguaje accent (A2)**: los gráficos de Proyección adoptan la
+  disciplina cromática de Plan.
+- **`8475319` MC: aporte creciente + plan base = solo confirmado**: `runMonteCarlo`
+  abandona el aporte mensual PLANO y deriva su calendario anual de la serie de
+  `projectV2` (`pt.monthlyAporte` agrupado por año) → hereda crecimiento salarial por
+  IPC, tramos y eventos; `includeHypothetical` default `false`. Corrige la divergencia
+  histórica mediana-MC vs determinista. **Divergencia intencional nueva en
+  `verify-lib`** (runMonteCarlo.paths difiere del baseline: el motor nuevo es el bueno).
+- **`678054e` hero del momento de libertad (dos estados)**: LLEGA (edad protagonista,
+  verde doctrinal) / NO LLEGA (brecha en accent, sin fallback a retireAge) + coherencia
+  de unidad + eje MC legible.
+- **`6195e2c` motor (línea de vida + dial) y supervivencia legible**.
+- **`5d2b4a3` espina FIRE en el motor**: el número desde el gasto (25× anual), el
+  cruce, la palanca.
+- **`ec1e4b6` amanecer del hero**: sol en arco según edad FIRE (CSS en `index.css`,
+  `prefers-reduced-motion` respetado).
+
+### 2026-06-10 · Proyección · nube de probabilidad MC por edad (commit `0b9e533`)
+
+- **Causa raíz**: la rejilla 10×10 comunicaba el % de éxito pero no la FORMA de la
+  incertidumbre (cuándo se abre la dispersión, cuánto cae la cola).
+- **Cambio**: `runMonteCarlo` devuelve `bandsByAge` (percentiles por año reetiquetados
+  por edad, P10..P90; aditivo puro). `MonteCarloCard` pinta nube P10–P90 + P25–P75 con
+  gradiente, mediana accent, meta "tu número" (plana en real / inflada en nominal) y
+  frontera ACUMULACIÓN/JUBILACIÓN en retireAge; eje Y capado contra la cola larga.
+- **No tocado**: firma de `runMonteCarlo` (añadido opcional), percentiles/éxito
+  existentes, migraciones, claves localStorage, baseline.
+- **Verificación**: build OK; verificadores en estado conocido (bandsByAge entra como
+  aditivo en verify-lib); consola limpia; 1280/375 sin desborde; cruce mediana×meta = 60
+  coherente con el hero.
+
+### 2026-06-10 · Estilos globales del baseline restaurados (commit `7a4fb59`)
+
+- **Causa raíz**: la migración a /src solo portó el reset de layout del `<style>` de
+  cabecera del baseline. Faltaba el INVARIANTE de inputs (`appearance: none` +
+  `-webkit-appearance: none` — bug documentado de modo oscuro macOS/iOS), el foco
+  accent, spinners, range/checkbox, placeholder, hover/active de botones, `::selection`,
+  `fadeUp`/`.tab-enter` (el Shell usaba la clase sin regla) y los overrides de recharts.
+- **Cambio**: bloque ENTERO portado a `app/src/index.css` (decisión de Nacho).
+- **Verificación**: emulación dark → 0 inputs con fondo oscuro; los EditableNumber
+  inline ganan por especificidad como en el baseline; fadeUp activo; ticks DM Mono.
+
+### 2026-06-10 · Plan M3 · hito ★ libertad honesto (commit `67fbf3a`)
+
+- **Causa raíz**: `libertadAge` caía en silencio a `retireAge` cuando el plan no
+  llegaba → el ★ verde mentía (mostraba la edad de jubilación como clímax conseguido).
+- **Cambio**: fallback honesto "—" muted + nota mono "todavía no llega" (patrón de
+  `momentumAge`; copy derivado del hero de Proyección). Verde y ★ solo si la edad existe.
+- **Verificación**: ambos estados en navegador (retorno 8% / 1%); demo restaurado.
+
+### 2026-06-10 · Limpieza de código muerto (commit `4ab4da6`)
+
+- **Cambio**: borrados `ScreenPlan` (stub huérfano, sin tab en el router),
+  `computeNextStep` (lib; importada pero jamás invocada) y 17 imports de lib sin uso en
+  screens. `verify-lib` re-cableado: el caso de computeNextStep sale del examen y
+  `computeSinPlanKPIs` (viva, envuelta por la antigua slice) gana slice propia.
+- **No tocado**: las funciones de lib que siguen vivas en state/verificadores.
+- **Verificación**: 0 usos confirmados símbolo a símbolo; build OK; verify-lib 43
+  filas · 201 casos en estado conocido; 5 pestañas renderizan sin errores nuevos.
+
+### 2026-06-10 · Gobernanza (commit `791eb3d` + docs)
+
+- `.gitignore` += `design-system/` (artefacto potencial de la skill de terceros
+  ui-ux-pro-max; la doctrina vinculante es `DOCTRINA_DISENO.md`).
+- `CLAUDE_CODE_CONTEXTO.md` adelgazado (pendiente 8): fuera el flujo del monolito
+  (estado v1.1.1, validación Babel, mapa de líneas, historias de sprint — viven en los
+  `CHANGELOG_v*.md`); queda voz editorial + convenciones no cubiertas por `CLAUDE.md`.
+- `ESTADO.md` actualizado al cierre de esta tanda.
