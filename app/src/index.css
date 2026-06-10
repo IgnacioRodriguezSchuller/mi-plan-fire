@@ -34,3 +34,23 @@ html, body {
 * {
   box-sizing: border-box;
 }
+
+/* Sol del hero de Proyección · el sol se COLOCA en el arco según la edad de libertad; cuando la
+ * edad mejora, sube con esta transición suave (NO es un bucle por el arco). Solo el HALO "respira"
+ * en un loop muy lento (8s, amplitud pequeña en opacidad/escala → la luz late, no parpadea).
+ * prefers-reduced-motion desactiva tanto la respiración como la transición de posición. */
+.hero-sun {
+  transition: top 600ms ease, right 600ms ease;
+}
+@keyframes heroSunBreath {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.9; transform: scale(1.06); }
+}
+.hero-sun-halo {
+  animation: heroSunBreath 8s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-sun { transition: none; }
+  .hero-sun-halo { animation: none; opacity: 0.72; transform: none; }
+}

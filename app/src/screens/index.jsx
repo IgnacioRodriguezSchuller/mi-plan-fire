@@ -2758,9 +2758,62 @@ export function ScreenProyeccion() {
   const numeroDisplay = realMode ? fireTarget : fireTargetNom;
   const gapDisplay = realMode ? fireGap : Math.max(0, fireTargetNom - finalActiveNom);
 
+  // ── Sol del hero como ELEMENTO en un ARCO según la edad de libertad ─────────────────────
+  // El sol ES el resultado: ALTO (mediodía) = liberarte pronto; BAJO (atardecer) = tarde; en el
+  // HORIZONTE (puesta) = no llegas. Mapeo FIJO: edad 40 (o antes) → arriba (t=0); edad 70 → abajo
+  // (t≈0.94); interpola lineal y clampa. NO LLEGA (ageAtFiReal == null) → puesta total (t=1). El
+  // sol se COLOCA donde toca y se queda ahí (NO recorre el arco en bucle): si el plan mejora y la
+  // edad baja, SUBE con transición CSS suave (600ms, en .hero-sun). Solo el halo "respira" (loop
+  // sutil, index.css; prefers-reduced-motion lo desactiva). El cielo de fondo es un wash cálido
+  // estático que se derrama (sin caja). Contenido en la columna izquierda; el sol no pisa texto.
+  const SUN_AGE_HIGH = 40, SUN_AGE_LOW = 70;
+  const sunReaches = d.ageAtFiReal != null;
+  let sunT;
+  if (!sunReaches) {
+    sunT = 1;                                                                  // puesta (horizonte)
+  } else {
+    const a = Math.min(Math.max(d.ageAtFiReal, SUN_AGE_HIGH), SUN_AGE_LOW);
+    sunT = ((a - SUN_AGE_HIGH) / (SUN_AGE_LOW - SUN_AGE_HIGH)) * 0.94;         // edad 70 → 0.94 (bajo, no del todo puesto)
+  }
+  // Geometría del arco: horizontal en cuarto de círculo (centrado → borde derecho); vertical = arco
+  // sin (alto+mediodía cuando joven, media tarde hacia ~60) MÁS una caída extra que solo actúa en la
+  // COLA (potencia alta de sunT: ~0 en joven/medio, crece al final). Así el extremo alto y ~60 quedan
+  // intactos y solo el extremo bajo —edades muy tardías y, sobre todo, NO LLEGA— cae más hacia el
+  // HORIZONTE en vez de quedarse a media altura (el sin solo se aplanaba cerca de t=1 → no separaba).
+  const arcA = sunT * Math.PI / 2;
+  // En MÓVIL el arco se comprime a la banda superior derecha (el titular ocupa el ancho): el sol se
+  // mueve sobre todo en horizontal + color, SIEMPRE por encima del titular para no pisarlo; ahí la
+  // cola es 0 → el arco móvil queda idéntico. En DESKTOP el arco es amplio (alto ↔ horizonte).
+  const arcTop = mobile ? 2 : 6, arcBase = mobile ? 8 : 132;                   // arco sin: cima ↔ base
+  const tailDrop = mobile ? 0 : 85, tailPow = 6;                              // caída extra solo en la cola
+  const rightCtr = mobile ? 54 : 150, rightEdge = mobile ? 10 : 26;
+  const sunSize = mobile ? 30 : 56;                                            // diámetro del disco
+  const sunTopPx = Math.round(arcTop + (arcBase - arcTop) * Math.sin(arcA) + tailDrop * Math.pow(sunT, tailPow));
+  const sunRightPx = Math.round(rightCtr - (rightCtr - rightEdge) * (1 - Math.cos(arcA)));
+  // Color del sol según la altura: dorado claro arriba → ámbar/anaranjado abajo (sutil, sin saturar).
+  const mix = (x, y) => Math.round(x + (y - x) * sunT);
+  const sunCore = `rgb(255, ${mix(247, 226)}, ${mix(210, 146)})`;
+  const sunEdge = `rgb(255, ${mix(206, 168)}, ${mix(122, 92)})`;
+  const haloColor = `rgba(255, ${mix(206, 170)}, ${mix(130, 100)}, 0.5)`;
+  const heroSunrise = {
+    position: 'relative',
+    background: 'radial-gradient(135% 130% at 100% -8%, rgba(255,224,180,0.5) 0%, rgba(251,236,214,0.24) 40%, rgba(245,240,230,0) 74%)',
+    padding: mobile ? '26px 18px 30px' : '38px 32px 38px',
+  };
+  // El sol (elemento): contenedor en el arco (transición suave de posición) + halo (respira) + disco.
+  const heroSunWrap = { position: 'absolute', top: sunTopPx, right: sunRightPx, width: sunSize, height: sunSize, pointerEvents: 'none', zIndex: 0 };
+  const haloD = sunSize * (mobile ? 3.2 : 3.6);
+  const heroSunHalo = { position: 'absolute', left: '50%', top: '50%', width: haloD, height: haloD, marginLeft: -haloD / 2, marginTop: -haloD / 2, borderRadius: '50%', background: `radial-gradient(circle, ${haloColor} 0%, rgba(255,205,135,0) 66%)` };
+  const heroSunDisc = { position: 'absolute', inset: 0, borderRadius: '50%', background: `radial-gradient(circle at 50% 42%, ${sunCore} 0%, ${sunEdge} 60%, rgba(255,205,135,0) 100%)` };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+      <div style={heroSunrise}>
+      <div className="hero-sun" style={heroSunWrap} aria-hidden="true">
+        <div className="hero-sun-halo" style={heroSunHalo} />
+        <div style={heroSunDisc} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, position: 'relative', zIndex: 1 }}>
         <div style={{ flex: 1, minWidth: 200 }}>
           <Label>Proyección</Label>
           {reachesFreedom ? (
@@ -2813,6 +2866,7 @@ export function ScreenProyeccion() {
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* "El motor" · línea de vida + dial de aporte (reemplaza Curva de patrimonio + Tu yo del futuro) */}
