@@ -585,3 +585,15 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   (estado v1.1.1, validación Babel, mapa de líneas, historias de sprint — viven en los
   `CHANGELOG_v*.md`); queda voz editorial + convenciones no cubiertas por `CLAUDE.md`.
 - `ESTADO.md` actualizado al cierre de esta tanda.
+
+### 2026-06-10 · Historial reescrito para retirar trailers de coautoría de IA
+
+- Reescritura de los **mensajes** de commit con `git filter-repo` (clon fresco, solo
+  mensajes): eliminados los 38 trailers `Co-Authored-By: Claude …`. **El código no cambia
+  ni un byte** (árbol raíz idéntico `2f42ee96…`; baseline `b3ea52b1…` intacto; 45 commits).
+- `git push --force-with-lease` ejecutado por Nacho a mano. Backup previo en
+  `~/Downloads/miplanfire-backup-pre-rewrite.bundle`.
+- **Los hashes de commit citados en documentos anteriores a esta fecha ya no resuelven**
+  (toda la cadena recibió hashes nuevos al reescribirse los mensajes).
+- `.claude/settings.json` += `attribution: { commit: "", pr: "" }` → corta la atribución
+  automática de IA en futuros commits y PRs.
