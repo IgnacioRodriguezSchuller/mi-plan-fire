@@ -944,7 +944,7 @@ export function MonthlyFlowCard({ plan, profile }) {
 }
 
 export function Onboarding() {
-  const { update, seedDemo } = useStore();
+  const { update, seedDemoConfirm } = useStore();
   const mobile = useIsMobile();
   const [step, setStep] = useState(0);
   const [data, setData] = useState({
@@ -1503,7 +1503,7 @@ export function Onboarding() {
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight }}>
             Mi <em style={{ color: T.accent }}>Plan</em>
           </div>
-          <button onClick={() => seedDemo()}
+          <button onClick={() => seedDemoConfirm()}
             style={{
               fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, background: 'transparent',
               border: 'none', cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase',
@@ -3603,7 +3603,7 @@ export function AccountsCard() {
 
 export function ScreenAjustes() {
   const { state, activePlan,
-    resetAll, reonboard, seedDemo, updatePlan, update, updateProfile } = useStore();
+    resetAll, reonboard, seedDemoConfirm, updatePlan, update, updateProfile } = useStore();
   const mobile = useIsMobile();
 
   return (
@@ -3683,7 +3683,7 @@ export function ScreenAjustes() {
             };
             input.click();
           }}>Importar JSON</Btn>
-          <Btn variant="ghost" size="sm" onClick={seedDemo}>Cargar datos demo</Btn>
+          <Btn variant="ghost" size="sm" onClick={seedDemoConfirm}>Cargar datos demo</Btn>
           <Btn variant="ghost" size="sm" onClick={resetAll} style={{ color: T.red, borderColor: T.red }}>Borrar todo</Btn>
         </div>
         <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>

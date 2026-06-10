@@ -134,10 +134,26 @@ export function StateProvider({ children }) {
     });
   }, []);
   const seedDemo = useCallback(() => setState(seedState()), []);
+  // Variante con confirmación (H11): cargar la demo SUSTITUYE el estado entero.
+  // El botón "Cargar datos demo" de Datos y el "Saltar · usar demo" del onboarding
+  // (alcanzable CON datos reales vía reonboard, que conserva el estado) pasan por
+  // el MISMO modal que resetAll/reonboard. seedDemo (directo) se conserva para la
+  // landing, que solo se renderiza con !landingSeen (usuario sin datos que perder).
+  const seedDemoConfirm = useCallback(() => {
+    setPendingConfirm({
+      title: 'Cargar datos de demostración',
+      body: 'Vas a sustituir tus datos por los de la demo. Lo que tienes ahora en este navegador se pierde. Si quieres conservarlos, expórtalos antes.',
+      confirmLabel: 'Cargar demo',
+      destructive: true,
+      action: () => {
+        setState(seedState());
+      },
+    });
+  }, []);
 
   const value = useMemo(() => ({
     state, update, updateProfile, updatePlan, mutatePlan,
-    setMonth, addGoal, updateGoal, removeGoal, resetAll, reonboard, seedDemo,
+    setMonth, addGoal, updateGoal, removeGoal, resetAll, reonboard, seedDemo, seedDemoConfirm,
     activePlan: state.plan,
     // Callbacks declarados arriba para compatibilidad de estado persistido.
     // No exportados actualmente.
