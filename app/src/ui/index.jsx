@@ -12,6 +12,30 @@ import { useState, useEffect } from 'react'
 import { T } from '../tokens/index.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 
+// Parseo de número en formato español (H2). `parseFloat(draft.replace(',', '.'))`
+// a secas corrompía datos: "1.500" → 1.5 y "1.500,50" → 1.5 (el punto de millares
+// se leía como decimal). Reglas, en orden:
+//   1. fuera espacios (incluidos \u00A0 NBSP y \u202F NNBSP, separadores
+//      de millar en algunos locales).
+//   2. más de una coma → NaN (descarte).
+//   3. exactamente una coma → la coma ES el decimal: fuera todos los puntos
+//      (millares), coma → punto.
+//   4. sin coma: si el string entero es un patrón de millares con punto
+//      (-?\d{1,3}(.\d{3})+) → fuera puntos; si no, parseFloat tal cual
+//      (un "1.5" suelto se respeta como 1,5).
+// Pura y sin dependencias a propósito: scripts/test-parse-spanish-number.mjs la
+// extrae del fuente y la ejecuta en node.
+export function parseSpanishNumber(str) {
+  if (str == null) return NaN;
+  const s = String(str).trim().replace(/[\s\u00A0\u202F]/g, '');
+  if (s === '') return NaN;
+  const commas = (s.match(/,/g) || []).length;
+  if (commas > 1) return NaN;
+  if (commas === 1) return parseFloat(s.replace(/\./g, '').replace(',', '.'));
+  if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) return parseFloat(s.replace(/\./g, ''));
+  return parseFloat(s);
+}
+
 // Editable number that looks like text (used inline in sentences)
 export function EditableNumber({ value, onChange, min, max, step = 1, suffix = '', width, color = T.accent, big = false }) {
   const [editing, setEditing] = useState(false);
@@ -19,7 +43,7 @@ export function EditableNumber({ value, onChange, min, max, step = 1, suffix = '
   useEffect(() => { if (!editing) setDraft(String(value)); }, [value, editing]);
   const commit = () => {
     setEditing(false);
-    const n = parseFloat(draft.replace(',', '.'));
+    const n = parseSpanishNumber(draft);
     if (!isNaN(n)) {
       const clamped = Math.max(min ?? -Infinity, Math.min(max ?? Infinity, n));
       onChange(clamped);
