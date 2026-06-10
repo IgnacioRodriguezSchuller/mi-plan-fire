@@ -3,3 +3,7 @@ dist/
 .DS_Store
 .claude/settings.local.json
 .claude/launch.json
+# Artefacto potencial de la skill ui-ux-pro-max (--design-system --persist).
+# La doctrina de diseño de este repo es DOCTRINA_DISENO.md; nada generado
+# por esa skill debe entrar en commits.
+design-system/
