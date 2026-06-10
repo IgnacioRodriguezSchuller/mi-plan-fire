@@ -2510,6 +2510,18 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
   const declared = !!(plan.actualLife && plan.actualLife.completed);
   const activeSeg = findActiveSegment(plan.savingSegments, todayKey());
 
+  // Derivación del número FIRE (espina conceptual) · solo COPY/VISTA, no recalcula.
+  // El número = 25× el gasto ANUAL (regla del 4%): 1/tasa redondeado, aplicado al gasto del año.
+  // numeroHoy = fiTarget real (€ de hoy) — el MISMO que ya existe, no se fuerza. La cadena va
+  // de mensual a ANUAL porque la regla del 4% es 25× el gasto ANUAL; con mensual×25 saldría 12×
+  // menos y la ecuación mentiría. fmtEurFull (cifra completa) para que la multiplicación cuadre
+  // a la vista. Coherencia verificada en runtime: gastoAnual × mult === fiTarget real.
+  const wRate = plan.withdrawalRate != null ? plan.withdrawalRate : 4.0;   // tasa de retiro %
+  const fiMult = Math.round(100 / wRate);                                  // 1/tasa: ×25 al 4%, ×33 al 3%
+  const monthlySpend = declared ? Math.round(sumExpenses(plan.actualLife)) : 0;
+  const annualSpend = monthlySpend * 12;                                   // origen mensual → anual (la regla es sobre gasto anual)
+  const numeroHoy = Math.round(fiTargetReal);                              // número FIRE en € de HOY (real)
+
   const R = window.Recharts || {};
   const { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceDot } = R;
 
@@ -2550,6 +2562,15 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
         <DisplayModeToggle />
       </div>
 
+      {/* Tira de derivación del número FIRE · de dónde sale tu número (solo con gasto declarado).
+          Gasto ANUAL × múltiplo (1/tasa) = número en € de HOY (= fiTarget real). */}
+      {declared && (
+        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, marginBottom: 10, lineHeight: T.lh.normal }}>
+          <span style={{ color: T.faint, textTransform: 'uppercase', letterSpacing: T.tracking.wider }}>Tu número · </span>
+          {fmtEurFull(monthlySpend)}/mes → {fmtEurFull(annualSpend)}/año × {fiMult} = <strong style={{ color: T.ink }}>{fmtEurFull(numeroHoy)}</strong> de hoy · regla del {wRate}%
+        </div>
+      )}
+
       {/* Lectura del año recorrido (scrub) · por defecto el punto a la jubilación */}
       <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.body, marginBottom: 10 }}>
         A los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{reading.age}</strong>: <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(reading.portfolio)}</strong>
@@ -2581,7 +2602,7 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
               <Line dataKey="portfolio" stroke={T.accent} strokeWidth={2} dot={false} isAnimationActive={false} activeDot={{ r: 4, fill: T.accent }} />
               {fiDot && (
                 <ReferenceDot x={fiDot.age} y={fiDot.portfolio} r={5} fill={T.green} stroke={T.paper} strokeWidth={2} isFront
-                  label={{ value: '★ ' + Math.round(ageAtFi), position: fiLabelPos, offset: 12, fill: T.green, fontFamily: T.mono, fontSize: T.size.eyebrow, fontWeight: 700 }} />
+                  label={{ value: '★ ' + Math.round(ageAtFi) + ' · el cruce', position: fiLabelPos, offset: 12, fill: T.green, fontFamily: T.mono, fontSize: T.size.eyebrow, fontWeight: 700 }} />
               )}
             </ComposedChart>
           </ResponsiveContainer>
@@ -2592,7 +2613,7 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
 
       <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal, marginTop: 8 }}>
         {ageAtFi != null
-          ? 'Asume el promedio histórico del mercado; habrá años mejores y peores. Recorre la línea para ver cualquier año.'
+          ? `El ★ es el cruce: a los ${Math.round(ageAtFi)}, el ${wRate}% anual de tu cartera iguala tu gasto — dejas de necesitar un sueldo.`
           : `Con este aporte, tu patrimonio no cruza tu número antes de los ${retireAge}. Ajusta el aporte abajo para acercar la línea a la meta.`}
       </div>
 
@@ -2604,6 +2625,12 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
           const eurFromPct = (pct) => Math.round(income * pct / 100);
           return (
             <>
+              {/* El dial es LA PALANCA · la tasa de ahorro es lo que más adelanta tu fecha. */}
+              <Label>La palanca</Label>
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, marginTop: 2, lineHeight: T.lh.snug }}>Tu tasa de ahorro</div>
+              <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.body, marginTop: 6, marginBottom: 16, lineHeight: T.lh.normal, maxWidth: 560 }}>
+                No es cuánto ganas — es <span style={{ color: T.accent }}>qué % guardas</span>. Tu tasa de ahorro es lo que más adelanta tu fecha.
+              </div>
               <Slider
                 label="Cada mes apartas"
                 value={Number(activeSeg.value) || 0}
