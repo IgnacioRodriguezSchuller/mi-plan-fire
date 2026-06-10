@@ -1638,8 +1638,10 @@ export function RutaCincoFases({ state, d, mobile }) {
   const activeTitle = phases[route.activePhase - 1] ? phases[route.activePhase - 1].title : '';
 
   // Hitos · libertad = edad FIRE real (excepción cromática verde · clímax);
-  // jubilación = edad legal del producto.
-  const libertadAge = d.ageAtFiReal != null ? Math.round(d.ageAtFiReal) : state.profile.retireAge;
+  // jubilación = edad legal del producto. Si el plan NO llega (ageAtFiReal null),
+  // el hito muestra fallback honesto "—" (mismo patrón que momentumAge), nunca
+  // retireAge disfrazado de edad de libertad.
+  const libertadAge = d.ageAtFiReal != null ? Math.round(d.ageAtFiReal) : null;
   const pensionAge = (plan.publicPension && plan.publicPension.startAge) || 67;
   // Hito "tu dinero te adelanta" · primera edad en la que el rendimiento anual de la
   // cartera (capital_inicio_año × retorno del plan) supera al aporte de ese año.
@@ -1751,10 +1753,12 @@ export function RutaCincoFases({ state, d, mobile }) {
           <div style={{ fontFamily: T.serif, fontSize: 16, color: T.muted, marginTop: 6, lineHeight: 1.2 }}>tu dinero te adelanta</div>
           {momentumAge == null && <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 3, letterSpacing: T.tracking.wide, textTransform: 'uppercase' }}>necesita aporte</div>}
         </div>
-        {/* Hito libertad · EXCEPCIÓN cromática declarada: verde (clímax de la ruta) */}
+        {/* Hito libertad · EXCEPCIÓN cromática declarada: verde (clímax de la ruta).
+            El verde y el ★ SOLO cuando la edad existe; si no llega, "—" muted. */}
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 34 : 42, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1 }}>★ {libertadAge}</div>
-          <div style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 16, color: T.green, marginTop: 6, lineHeight: 1.2 }}>eres libre</div>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 34 : 42, color: libertadAge != null ? T.green : T.muted, letterSpacing: T.tracking.display, lineHeight: 1 }}>{libertadAge != null ? '★ ' + libertadAge : '—'}</div>
+          <div style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 16, color: libertadAge != null ? T.green : T.muted, marginTop: 6, lineHeight: 1.2 }}>eres libre</div>
+          {libertadAge == null && <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 3, letterSpacing: T.tracking.wide, textTransform: 'uppercase' }}>todavía no llega</div>}
         </div>
         {/* Hito jubilación pública */}
         <div style={{ textAlign: 'center' }}>
