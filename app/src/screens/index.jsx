@@ -544,29 +544,31 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
     return () => { cancelled = true; clearTimeout(timer); };
   }, [inputsKey]);
 
-  // Build chart data: ages mapped to p10/p25/p50/p75/p90 values, optionally converted to real
+  // Datos de la NUBE: bandsByAge (lo que runMonteCarlo ya devuelve, un punto por edad) → cada edad
+  // con p10/p25/p50/p75/p90, deflactado al modo real igual que el resto (toRealEur; bandsByAge viene
+  // en nominal). NO toca lib: solo consume y deflacta aquí. Añade la meta "tu número" por edad.
   const chartData = useMemo(() => {
-    if (!result) return [];
-    return result.percentiles.map((row, y) => {
-      const monthsFromNow = y * 12;
+    if (!result || !result.bandsByAge) return [];
+    const fiTargetHoy = d.fiTarget || 0;                 // número FIRE en € de HOY (real)
+    return result.bandsByAge.map((row) => {
+      const monthsFromNow = (row.age - profile.age) * 12;
       const conv = (v) => realMode ? toRealEur(v, monthsFromNow, inflRate) : v;
+      const p10 = conv(row.p10), p25 = conv(row.p25), p50 = conv(row.p50), p75 = conv(row.p75), p90 = conv(row.p90);
+      // Meta "tu número": en real es plana (€ de hoy); en nominal se infla por edad — MISMO patrón
+      // que el gráfico de vida, para que el cruce mediana × meta case con la otra curva.
+      const meta = fiTargetHoy > 0
+        ? (realMode ? fiTargetHoy : fiTargetHoy * Math.pow(1 + inflRate / 100, row.age - profile.age))
+        : null;
       return {
-        age: profile.age + y,
-        p10: conv(row.p10),
-        p25: conv(row.p25),
-        p50: conv(row.p50),
-        p75: conv(row.p75),
-        p90: conv(row.p90),
-        // Pre-computed band ribbons so Recharts can render them as stacked areas.
-        // outerSpan: from p10 to p90 (full plausible range, 80% central).
-        // innerSpan: from p25 to p75 (probable range, 50% central).
-        outerLow: conv(row.p10),
-        outerSpan: conv(row.p90) - conv(row.p10),
-        innerLow: conv(row.p25),
-        innerSpan: conv(row.p75) - conv(row.p25),
+        age: row.age,
+        p10, p25, p50, p75, p90,
+        // Cintas pre-calculadas (base invisible + span apilado) para que Recharts pinte las bandas.
+        outerLow: p10, outerSpan: p90 - p10,             // banda exterior P10–P90 (80% central)
+        innerLow: p25, innerSpan: p75 - p25,             // banda interior P25–P75 (50% central, densa)
+        meta,
       };
     });
-  }, [result, realMode, inflRate, profile.age]);
+  }, [result, realMode, inflRate, profile.age, d.fiTarget]);
 
   if (running && !result) {
     return (
@@ -607,6 +609,16 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
   const depleted = 100 - survivors;
   const lifeExp = plan.lifeExpectancy || 90;
 
+  // Nube de probabilidad (Recharts global UMD). Reemplaza la rejilla de 100 casillas.
+  const R = window.Recharts || {};
+  const { ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, ReferenceLine } = R;
+  // Cap del eje Y (anti-aplastamiento): los P90 tardíos son enormes (cola larga: P90 a 90 ~12M
+  // cuando la mediana ~2,6M). Capamos a max(P90 a la edad de retiro, P50 final) × 1.3 y dejamos que
+  // la cima de la banda P90 se salga RECORTADA (allowDataOverflow). Así mediana y cruce se leen sin
+  // que la banda útil quede aplastada. Se calcula sobre chartData → respeta real/nominal.
+  const finalRow = chartData[chartData.length - 1];
+  const yCap = (retireRow && finalRow) ? Math.round(Math.max(retireRow.p90, finalRow.p50) * 1.3) : undefined;
+
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -630,12 +642,71 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
         De cada 100 futuros, <strong style={{ color: T.green, fontStyle: 'normal' }}>{survivors}</strong> aguantan hasta los {lifeExp} · <strong style={{ color: T.amber, fontStyle: 'normal' }}>{depleted}</strong> se agotan antes.
       </div>
 
-      {/* Rejilla 10×10 · los primeros {survivors} verdes (aguantan), el resto ámbar (se agotan).
-          Verde SOLO para los supervivientes; ámbar T.amber para los que se agotan. */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 6, maxWidth: 360, marginBottom: 16 }} aria-hidden="true">
-        {Array.from({ length: 100 }, (_, i) => (
-          <div key={i} style={{ aspectRatio: '1', borderRadius: 3, background: i < survivors ? T.green : T.amber }} />
-        ))}
+      {/* NUBE de probabilidad sobre toda la vida (acumulación + jubilación). Bandas P10–P90 (exterior,
+          tenue) y P25–P75 (interior, densa) con gradiente vertical → bordes que mueren suaves, sin
+          contorno duro. Mediana P50 sólida acento por encima. Línea de retiro separa las dos fases;
+          meta "tu número" tenue para ver el cruce. Eje Y capado (yCap) con desbordamiento recortado. */}
+      {ResponsiveContainer && chartData.length > 1 ? (
+        <div style={{ height: 248, marginBottom: 10, position: 'relative' }}>
+          <ResponsiveContainer>
+            <ComposedChart data={chartData} margin={{ top: 16, right: 16, left: 18, bottom: 22 }}>
+              <defs>
+                <linearGradient id="mcCloudOuter" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={T.accent} stopOpacity="0.02" />
+                  <stop offset="52%" stopColor={T.accent} stopOpacity="0.16" />
+                  <stop offset="100%" stopColor={T.accent} stopOpacity="0.04" />
+                </linearGradient>
+                <linearGradient id="mcCloudInner" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={T.accent} stopOpacity="0.10" />
+                  <stop offset="50%" stopColor={T.accent} stopOpacity="0.28" />
+                  <stop offset="100%" stopColor={T.accent} stopOpacity="0.10" />
+                </linearGradient>
+                <filter id="mcCloudBlur" x="-3%" y="-8%" width="106%" height="116%">
+                  <feGaussianBlur stdDeviation="2" />
+                </filter>
+              </defs>
+              <CartesianGrid stroke={T.lineSoft} vertical={false} />
+              <XAxis dataKey="age" type="number" domain={['dataMin', 'dataMax']}
+                ticks={[profile.age, profile.retireAge, lifeExp]}
+                tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
+                axisLine={{ stroke: T.line }} tickLine={false}
+                label={{ value: 'Edad', position: 'insideBottom', offset: -12, fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow }} />
+              <YAxis tickFormatter={fmtEur} domain={[0, yCap]} allowDataOverflow
+                tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
+                axisLine={false} tickLine={false} width={56} />
+
+              {/* Banda exterior P10–P90 (base invisible + span apilado, gradiente + leve blur) */}
+              <Area dataKey="outerLow" stackId="outer" stroke="none" fill="none" isAnimationActive={false} />
+              <Area dataKey="outerSpan" stackId="outer" stroke="none" fill="url(#mcCloudOuter)" filter="url(#mcCloudBlur)" isAnimationActive={false} />
+              {/* Banda interior P25–P75 (la densidad de la nube) */}
+              <Area dataKey="innerLow" stackId="inner" stroke="none" fill="none" isAnimationActive={false} />
+              <Area dataKey="innerSpan" stackId="inner" stroke="none" fill="url(#mcCloudInner)" filter="url(#mcCloudBlur)" isAnimationActive={false} />
+
+              {/* Tu número (meta): cruce con la mediana */}
+              <Line dataKey="meta" stroke={T.faint} strokeWidth={1.5} strokeDasharray="4 4" dot={false} isAnimationActive={false} connectNulls />
+              {/* Mediana P50 — por encima de las bandas */}
+              <Line dataKey="p50" stroke={T.accent} strokeWidth={2.4} dot={false} isAnimationActive={false} />
+
+              {/* Frontera de fase: edad de retiro, con las dos fases etiquetadas */}
+              <ReferenceLine x={profile.retireAge} stroke={T.faint} strokeDasharray="3 3"
+                label={(lp) => {
+                  const vb = lp && lp.viewBox; if (!vb) return null;
+                  const ly = vb.y + 12;
+                  return (
+                    <g>
+                      <text x={vb.x - 8} y={ly} textAnchor="end" fill={T.faint} fontFamily={T.mono} fontSize={10} letterSpacing="0.08em">ACUMULACIÓN</text>
+                      <text x={vb.x + 8} y={ly} textAnchor="start" fill={T.muted} fontFamily={T.mono} fontSize={10} letterSpacing="0.08em">JUBILACIÓN</text>
+                    </g>
+                  );
+                }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      ) : null}
+
+      {/* Frase corta que enlaza con la de los 100 futuros: la nube se abre al jubilarse. */}
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, lineHeight: T.lh.normal, marginBottom: 16 }}>
+        Hasta los {profile.retireAge} la nube es estrecha: todos los futuros acumulan parecido. Al jubilarte se abre — arriba los que crecen, abajo la cola que se agota antes de los {lifeExp}.
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, paddingTop: 12, borderTop: '1px dashed ' + T.lineSoft }}>

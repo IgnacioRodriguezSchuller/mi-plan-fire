@@ -646,7 +646,7 @@ export function runMonteCarlo(plan, profile, opts = {}) {
   const retireAge = profile.retireAge;
   const lifeExp = plan.lifeExpectancy || 90;
   const yearsTotal = lifeExp - fromAge;
-  if (yearsTotal <= 0) return { paths: [], percentiles: [], successRate: 1, yearsTotal: 0, depletionYears: [], depletionAgeStats: null };
+  if (yearsTotal <= 0) return { paths: [], percentiles: [], successRate: 1, yearsTotal: 0, depletionYears: [], depletionAgeStats: null, bandsByAge: [] };
 
   const annualReturn = plan.annualReturn || 0;
   const sigma = (opts.volatility != null ? opts.volatility : inferVolatility(annualReturn)) / 100;
@@ -810,6 +810,22 @@ export function runMonteCarlo(plan, profile, opts = {}) {
     };
   });
 
+  // Bandas por EDAD (la nube percentil a lo largo del recorrido). Los percentiles por año ya están
+  // calculados arriba (valuesPerYear → percentiles); aquí SOLO los reetiquetamos por edad para que el
+  // consumidor pueda dibujar la banda P10..P90 a cada edad, desde la edad actual hasta la esperanza
+  // de vida. Mismo conjunto de trayectorias que el % de éxito y que P10/Mediana/P90 (los trials
+  // agotados ya entran como patrimonio 0; respeta el flag de eventos posibles vía includeHyp). 100%
+  // aditivo: no recalcula nada ni cambia ninguna salida previa. Índice de año y → edad fromAge + y
+  // (y=0 → edad actual; último → lifeExp).
+  const bandsByAge = percentiles.map((pc, y) => ({
+    age: fromAge + y,
+    p10: pc.p10,
+    p25: pc.p25,
+    p50: pc.p50,
+    p75: pc.p75,
+    p90: pc.p90,
+  }));
+
   // Depletion-age stats: the age at which the failing scenarios run out.
   let depletionAgeStats = null;
   if (depletionYears.length > 0) {
@@ -833,6 +849,7 @@ export function runMonteCarlo(plan, profile, opts = {}) {
     sequenceMode,
     depletionYears,
     depletionAgeStats,
+    bandsByAge,
   };
 }
 
