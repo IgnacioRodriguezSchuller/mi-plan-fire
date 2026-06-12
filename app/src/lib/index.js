@@ -449,6 +449,13 @@ export function projectDecumulation(startCapital, plan, fromAge, toAge, opts = {
 
   // Public pension (Spain by default): starts at pension.startAge, monthly amount
   // grows with inflation each month, and is added on top of portfolio withdrawal.
+  // pen.monthlyAmount es la mensualidad oficial en 14 pagas (así la etiqueta la UI:
+  // "Pensión mensual (14 pagas)"). El ingreso mensual reparte ese ANUAL de 14 pagas
+  // en los 12 meses (factor PENSION_PAGAS/12) — misma convención que runMonteCarlo
+  // (penAnnual = monthlyAmount*14) y que estimateSpanishPension.monthly12Equivalent.
+  // Antes se sumaba monthlyAmount ×12 implícito → infraestimaba el ingreso anual de
+  // pensión un ~14,3% (2/14) e incoherente con el MC (fix H1).
+  const PENSION_PAGAS = 14;
   const pen = plan.publicPension || null;
   const penEnabled = pen && pen.enabled && pen.monthlyAmount > 0;
   const penStartAge = penEnabled ? (pen.startAge || 67) : null;
@@ -459,7 +466,7 @@ export function projectDecumulation(startCapital, plan, fromAge, toAge, opts = {
     let pensionThisMonth = 0;
     if (penEnabled && ageNow >= penStartAge) {
       const monthsSincePension = (ageNow - penStartAge) * 12;
-      pensionThisMonth = pen.monthlyAmount * Math.pow(1 + monthlyInflation, monthsSincePension);
+      pensionThisMonth = pen.monthlyAmount * (PENSION_PAGAS / 12) * Math.pow(1 + monthlyInflation, monthsSincePension);
     }
     series.push({
       monthIndex: m,
