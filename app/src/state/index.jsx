@@ -300,8 +300,38 @@ export function useDerived() {
       }
       return null;
     };
-    const ageAtFiPlan = fiTarget > 0 ? ageHittingTarget(seriesPlanFromStart, fiTarget) : null;
-    const ageAtFiReal = fiTarget > 0 ? ageHittingTarget(seriesRealFromStart, fiTarget) : null;
+    // Vía (b): las series dibujadas (seriesPlanFromStart / seriesRealFromStart) se
+    // cortan en retireAge para el gráfico plan-vs-realidad. Si el cruce FIRE cae
+    // DESPUÉS de la edad de retiro, esas series no llegan y ageHittingTarget devuelve
+    // null → "vas tarde" quedaba indetectable. Proyectamos DOS series auxiliares
+    // extendidas hasta los 90 SOLO para detección: no se dibujan ni alimentan
+    // planAtLastReg/realAtLastReg (extender las dibujadas rompería el gráfico).
+    // Mismos parámetros que seriesPlanFromStart/seriesRealFromStart salvo endAge.
+    const DETECT_END_AGE = 90;
+    const seriesPlanForDetect = projectV2(plan, profile, {
+      capital: plan.capital || 0,
+      startKey: startKeyForHistory,
+      endAge: DETECT_END_AGE,
+      includeHypothetical: false,
+      effectiveReturn,
+    });
+    const seriesRealForDetect = projectV2(plan, profile, {
+      capital: plan.capital || 0,
+      startKey: startKeyForHistory,
+      endAge: DETECT_END_AGE,
+      includeHypothetical: false,
+      actualByKey,
+      effectiveReturn,
+    });
+    const ageAtFiPlan = fiTarget > 0 ? ageHittingTarget(seriesPlanForDetect, fiTarget) : null;
+    const ageAtFiReal = fiTarget > 0 ? ageHittingTarget(seriesRealForDetect, fiTarget) : null;
+    // Estado del destino. cruceEdad usa el ritmo REAL: cae automáticamente al plan
+    // cuando no hay meses registrados, porque sin actualByKey la serie real == plan.
+    const cruceEdad = ageAtFiReal;
+    let destinoEstado;
+    if (cruceEdad == null) destinoEstado = 'no-llega';
+    else if (cruceEdad <= profile.retireAge) destinoEstado = 'libre';
+    else destinoEstado = 'tarde';
     // Plan curve including hypothetical events (for "if all goes well" view)
     const seriesPlanWithHypo = projectV2(plan, profile, {
       capital: currentPortfolio,
@@ -359,6 +389,7 @@ export function useDerived() {
       planPortfolioAtLastReg, realPortfolioAtLastReg,
       realVsPlanDelta, realVsPlanRatio,
       fiTarget, ageAtFiPlan, ageAtFiReal,
+      cruceEdad, destinoEstado,
       // v5 · "Antes de Mi Plan"
       effectiveReturn,
       usingDeclaredExpenses: useDeclaredExpensesNow,

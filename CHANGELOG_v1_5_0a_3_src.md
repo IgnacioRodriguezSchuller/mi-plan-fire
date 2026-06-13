@@ -597,3 +597,23 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   (toda la cadena recibió hashes nuevos al reescribirse los mensajes).
 - `.claude/settings.json` += `attribution: { commit: "", pr: "" }` → corta la atribución
   automática de IA en futuros commits y PRs.
+
+### 2026-06-13 · Proyección · cruce FIRE detectable más allá de retireAge + estado del destino
+
+- **Causa raíz**: `ageAtFiPlan`/`ageAtFiReal` leían de `seriesPlanFromStart`/`seriesRealFromStart`,
+  capadas en `retireAge` para el gráfico plan-vs-realidad. Si el cruce FIRE caía DESPUÉS de la
+  jubilación, la serie no llegaba y `ageHittingTarget` devolvía `null` → "vas tarde" era indetectable.
+- **Cambio**: dos series de detección independientes (`seriesPlanForDetect`/`seriesRealForDetect`,
+  `endAge` 90) que alimentan `ageHittingTarget`; `ageAtFiPlan`/`ageAtFiReal` pasan a leer de ellas.
+  Nuevos `cruceEdad` (= `ageAtFiReal`, ritmo REAL — sin meses registrados la serie real == plan) y
+  `destinoEstado` (`'libre'` ≤ retireAge · `'tarde'` > retireAge · `'no-llega'` null) expuestos en
+  `useDerived`, aún SIN consumir en UI (la card "En limpio" es el siguiente prompt).
+- **No tocado**: `projectV2`/`projectDecumulation`, las series dibujadas (`seriesPlanFromStart`/
+  `seriesRealFromStart`), `planAtLastReg`/`realAtLastReg`, claves localStorage, baseline congelado.
+  El **Fix A** (deflactado vía `toRealEur` dentro de `ageHittingTarget`) ya estaba aplicado en el
+  código vivo ("Vía (a)"); esta tanda es la "Vía (b)".
+- **Verificación**: harness determinista contra el motor + demo Alex en navegador (valores idénticos).
+  Alex cruza REAL a **59,75** (antes `null` por el cap; el plan a 60,08, que también caía en `null`);
+  caso "tarde" (ahorro 3%) → `cruceEdad 88,25`, `destinoEstado 'tarde'`; objetivo imposible (50 M€) →
+  `null`, `'no-llega'`. Sin NaN en Hoy/Proy/Seguim; arranque móvil 375×812 limpio; `npm run build` OK;
+  verificadores sin diffs nuevos; hash baseline intacto.
