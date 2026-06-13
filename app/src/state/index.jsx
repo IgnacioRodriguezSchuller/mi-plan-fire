@@ -268,11 +268,14 @@ export function useDerived() {
     const monthlyLifeNow = useDeclaredExpensesNow
       ? sumExpenses(alNow)
       : Math.max(0, monthlyIncomeNow - monthlyInvestmentNow);
-    const penNow = plan.publicPension || { enabled: false };
-    const pensionMonthlyNow = penNow.enabled ? (penNow.monthlyAmount || 0) : 0;
-    const monthlyGapNow = Math.max(0, monthlyLifeNow - pensionMonthlyNow);
+    // "Tu número" (fiTarget) = el capital que necesitas POR TU CUENTA: el gasto anual
+    // completo dividido por la tasa de retiro. NO se resta la pensión pública (decisión
+    // de modelo): la pensión no baja el objetivo, se modela como ingreso en la simulación
+    // temporal (projectDecumulation / runMonteCarlo, desde startAge), que es donde hace
+    // que el dinero dure más. Antes se restaba la pensión desde hoy y el objetivo se
+    // anulaba a 0 cuando pensión ≥ gasto, borrando el ★.
     const wdr = (plan.withdrawalRate != null ? plan.withdrawalRate : 4.0) / 100;
-    const fiTarget = monthlyGapNow > 0 ? monthlyGapNow * 12 / wdr : 0;
+    const fiTarget = monthlyLifeNow * 12 / wdr;
 
     // Edad de independencia financiera · comparación REAL vs REAL.
     // Vía (a): fiTarget está en euros de HOY (se deriva del gasto actual), pero

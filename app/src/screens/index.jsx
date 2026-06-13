@@ -3449,7 +3449,7 @@ export function PublicPensionCard({ plan, updatePlan, profile }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <Label>Pensión pública española</Label>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 4, lineHeight: T.lh.normal }}>
-            La Seguridad Social complementa lo que retiras de tu cartera. Si la activas, la app reduce el patrimonio necesario para tu libertad financiera.
+            La Seguridad Social complementa lo que retiras de tu cartera desde la edad de jubilación. No baja tu número —ese es el capital que necesitas por tu cuenta—, pero hace que tu dinero dure más. Lo verás en ¿Y te dura?
           </div>
         </div>
         <button onClick={() => {
