@@ -1565,6 +1565,15 @@ export function RutaCincoFases({ state, d, mobile }) {
   const route = useMemo(() => computeActivePhase(state, d), [state, d]);
   // Selección de fase para el panel de detalle integrado (por defecto = activa).
   const [selected, setSelected] = useState(null);
+  // Ref al panel de detalle: al tocar una pestaña en móvil, lo traemos a la vista
+  // (el panel siempre está montado; solo cambia su contenido) → el cambio se percibe.
+  const panelRef = useRef(null);
+  const selectPhase = (num) => {
+    setSelected(num);
+    if (mobile && panelRef.current) {
+      panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
 
   const toggleManual = (stepId, currentlyChecked) => {
     const prev = plan.phaseManualChecks || {};
@@ -1635,7 +1644,6 @@ export function RutaCincoFases({ state, d, mobile }) {
   const phases = route.phases;
   const selectedNum = selected != null ? selected : route.activePhase;
   const selPhase = phases[selectedNum - 1] || phases[route.activePhase - 1];
-  const activeTitle = phases[route.activePhase - 1] ? phases[route.activePhase - 1].title : '';
 
   // Hitos · libertad = edad FIRE real (excepción cromática verde · clímax);
   // jubilación = edad legal del producto. Si el plan NO llega (ageAtFiReal null),
@@ -1669,7 +1677,9 @@ export function RutaCincoFases({ state, d, mobile }) {
       {/* Card superior · ruta (fondo naranja difuminado, borde acento) */}
       <div style={card}>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 21 : 24, color: T.muted, letterSpacing: T.tracking.tight, lineHeight: 1.15 }}>Tu ruta hacia la libertad:</div>
-        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 26 : 32, color: T.accent, letterSpacing: T.tracking.display, lineHeight: 1.1, marginTop: 4 }}>Fase {route.activePhase} de 5 · {activeTitle}.</div>
+        {/* Título grande = fase SELECCIONADA (selPhase), para que case con el panel de
+            detalle de abajo. La fase ACTIVA actual se marca aparte, en su pestaña. */}
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 26 : 32, color: T.accent, letterSpacing: T.tracking.display, lineHeight: 1.1, marginTop: 4 }}>Fase {selPhase.num} de 5 · {selPhase.title}.</div>
 
         {/* Barra de progreso · 5 tramos por estado de fase */}
         <div style={{ display: 'flex', gap: 6, marginTop: mobile ? 20 : 26 }}>
@@ -1684,34 +1694,41 @@ export function RutaCincoFases({ state, d, mobile }) {
             minmax(0,1fr): los tracks pueden encoger bajo el min-content del nombre más
             largo ("Optimización"/"Saneamiento") → las 5 caben SIEMPRE en 375 sin desbordar
             (el nombre largo parte de línea si hace falta). */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: mobile ? 5 : 10, marginTop: mobile ? 18 : 22 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: mobile ? 5 : 10, marginTop: mobile ? 18 : 22, alignItems: 'start' }}>
           {phases.map(p => {
             const st = stateOf(p);
             const isSel = p.num === selectedNum;
+            const isActive = st === 'active';
             const circleBg = st === 'done' ? T.green : st === 'skipped' ? T.lineSoft : st === 'active' ? T.accent : 'transparent';
             const circleColor = (st === 'done' || st === 'active') ? '#fff' : T.faint;
             const circleBorder = st === 'future' ? '1.5px solid ' + T.line : 'none';
             const glyph = st === 'done' ? '✓' : st === 'skipped' ? '—' : String(p.num);
             const nameColor = st === 'done' ? T.green : st === 'active' ? T.accent : T.faint;
+            // FIX 3 · la pestaña seleccionada se refuerza (fondo paper + borde accent
+            // más grueso + sombra suave). Sin verde (reservado a libertad).
             return (
-              <button key={p.num} onClick={() => setSelected(p.num)} style={{
+              <button key={p.num} onClick={() => selectPhase(p.num)} aria-pressed={isSel} title={p.title} style={{
                 background: isSel ? T.paper : 'transparent',
-                border: '1px solid ' + (isSel ? T.accent : 'transparent'),
+                border: '1.5px solid ' + (isSel ? T.accent : 'transparent'),
+                boxShadow: isSel ? '0 2px 8px rgba(26,22,18,0.10)' : 'none',
                 borderRadius: 12, padding: mobile ? '8px 3px' : '10px 6px', cursor: 'pointer',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
                 minWidth: 0,
               }}>
                 <div style={{ width: 34, height: 34, borderRadius: '50%', background: circleBg, border: circleBorder, color: circleColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, flexShrink: 0 }}>{glyph}</div>
                 <div style={{ fontFamily: T.serif, fontSize: mobile ? 13 : 16, color: nameColor, textAlign: 'center', lineHeight: 1.15, maxWidth: '100%', overflowWrap: 'break-word', hyphens: 'auto' }}>{p.title.split(' ')[0]}</div>
+                {/* FIX 2 · marca discreta de la fase ACTIVA (la noción que el título ya no carga) */}
+                {isActive && <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.accent, lineHeight: 1 }}>ahora</div>}
               </button>
             );
           })}
         </div>
 
-        {/* Panel de detalle · INTEGRADO en la card (borderTop, hereda el difuminado) */}
-        <div style={{ borderTop: '1px solid ' + T.lineSoft, marginTop: mobile ? 18 : 24, paddingTop: mobile ? 18 : 24 }}>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 22, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug }}>Fase {selPhase.num} · {selPhase.title}</div>
-          <div style={{ fontFamily: T.serif, fontSize: 16, color: T.muted, marginTop: 4, lineHeight: T.lh.normal }}>{selPhase.subtitle}</div>
+        {/* Panel de detalle · INTEGRADO en la card (borderTop, hereda el difuminado).
+            El encabezado de fase lo lleva el título grande de arriba (= selPhase), por
+            eso aquí va directo el subtítulo, sin repetir "Fase N · Título". */}
+        <div ref={panelRef} style={{ borderTop: '1px solid ' + T.lineSoft, marginTop: mobile ? 18 : 24, paddingTop: mobile ? 18 : 24, scrollMarginTop: 12 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 16, color: T.muted, lineHeight: T.lh.normal }}>{selPhase.subtitle}</div>
           {!selPhase.skipped && selPhase.steps.length > 0 && (
             <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
               {selPhase.steps.map(step => {
@@ -1720,16 +1737,27 @@ export function RutaCincoFases({ state, d, mobile }) {
                 const isManualStep = selPhase.num >= 4 && step.id === '4.3' || selPhase.num === 5 || selPhase.num === 2;
                 return (
                   <div key={step.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 0', borderTop: '1px dashed ' + T.lineSoft }}>
-                    <button
-                      onClick={() => isManualStep ? toggleManual(step.id, isManualCompleted) : null}
-                      disabled={!isManualStep && step.source !== 'auto'}
-                      title={isManualStep ? 'Click para marcar/desmarcar' : (isAutoCompleted ? 'Detectado automáticamente · puedes ajustarlo' : 'Pendiente')}
-                      style={{ width: 22, height: 22, borderRadius: 5, background: step.completed ? T.green : 'transparent', border: '1.5px solid ' + (step.completed ? T.green : T.line), color: '#fff', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, cursor: isManualStep ? 'pointer' : (isAutoCompleted ? 'pointer' : 'default'), flexShrink: 0, padding: 0, lineHeight: 1 }}>
-                      {step.completed ? '✓' : ''}
-                    </button>
+                    {isManualStep ? (
+                      // FIX 1/4 · CASILLA manual (cuadrada): el usuario la marca. Hit area
+                      // ≥44px vía padding 11 + margin −11 (invisible, no empuja el layout);
+                      // el cuadro visible sigue a 22px.
+                      <button
+                        onClick={() => toggleManual(step.id, isManualCompleted)}
+                        aria-pressed={step.completed}
+                        title="Tócalo para marcar o desmarcar"
+                        style={{ flexShrink: 0, padding: 11, margin: -11, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', lineHeight: 0 }}>
+                        <span style={{ width: 22, height: 22, borderRadius: 5, background: step.completed ? T.green : 'transparent', border: '1.5px solid ' + (step.completed ? T.green : T.line), color: '#fff', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{step.completed ? '✓' : ''}</span>
+                      </button>
+                    ) : (
+                      // FIX 1 · INDICADOR de estado (redondo): lo detecta la app, NO es una
+                      // casilla que se marque. Sin cursor pointer, sin botón → se lee como
+                      // estado (hecho/pendiente). La forma redonda lo distingue del cuadrado.
+                      <span aria-hidden="true" title={isAutoCompleted ? 'Detectado automáticamente' : 'Pendiente'}
+                        style={{ flexShrink: 0, width: 22, height: 22, borderRadius: '50%', background: step.completed ? T.green : 'transparent', border: step.completed ? 'none' : '1.5px solid ' + T.line, color: '#fff', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, cursor: 'default' }}>{step.completed ? '✓' : ''}</span>
+                    )}
                     <div style={{ flex: 1, fontFamily: T.serif, fontSize: 17, color: T.ink, lineHeight: T.lh.normal }}>
                       {step.label}
-                      {isAutoCompleted && <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide, marginTop: 2 }}>✓ detectado automáticamente · puedes ajustarlo</div>}
+                      {isAutoCompleted && <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide, marginTop: 2 }}>detectado automáticamente</div>}
                     </div>
                   </div>
                 );
