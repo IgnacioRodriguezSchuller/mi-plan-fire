@@ -3,6 +3,8 @@
 > Documento de referencia para próximos prompts de implementación.
 > Junio 2026. **Versión de la app: v1.5.0a3** (codebase modular `app/src/`, ver `ESTADO.md`).
 >
+> **Despliegue:** la app ya es una **web pública** en **`app.miplanfire.com`**, servida por **GitHub Pages** desde el workflow `.github/workflows/deploy-pages.yml` (build single-file Vite → `dist/index.html`). **Repo público.** **Atribución de commits cortada**: `attribution` en `.claude/settings.json` deja `commit`/`pr` vacíos → ningún commit lleva trailer de coautoría.
+>
 > **Documento de diseño maestro: `DOCTRINA_DISENO.md`.** Toda decisión visual o de UX debe consultarse allí antes que aquí. Este documento (CONTEXTO) es la referencia editorial/técnica complementaria a `CLAUDE.md`; lo que ya está en `CLAUDE.md` (flujo de trabajo, invariantes, mapa de documentos) no se repite aquí.
 >
 > *(Adelgazado en junio 2026 — pendiente 8 de `ESTADO.md`: las secciones del flujo del monolito —estado funcional v1.1.1, validación Babel-in-browser, mapa de líneas del HTML, historias de sprint— se retiraron. La historia por versión vive en los `CHANGELOG_v*.md`; el registro actual es `CHANGELOG_v1_5_0a_3_src.md`.)*
@@ -13,9 +15,9 @@
 
 Mi Plan FIRE es una herramienta web de planificación financiera personal a largo plazo orientada al perfil **FIRE-en-formación español** (no a principiantes generales, no a inversores avanzados).
 
-Funciona enteramente en local: cero backend, todo el estado en `localStorage`. Sin cuenta, sin nube, sin perfilado. La promesa de privacidad es verificable: cualquiera puede abrir el HTML y leer el código.
+Funciona enteramente en local: cero backend, todo el estado en `localStorage`. Sin cuenta, sin nube, sin perfilado. La promesa de privacidad es verificable: el código se sirve como un único HTML que cualquiera puede leer (y el repo es público).
 
-**El código fuente vive en `app/src/`** (modular, build Vite single-file → `dist/index.html`, el lead magnet). El HTML monolítico `mi_plan_v1_5_0a_3.html` queda **congelado como red de regresión** — no se edita (hash `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`). Estructura por capas: `tokens/ lib/ hooks/ ui/ charts/ content/ modals/ flows/ state/ screens/`.
+**El código fuente vive en `app/src/`** (modular, build Vite single-file → `dist/index.html`, lo que GitHub Pages publica en `app.miplanfire.com`). El HTML monolítico `mi_plan_v1_5_0a_3.html` queda **congelado como red de regresión** — no se edita (hash `b3ea52b1f4a0960eecd0ee2a32d6d651fd3603e7`). Estructura por capas: `tokens/ lib/ hooks/ ui/ charts/ content/ modals/ flows/ state/ screens/`.
 
 ---
 
