@@ -1295,6 +1295,7 @@ export function Onboarding() {
                   </div>
                 </div>
               </div>
+              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide }}>En neto, como tu salario.</div>
               {/* F1.4 · Inline explanation of "tope" */}
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal, paddingTop: 6, borderTop: '1px dashed ' + T.lineSoft }}>
                 <strong style={{ color: T.ink, fontStyle: 'normal' }}>Tope</strong>: el salario máximo al que esperas llegar en tu carrera. Si dejas el mismo valor que tu salario actual, no habrá progresión.
@@ -1968,7 +1969,7 @@ export function ScreenHoy({ goTo }) {
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 36, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }}>{fmtEur(invested)}</div>
                   </div>
                 </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>El mismo tiempo. La diferencia la pone el interés compuesto.</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>El mismo tiempo. La diferencia la pone el interés compuesto · {planReturn} % anual asumido.</div>
               </div>
               );
             })() : (
@@ -2668,10 +2669,18 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
       {/* Tira de derivación del número FIRE · de dónde sale tu número (solo con gasto declarado).
           Gasto ANUAL × múltiplo (1/tasa) = número en € de HOY (= fiTarget real). */}
       {declared && (
-        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, marginBottom: 10, lineHeight: T.lh.normal }}>
-          <span style={{ color: T.faint, textTransform: 'uppercase', letterSpacing: T.tracking.wider }}>Tu número · </span>
-          {fmtEurFull(monthlySpend)}/mes → {fmtEurFull(annualSpend)}/año × {fiMult} = <strong style={{ color: T.ink }}>{fmtEurFull(numeroHoy)}</strong> de hoy · regla del {wRate}%
-        </div>
+        <>
+          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, marginBottom: 4, lineHeight: T.lh.normal }}>
+            <span style={{ color: T.faint, textTransform: 'uppercase', letterSpacing: T.tracking.wider }}>Tu número · </span>
+            {fmtEurFull(monthlySpend)}/mes → {fmtEurFull(annualSpend)}/año × {fiMult} = <strong style={{ color: T.ink }}>{fmtEurFull(numeroHoy)}</strong> de hoy · regla del {wRate}%
+          </div>
+          {/* Aclaración de la inflación de la meta · se ajusta al modo activo: en nominal
+              (default) la línea de meta del gráfico sube con el IPC; en real (€ de hoy) es
+              plana porque la subida ya está descontada. */}
+          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide, marginBottom: 10, lineHeight: T.lh.normal }}>
+            {realMode ? 'En euros de hoy: la subida de la vida ya está descontada.' : 'Tu meta sube con los años porque tus gastos también subirán.'}
+          </div>
+        </>
       )}
 
       {/* Lectura del año recorrido (scrub) · por defecto el punto a la jubilación */}
@@ -2972,6 +2981,15 @@ export function ScreenProyeccion() {
       </div>
       </div>
 
+      {/* Supuestos visibles · resumen mono de las 4 asunciones (valores reales del estado)
+          con salto a la card "Asunciones del modelo". DM Mono para metadatos; la card NO
+          se mueve de sitio. Inflación con coma decimal española. */}
+      <button
+        onClick={() => document.getElementById('proy-asunciones')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        style={{ alignSelf: 'flex-start', background: 'transparent', border: 'none', padding: 0, marginTop: -8, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wider, textTransform: 'uppercase', lineHeight: T.lh.normal, textAlign: 'left' }}>
+        Supuestos · {plan.annualReturn != null ? plan.annualReturn : 8} % · {String(plan.inflationRate != null ? plan.inflationRate : 2.5).replace('.', ',')} % · {plan.withdrawalRate != null ? plan.withdrawalRate : 4} % · {plan.lifeExpectancy || 90} — <span style={{ color: T.accent }}>ajustar</span>
+      </button>
+
       {/* "El motor" · línea de vida + dial de aporte (reemplaza Curva de patrimonio + Tu yo del futuro) */}
       <ProyeccionEngine
         d={d}
@@ -3098,7 +3116,9 @@ export function ScreenProyeccion() {
         />
       </Card>
 
-      {/* v1.4.0c BIG-A · ASUNCIONES DEL MODELO · 4 campos extraídos del Perfil de Ajustes */}
+      {/* v1.4.0c BIG-A · ASUNCIONES DEL MODELO · 4 campos extraídos del Perfil de Ajustes.
+          Ancla del salto desde la píldora "SUPUESTOS" del inicio de la pantalla. */}
+      <div id="proy-asunciones" aria-hidden="true" style={{ scrollMarginTop: 16 }} />
       <Card pad={mobile ? 16 : 24}>
         <Label style={{ marginBottom: 14 }}>Asunciones del modelo</Label>
         <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(2, 1fr)', gap: 14 }}>
