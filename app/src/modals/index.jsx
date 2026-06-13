@@ -475,7 +475,7 @@ export function Concept({ id, children, inline = true }) {
           color: 'inherit',
           font: 'inherit',
           cursor: 'pointer',
-          borderBottom: '1px dotted ' + T.accent,
+          borderBottom: '1px dashed ' + T.accent,
           paddingBottom: 1,
           textDecoration: 'none',
         }}>
