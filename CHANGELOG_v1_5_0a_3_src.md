@@ -617,3 +617,17 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   caso "tarde" (ahorro 3%) → `cruceEdad 88,25`, `destinoEstado 'tarde'`; objetivo imposible (50 M€) →
   `null`, `'no-llega'`. Sin NaN en Hoy/Proy/Seguim; arranque móvil 375×812 limpio; `npm run build` OK;
   verificadores sin diffs nuevos; hash baseline intacto.
+
+### 2026-06-14 · Proyección · card "En limpio" — retrato del destino FIRE
+
+- **Causa raíz**: ScreenProyeccion terminaba en datos y gráficos, sin un retrato en lenguaje
+  claro del destino: qué número necesita el usuario y a qué edad lo alcanza.
+- **Cambio**: card "En limpio" al pie de `ScreenProyeccion` (forma C — un dato grande arriba,
+  voz debajo), 3 estados según `destinoEstado`: `'libre'` (edad en `T.green`), `'tarde'`
+  (edad en `T.amber`), `'no-llega'` (sobrio, sin dígito). Muestra `fiTarget` con `fmtEur` y la
+  nota "cifra en € de hoy". Edad redondeada `Math.ceil`. Consume `cruceEdad`/`destinoEstado`/
+  `fiTarget` ya expuestos por `useDerived`.
+- **No tocado**: motor (`useDerived`/`projectV2`/`projectDecumulation`), series, claves
+  localStorage, baseline. Verde solo en el estado 'libre' (excepción documentada de libertad).
+- **Verificación**: 3 estados en navegador (Alex 'libre' → ★60 verde y 590k€; 'tarde' → 89 ámbar;
+  objetivo imposible → sobrio, sin dígito); sin NaN; móvil 375×812; consola limpia; `npm run build` OK.

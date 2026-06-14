@@ -3177,6 +3177,50 @@ export function ScreenProyeccion() {
       {/* Monte Carlo · al final, tras las cards editables (BIG-B reorden v1.4.0d) */}
       <MonteCarloCard plan={plan} profile={profile} d={d} realMode={realMode} inflRate={inflRate} />
 
+      {/* "En limpio" · retrato del destino FIRE · ÚLTIMO bloque de la pantalla.
+          Consume lo expuesto en useDerived (commit 49446cb): destinoEstado, cruceEdad,
+          fiTarget. Sin lógica de motor: solo lee y formatea. Forma C (un dato manda
+          arriba, voz debajo). Verde SOLO en 'libre'; edad SIEMPRE Math.ceil hacia arriba. */}
+      <Card>
+        <Label style={{ color: T.faint }}>En limpio</Label>
+        {(() => {
+          const estado = d.destinoEstado;
+          const edad = d.cruceEdad != null ? Math.ceil(d.cruceEdad) : null;
+          const numero = fmtEur(d.fiTarget || 0);
+          const kicker = { fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, letterSpacing: T.tracking.wide, marginTop: 18 };
+          const cifra = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXxl, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 2 };
+          const frase = { fontFamily: T.serif, fontWeight: 400, fontSize: T.size.lead, lineHeight: 1.55, color: T.ink, marginTop: 12 };
+          const notaHoy = { fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide, marginTop: 12 };
+          if (estado === 'libre') {
+            return (
+              <>
+                <div style={kicker}>libre por tu cuenta a los</div>
+                <div style={{ ...cifra, color: T.green }}>{edad}</div>
+                <div style={frase}>Necesitas {numero} para vivir de tu cartera. La palanca es tu ahorro, no tu sueldo; la pensión es viento de cola.</div>
+                <div style={notaHoy}>cifra en € de hoy</div>
+              </>
+            );
+          }
+          if (estado === 'tarde') {
+            return (
+              <>
+                <div style={kicker}>a este ritmo, libre a los</div>
+                <div style={{ ...cifra, color: T.amber }}>{edad}</div>
+                <div style={frase}>Vas más allá de la edad que querías. Tu número son {numero}, y al ritmo actual llegas tarde.</div>
+                <div style={notaHoy}>cifra en € de hoy</div>
+              </>
+            );
+          }
+          // 'no-llega' · sobrio: sin dígito de edad, nada de verde.
+          return (
+            <>
+              <div style={kicker}>aún fuera de alcance</div>
+              <div style={{ ...frase, marginTop: 14 }}>Con los supuestos actuales no llegas a vivir solo de tu cartera antes de los 90. Tu número son {numero} en € de hoy.</div>
+            </>
+          );
+        })()}
+      </Card>
+
       {wizardOpen && (
         <ProgressionWizard
           onClose={() => setWizardOpen(false)}
