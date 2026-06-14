@@ -2654,6 +2654,26 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
   // del punto (hacia el interior del plot) para que no se corte; si no, debajo del punto.
   const fiLabelPos = fiDot && (retireAge - ageAtFi) <= 3 ? 'left' : 'bottom';
 
+  // Coast/Lean sobre la MISMA curva (misma interpolación que el ★). Solo dentro del
+  // dominio dibujado [hoy, retireAge]; fuera de rango (edades > jubilación en 'tarde'/
+  // 'no-llega') no se dibujan — esa dirección vive en la card "Siguiente paso", no en la
+  // curva. Sin verde (reservado al ★ de libertad). Las edades se nombran en la leyenda,
+  // no como etiqueta sobre la curva, para no solaparse con el ★ cuando caen juntas.
+  const dotAt = (edad) => {
+    if (edad == null || lifeData.length < 2) return null;
+    if (edad < lifeData[0].age || edad > lifeData[lifeData.length - 1].age) return null;
+    for (let i = 1; i < lifeData.length; i++) {
+      if (lifeData[i].age >= edad) {
+        const a0 = lifeData[i - 1], a1 = lifeData[i];
+        const t = (edad - a0.age) / ((a1.age - a0.age) || 1);
+        return { age: edad, portfolio: Math.round(a0.portfolio + t * (a1.portfolio - a0.portfolio)) };
+      }
+    }
+    return null;
+  };
+  const coastDot = dotAt(d.coastEdad);
+  const leanDot = dotAt(d.leanEdad);
+
   return (
     <Card pad={mobile ? 16 : 26} style={{ minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
@@ -2692,6 +2712,8 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
       <div style={{ display: 'flex', gap: 16, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', marginBottom: 6, flexWrap: 'wrap' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 18, height: 2, background: T.accent, display: 'inline-block' }} />patrimonio</span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 18, borderTop: '1.5px dashed ' + T.faint, display: 'inline-block' }} />tu número</span>
+        {leanDot && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: T.accent }}><span style={{ width: 8, height: 8, borderRadius: '50%', border: '1.5px solid ' + T.accent, display: 'inline-block' }} />lean {Math.ceil(d.leanEdad)}</span>}
+        {coastDot && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: T.accent }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />coast {Math.ceil(d.coastEdad)}</span>}
         {ageAtFi != null && <span style={{ color: T.green }}>★ libre a los {Math.round(ageAtFi)}</span>}
       </div>
 
@@ -2712,6 +2734,12 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
               <Tooltip cursor={{ stroke: T.ink, strokeWidth: 1, opacity: 0.3 }} content={() => null} />
               <Line dataKey="meta" stroke={T.faint} strokeWidth={1.5} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
               <Line dataKey="portfolio" stroke={T.accent} strokeWidth={2} dot={false} isAnimationActive={false} activeDot={{ r: 4, fill: T.accent }} />
+              {leanDot && (
+                <ReferenceDot x={leanDot.age} y={leanDot.portfolio} r={4} fill={T.paper} stroke={T.accent} strokeWidth={2} isFront />
+              )}
+              {coastDot && (
+                <ReferenceDot x={coastDot.age} y={coastDot.portfolio} r={4} fill={T.accent} stroke={T.paper} strokeWidth={2} isFront />
+              )}
               {fiDot && (
                 <ReferenceDot x={fiDot.age} y={fiDot.portfolio} r={5} fill={T.green} stroke={T.paper} strokeWidth={2} isFront
                   label={{ value: '★ ' + Math.round(ageAtFi) + ' · el cruce', position: fiLabelPos, offset: 12, fill: T.green, fontFamily: T.mono, fontSize: T.size.eyebrow, fontWeight: 700 }} />

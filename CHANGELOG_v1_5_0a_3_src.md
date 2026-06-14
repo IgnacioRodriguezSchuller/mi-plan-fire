@@ -649,3 +649,22 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   `leanGastoMes 1378` a 70%); 'tarde' (+5pp → 80, Lean 82 < 88, borde ámbar); 'no-llega' (palanca
   base sola / vía Lean si llega; `cruce null` sin crash); `leanPct` 60/70/80 monótono (79/82/84);
   móvil 375×812; consola limpia; `npm run build` OK; verificadores en verde; hash baseline intacto.
+
+### 2026-06-14 · Proyección · hitos FIRE (Coast/Lean) marcados sobre la curva de patrimonio
+
+- **Causa raíz**: la línea de vida solo señalaba el ★ del cruce FIRE; el camino se leía como una
+  sola meta lejana, sin los hitos intermedios (Coast/Lean) que el motor ya calcula.
+- **Cambio**: en `ProyeccionEngine`, sobre la MISMA curva (`ComposedChart`), dos `ReferenceDot`
+  nuevos junto al ★ existente: Coast (punto sólido `T.accent`, en `d.coastEdad`) y Lean (punto
+  hueco `T.accent`, en `d.leanEdad`), vía el helper `dotAt` (misma interpolación que `fiDot`). Las
+  edades (`Math.ceil`) se nombran en la leyenda — "lean 55 · coast 59 · ★ libre 60" — no como
+  etiqueta sobre la curva, para no solaparse cuando caen juntas. Solo dentro del dominio
+  [hoy, retireAge]; fuera (estados 'tarde'/'no-llega', edades > jubilación) no se dibujan — esa
+  dirección vive en la card "Siguiente paso".
+- **No tocado**: el ★ FIRE (único verde, única estrella, única etiqueta sobre la curva) ni su
+  lógica; `projectV2`/series; sin emojis nuevos ni colores fuera de tokens.
+- **Aplazado**: Fat FIRE (`fatEdad = ageHittingTarget(seriesRealForDetect, fiTarget*1.25)`) — omitido
+  por densidad sobre un cluster ya apretado; anotado para una tanda futura.
+- **Verificación**: Alex 'libre' (lean ○55 / coast ●59 / ★60 sobre la curva; leyenda completa;
+  coast/lean en accent, ★ en verde); 'tarde'/'no-llega' (sin marcadores en curva —hitos > 60—, sin
+  crash); móvil 375×812 (leyenda en 2 líneas, legible); consola limpia; `npm run build` OK.
