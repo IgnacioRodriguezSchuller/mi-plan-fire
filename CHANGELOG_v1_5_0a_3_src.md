@@ -668,3 +668,21 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
 - **Verificación**: Alex 'libre' (lean ○55 / coast ●59 / ★60 sobre la curva; leyenda completa;
   coast/lean en accent, ★ en verde); 'tarde'/'no-llega' (sin marcadores en curva —hitos > 60—, sin
   crash); móvil 375×812 (leyenda en 2 líneas, legible); consola limpia; `npm run build` OK.
+
+### 2026-06-14 · Hoy · resumen + dirección fundidos al pie de la ruta (rediseño de los 3 hitos)
+
+- **Causa raíz**: la fila de 3 hitos al pie de `RutaCincoFases` ("tu dinero te adelanta / eres
+  libre / pensión pública") eran tres cifras sin jerarquía que confundían; y la pantalla Hoy no
+  terminaba en una dirección (doctrina P8).
+- **Cambio**: un solo bloque que (1) hace HÉROE la edad de libertad (★ + `libertadAge`, verde —
+  única excepción cromática) — ámbar sin ★ si llega 'tarde', "—" muted si 'no-llega'; (2) hila los
+  hitos en una frase de lectura (`momentumAge` "te adelanta" + `pensionAge` "pensión") sin tres
+  números compitiendo; (3) cierra en la dirección (kicker "Siguiente paso") determinista: sin meses
+  → "Registra tu primer mes" (Mes a mes); 'libre' → "Vas en camino" (Mes a mes); 'tarde' → "Llegas
+  tarde, ajusta tu plan" (Proyección); 'no-llega' → "Aún sin edad, ajusta ahorro u objetivo"
+  (Proyección). Nav vía `update({activeTab})`. `libertadAge` pasa a `Math.ceil` (invariante 6) y el
+  color del héroe lo rige `destinoEstado` (antes era verde siempre que hubiera cruce, incluso 'tarde').
+- **No tocado**: la card de las 5 fases ni su lógica; `momentumAge`/`pensionAge`; motor; series; claves.
+- **Verificación**: 4 ramas de dirección (Alex 'libre' ★60 verde → Mes a mes; 'tarde' 89 ámbar →
+  Proyección; 'no-llega' "—" → Proyección; sin meses → "Registra tu primer mes", con prioridad);
+  verde solo en 'libre' (0 verdes en 'tarde'/'no-llega'); nav funciona; móvil 375×812; consola limpia.
