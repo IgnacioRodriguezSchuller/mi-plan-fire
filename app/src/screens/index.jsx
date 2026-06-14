@@ -4925,6 +4925,14 @@ export function ScreenAprende() {
   // Súbelo (p.ej. a 0.40) si quedan poco legibles como clicables en device real.
   const INACTIVE_OPACITY = 0.35;
 
+  // "Leído" persistente (para retomar): se marca al ABRIR un concepto. Vive en
+  // plan.readLessons ({id:true}, patrón de phaseManualChecks); default en lectura, sin
+  // tocar migrateToV2 ni LEARN_CORPUS (contenido editorial cerrado, solo se referencia).
+  const { state, mutatePlan } = useStore();
+  const readLessons = (state.plan && state.plan.readLessons) || {};
+  const markRead = (id) => { if (id && !readLessons[id]) mutatePlan(p => ({ ...p, readLessons: { ...(p.readLessons || {}), [id]: true } })); };
+  const openConcept = (id) => { markRead(id); setActiveId(id); };
+
   const allConcepts = Object.entries(LEARN_CORPUS).map(([id, c]) => ({ id, ...c }));
   // For the Conceptos tab, surface every entry of LEARN_CORPUS as a card —
   // not just those with full articles — so the levels stay coherent.
@@ -4998,7 +5006,7 @@ export function ScreenAprende() {
                 {group.lessons.map((lesson, j) => (
                   <blockquote
                     key={j}
-                    onClick={() => setActiveId(lesson.source)}
+                    onClick={() => openConcept(lesson.source)}
                     style={{
                       margin: 0, padding: '20px 24px',
                       background: T.paper, border: '1px solid ' + T.line, borderRadius: 10,
@@ -5063,7 +5071,7 @@ export function ScreenAprende() {
               return (
                 <button
                   key={c.id}
-                  onClick={() => setActiveId(c.id)}
+                  onClick={() => openConcept(c.id)}
                   style={{
                     background: T.paper, border: '1px solid ' + T.line, borderRadius: 12,
                     padding: 18, cursor: 'pointer', textAlign: 'left', fontFamily: T.serif,
@@ -5074,9 +5082,12 @@ export function ScreenAprende() {
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.transform = 'none'; }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                     <LearnIcon id={c.id} size={32} color={T.ink} />
-                    <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>
-                      {LEARN_LEVEL_LABELS[lvlId] || 'Avanzado'}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                      <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>
+                        {LEARN_LEVEL_LABELS[lvlId] || 'Avanzado'}
+                      </span>
+                      {readLessons[c.id] && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint }}>✓ leído</span>}
+                    </div>
                   </div>
                   <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, lineHeight: T.lh.snug, color: T.ink, letterSpacing: T.tracking.tight }}>
                     {c.title}
@@ -5114,7 +5125,7 @@ export function ScreenAprende() {
                 {list.map(c => (
                   <button
                     key={c.id}
-                    onClick={() => setActiveId(c.id)}
+                    onClick={() => openConcept(c.id)}
                     style={{
                       background: 'transparent', border: 'none', borderBottom: '1px solid ' + T.lineSoft,
                       padding: '14px 4px', cursor: 'pointer', textAlign: 'left', fontFamily: T.serif,

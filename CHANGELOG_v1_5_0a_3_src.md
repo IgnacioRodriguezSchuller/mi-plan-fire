@@ -743,3 +743,15 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
 - **Verificación**: editor "¿Dónde está tu dinero hoy?" → los 4 campos de rentabilidad editables
   (cash fijo 0%, defaults 2/8/8/0 correctos); el "retorno medio ponderado" responde (100% fondos →
   8%); consola limpia; `npm run build` OK. Sin guardar → demo intacta.
+
+### 2026-06-14 · Aprende · marca "leído" persistente en los conceptos
+
+- **Causa raíz**: no había forma de saber qué conceptos ya habías leído → difícil retomar el
+  aprendizaje donde lo dejaste.
+- **Cambio**: al ABRIR un concepto (desde Conceptos, El Tablón o Glosario) se marca como leído en
+  `plan.readLessons` ({id:true}, patrón de `phaseManualChecks`); las cards de Conceptos muestran un
+  badge mono "✓ leído". Default en lectura (`plan.readLessons || {}`), sin migración.
+- **No tocado**: `LEARN_CORPUS`/`LEARN_LEVELS` (contenido editorial cerrado, solo se referencia);
+  `migrateToV2`; claves localStorage. Badge en `T.faint` (no verde — no es libertad).
+- **Verificación**: abrir "Interés compuesto" → `plan.readLessons` gana la clave y la card muestra
+  "✓ leído" (1 sola); persiste tras recargar; móvil 375×812; consola limpia; `npm run build` OK.
