@@ -4002,7 +4002,7 @@ export function ExpenseRow({ k, label, chips, expenses, onSetExpense }) {
   );
 }
 
-export function AllocRow({ k, label, fixedReturn, customKey, returnLabel, allocation, onSetAlloc, planReturn }) {
+export function AllocRow({ k, label, fixedReturn, customKey, returnLabel, allocation, onSetAlloc, onSetReturn, planReturn }) {
   // Resolve the displayed return: customReturns override → defaults.
   const customReturn = customKey
     ? (allocation.customReturns[customKey] != null
@@ -4021,8 +4021,13 @@ export function AllocRow({ k, label, fixedReturn, customKey, returnLabel, alloca
       <input type="range" min="0" max="100" step="1" value={allocation[k]}
         onChange={(e) => onSetAlloc(k, +e.target.value)}
         style={{ width: '100%', accentColor: T.accent }} />
-      <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide }}>
-        rinde {customReturn}% nominal
+      {/* Rentabilidad nominal por clase · editable salvo en liquidez (fija 0%). El usuario
+          ajusta p. ej. depósito 1,5–2,5% u otros 5–10%; computeEffectiveCapitalReturn ya las
+          combina por media ponderada (motor sin tocar). */}
+      <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide, display: 'flex', alignItems: 'baseline', gap: 4 }}>
+        rinde {customKey
+          ? <EditableNumber value={customReturn} onChange={(v) => onSetReturn(customKey, v)} min={0} max={20} step={0.5} color={T.muted} />
+          : customReturn}% nominal
       </div>
     </div>
   );
@@ -4087,8 +4092,10 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
   const setExpense = (k, v) => setData(d => ({ ...d, expenses: { ...d.expenses, [k]: Math.max(0, v) } }));
   const setMortgage = (patch) => setData(d => ({ ...d, mortgage: { ...d.mortgage, ...patch } }));
   const setAlloc = (k, v) => setData(d => ({ ...d, allocation: { ...d.allocation, [k]: Math.max(0, Math.min(100, v)) } }));
-  // setCustomReturn eliminado en v1.5.0a. customReturns sigue siendo parte
-  // del estado para compatibilidad; AllocRow lo lee como fallback.
+  // setCustomReturn REEXPUESTO (v1.5.0a3): el usuario ajusta la rentabilidad nominal esperada
+  // por clase de activo. computeEffectiveCapitalReturn ya las combina por media ponderada — el
+  // motor NO se toca; aquí solo se escribe a allocation.customReturns[key].
+  const setCustomReturn = (key, v) => setData(d => ({ ...d, allocation: { ...d.allocation, customReturns: { ...d.allocation.customReturns, [key]: Math.max(0, Math.min(20, v)) } } }));
 
   const totalExpenses = data.expenses.housing + data.expenses.food + data.expenses.transport
                        + data.expenses.subscriptions + data.expenses.other;
@@ -4307,10 +4314,10 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
             </div>
 
             <AllocRow k="cash" label="Cuenta corriente / liquidez" fixedReturn={0} allocation={data.allocation} onSetAlloc={setAlloc} planReturn={planReturn} />
-            <AllocRow k="deposits" label="Depósitos a plazo" customKey="deposits" allocation={data.allocation} onSetAlloc={setAlloc} planReturn={planReturn} />
-            <AllocRow k="fundsEtfs" label="Fondos / ETFs" customKey="fundsEtfs" returnLabel="plan" allocation={data.allocation} onSetAlloc={setAlloc} planReturn={planReturn} />
-            <AllocRow k="pensionPlan" label="Plan de pensiones" customKey="pensionPlan" returnLabel="plan" allocation={data.allocation} onSetAlloc={setAlloc} planReturn={planReturn} />
-            <AllocRow k="other" label="Otros" customKey="other" allocation={data.allocation} onSetAlloc={setAlloc} planReturn={planReturn} />
+            <AllocRow k="deposits" label="Depósitos a plazo" customKey="deposits" allocation={data.allocation} onSetAlloc={setAlloc} onSetReturn={setCustomReturn} planReturn={planReturn} />
+            <AllocRow k="fundsEtfs" label="Fondos / ETFs" customKey="fundsEtfs" returnLabel="plan" allocation={data.allocation} onSetAlloc={setAlloc} onSetReturn={setCustomReturn} planReturn={planReturn} />
+            <AllocRow k="pensionPlan" label="Plan de pensiones" customKey="pensionPlan" returnLabel="plan" allocation={data.allocation} onSetAlloc={setAlloc} onSetReturn={setCustomReturn} planReturn={planReturn} />
+            <AllocRow k="other" label="Otros" customKey="other" allocation={data.allocation} onSetAlloc={setAlloc} onSetReturn={setCustomReturn} planReturn={planReturn} />
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 14, borderTop: '1px solid ' + T.line, marginTop: 4 }}>
               <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Total</div>

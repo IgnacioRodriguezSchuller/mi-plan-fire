@@ -727,3 +727,19 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
 - **Verificación**: chip visible y sobrio (a juego con el toggle de inflación contiguo); el
   scroll-link lleva a la card en desktop y móvil; cabe en 375×812 (envuelve a 2 líneas, sin
   desbordar); consola limpia; `npm run build` OK.
+
+### 2026-06-14 · Antes de Mi Plan · rentabilidad editable por clase de activo
+
+- **Causa raíz**: Juanjo quería ajustar la rentabilidad esperada por clase (depósito 1,5–2,5%,
+  otros 5–10%…). El motor YA combina rentabilidades por clase (`computeEffectiveCapitalReturn`,
+  media ponderada sobre `allocation.customReturns`), pero la edición se quitó en v1.5.0a (solo
+  fallback de lectura) → no había forma de tocarlas.
+- **Cambio**: reexpuesto `setCustomReturn` en `ActualLifeOnboarding`; `AllocRow` muestra la
+  rentabilidad como `EditableNumber` (0–20%, paso 0,5) para depósito/fondos-ETF/plan/otros; la
+  liquidez sigue fija a 0%. NO se toca el motor: la media ponderada y `computeEffectiveCapitalReturn`
+  quedan igual; solo se escribe a `allocation.customReturns[key]`.
+- **No tocado**: `projectV2`/`computeEffectiveCapitalReturn`; claves localStorage; defaults de
+  lectura (depósito 2,0 · fondos/plan = `annualReturn` · otros 0).
+- **Verificación**: editor "¿Dónde está tu dinero hoy?" → los 4 campos de rentabilidad editables
+  (cash fijo 0%, defaults 2/8/8/0 correctos); el "retorno medio ponderado" responde (100% fondos →
+  8%); consola limpia; `npm run build` OK. Sin guardar → demo intacta.
