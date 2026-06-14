@@ -3039,10 +3039,13 @@ export function ScreenProyeccion() {
       {/* Supuestos visibles · resumen mono de las 4 asunciones (valores reales del estado)
           con salto a la card "Asunciones del modelo". DM Mono para metadatos; la card NO
           se mueve de sitio. Inflación con coma decimal española. */}
+      {/* Píldora-chip de supuestos · invitación clara a ajustar ANTES de leer las gráficas
+          (Juanjo pidía "asunciones primero"). No subimos la card; reforzamos el acceso: chip
+          pulsable (fondo papel + borde + forma píldora) con "ajustar →" en accent. Sobrio. */}
       <button
         onClick={() => document.getElementById('proy-asunciones')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-        style={{ alignSelf: 'flex-start', background: 'transparent', border: 'none', padding: 0, marginTop: -8, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wider, textTransform: 'uppercase', lineHeight: T.lh.normal, textAlign: 'left' }}>
-        Supuestos · {plan.annualReturn != null ? plan.annualReturn : 8} % · {String(plan.inflationRate != null ? plan.inflationRate : 2.5).replace('.', ',')} % · {plan.withdrawalRate != null ? plan.withdrawalRate : 4} % · {plan.lifeExpectancy || 90} — <span style={{ color: T.accent }}>ajustar</span>
+        style={{ alignSelf: 'flex-start', background: T.paper, border: '1px solid ' + T.line, borderRadius: 999, padding: '7px 14px', marginTop: 2, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', lineHeight: T.lh.normal, textAlign: 'left' }}>
+        Supuestos · {plan.annualReturn != null ? plan.annualReturn : 8} % · {String(plan.inflationRate != null ? plan.inflationRate : 2.5).replace('.', ',')} % · {plan.withdrawalRate != null ? plan.withdrawalRate : 4} % · {plan.lifeExpectancy || 90} — <span style={{ color: T.accent, fontWeight: 700 }}>ajustar →</span>
       </button>
 
       {/* "El motor" · línea de vida + dial de aporte (reemplaza Curva de patrimonio + Tu yo del futuro) */}

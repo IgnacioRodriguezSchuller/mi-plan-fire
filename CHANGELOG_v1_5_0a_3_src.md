@@ -715,3 +715,15 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
 - **Verificación**: Colchón (auto: 2 ✓ verdes + 1 punto pendiente); Optimización (3 casillas
   manuales con relieve); el marcado manual sigue funcionando (✓ verde, toggle ida/vuelta); consola
   limpia; `npm run build` OK. Marcadores de tamaño fijo → idénticos en móvil.
+
+### 2026-06-14 · Proyección · pill de Supuestos reforzada como invitación a ajustar
+
+- **Causa raíz**: Juanjo pidió 2× "asunciones primero". No se suben (romperían "di menos"), pero el
+  acceso desde arriba era una línea de texto faint sin borde, fácil de pasar por alto.
+- **Cambio**: la pill "Supuestos · … — ajustar" pasa a chip pulsable (fondo `T.paper` + borde
+  `T.line` + forma píldora + "ajustar →" en accent, valores en `T.muted`). Mismo jump-link a
+  `#proy-asunciones`.
+- **No tocado**: la posición de la card de Asunciones (sigue 7ª en la pantalla); el motor.
+- **Verificación**: chip visible y sobrio (a juego con el toggle de inflación contiguo); el
+  scroll-link lleva a la card en desktop y móvil; cabe en 375×812 (envuelve a 2 líneas, sin
+  desbordar); consola limpia; `npm run build` OK.
