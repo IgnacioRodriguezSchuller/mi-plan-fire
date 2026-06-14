@@ -755,3 +755,13 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   `migrateToV2`; claves localStorage. Badge en `T.faint` (no verde — no es libertad).
 - **Verificación**: abrir "Interés compuesto" → `plan.readLessons` gana la clave y la card muestra
   "✓ leído" (1 sola); persiste tras recargar; móvil 375×812; consola limpia; `npm run build` OK.
+
+### 2026-06-14 · Onboarding · aclara "neto" en la progresión salarial escalonada
+
+- **Causa raíz**: en el paso de progresión "escalonado" la nota "En neto, como tu salario" era
+  ambigua sobre si el incremento (+€/mes) y el tope iban en neto o en bruto.
+- **Cambio**: nota más explícita — "Importes en neto (lo que recibes en cuenta), igual que tu
+  salario — no el bruto." Copy menor, sin lógica.
+- **No tocado**: nada más; misma posición y estilo (mono eyebrow faint) en `Onboarding()`.
+- **Verificación**: `npm run build` OK; la app arranca sin errores de consola; string sustituido en
+  el componente que se muestra al elegir "escalonado" en la progresión salarial.
