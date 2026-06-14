@@ -3426,6 +3426,8 @@ export function HitosEditor() {
 }
 
 export function ScreenSeguimiento() {
+  const d = useDerived();
+  const { update } = useStore();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 40 }}>
       <div>
@@ -3439,7 +3441,7 @@ export function ScreenSeguimiento() {
       </div>
 
       {/* Bloque 1 · Mensual (flujo + registro mes a mes) */}
-      <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <section id="seg-mensual" style={{ display: 'flex', flexDirection: 'column', gap: 14, scrollMarginTop: 16 }}>
         <MonthlyFlowBlock />
         <ScreenMesAMes />
       </section>
@@ -3454,6 +3456,41 @@ export function ScreenSeguimiento() {
       {/* Bloque 3 · Reparto del ingreso en el tiempo */}
       <section>
         <RepartoIngresoBlock />
+      </section>
+
+      {/* Siguiente paso (P8) · dirección determinista según el RITMO de aporte: media de lo
+          aportado (avgActual) frente a lo que el plan pide ahora (currentAporte). Es el señal
+          más directo de "¿mantengo el ritmo?" en una pantalla de seguimiento mensual — no uso
+          realVsPlanDelta (con el tramo de ahorro arrancando hoy, lo planificado en meses
+          pasados es 0 → siempre "por delante") ni d.ahead (compara pace plano vs plan creciente
+          con IPC → casi siempre "por detrás"). Sin verde (aquí no hay libertad plena). */}
+      <section>
+        {(() => {
+          const noMeses = !(d.filledMonths && d.filledMonths.length);
+          const ahead = !noMeses && d.avgActual >= d.currentAporte;
+          const borderColor = (noMeses || ahead) ? T.accent : T.amber;
+          let frase, label, action;
+          if (noMeses) {
+            frase = 'Aún no registras meses. Anota el primero para comparar realidad y plan.';
+            label = 'Registrar un mes →';
+            action = () => document.getElementById('seg-mensual')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else if (ahead) {
+            frase = 'Vas por delante del plan. Mira cuánto adelanta tu fecha de libertad.';
+            label = 'Ir a Proyección →';
+            action = () => update({ activeTab: 'proy' });
+          } else {
+            frase = 'Vas por detrás del plan. Revisa tu aporte para recuperar el ritmo.';
+            label = 'Ir a Proyección →';
+            action = () => update({ activeTab: 'proy' });
+          }
+          return (
+            <Card style={{ borderLeft: '3px solid ' + borderColor }}>
+              <Label style={{ color: borderColor }}>Siguiente paso</Label>
+              <div style={{ fontFamily: T.serif, fontWeight: 400, fontSize: T.size.lead, lineHeight: 1.55, color: T.ink, marginTop: 12 }}>{frase}</div>
+              <button onClick={action} style={{ background: 'transparent', border: 'none', padding: 0, marginTop: 12, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, letterSpacing: T.tracking.wide, textTransform: 'uppercase', textAlign: 'left', display: 'inline-block' }}>{label}</button>
+            </Card>
+          );
+        })()}
       </section>
     </div>
   );

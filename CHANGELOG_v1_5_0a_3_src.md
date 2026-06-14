@@ -686,3 +686,18 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
 - **Verificación**: 4 ramas de dirección (Alex 'libre' ★60 verde → Mes a mes; 'tarde' 89 ámbar →
   Proyección; 'no-llega' "—" → Proyección; sin meses → "Registra tu primer mes", con prioridad);
   verde solo en 'libre' (0 verdes en 'tarde'/'no-llega'); nav funciona; móvil 375×812; consola limpia.
+
+### 2026-06-14 · Seguimiento · "Siguiente paso" al pie (P8)
+
+- **Causa raíz**: Seguimiento (Mes a mes) no terminaba en una dirección (doctrina P8); el fondo
+  de pantalla quedaba muerto tras el reparto del ingreso.
+- **Cambio**: card "Siguiente paso" al final de `ScreenSeguimiento` (se añade `useDerived` +
+  `update`). Regla determinista por RITMO de aporte: sin meses → "Anota el primero" (scroll a la
+  sección Mes a mes, ancla `#seg-mensual`); media aportada ≥ lo que pide el plan
+  (`avgActual ≥ currentAporte`) → "Vas por delante" (Proyección, borde accent); por debajo →
+  "Vas por detrás, revisa tu aporte" (Proyección, borde ámbar). Sin verde. Se descartó
+  `realVsPlanDelta` (tramo de ahorro arranca hoy → pasado planificado 0, siempre "delante") y
+  `d.ahead` (pace plano vs plan creciente con IPC → casi siempre "detrás").
+- **No tocado**: motor, series, claves, el resto de bloques de Seguimiento.
+- **Verificación**: 3 ramas (delante/detrás/sin-meses) con actuals forzados; borde accent/ámbar
+  correcto; ancla de scroll presente; móvil 375×812; consola limpia; `npm run build` OK.
