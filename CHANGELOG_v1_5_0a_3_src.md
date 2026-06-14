@@ -701,3 +701,17 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
 - **No tocado**: motor, series, claves, el resto de bloques de Seguimiento.
 - **Verificación**: 3 ramas (delante/detrás/sin-meses) con actuals forzados; borde accent/ámbar
   correcto; ancla de scroll presente; móvil 375×812; consola limpia; `npm run build` OK.
+
+### 2026-06-14 · Hoy · affordance de las casillas de fase (lo tocable vs lo informativo)
+
+- **Causa raíz**: en `RutaCincoFases`, el indicador de estado AUTO pendiente era un círculo hueco
+  con borde — se leía como un checkbox vacío y la gente intentaba pulsarlo (no es interactivo).
+- **Cambio**: el indicador AUTO pendiente pasa a un punto pequeño muted (estado, no checkbox); el
+  AUTO hecho mantiene el ✓ en círculo verde. La CASILLA manual (que sí se marca) gana aspecto de
+  control pulsable: fondo papel + borde marcado (`T.muted`) + relieve sutil (boxShadow). Cuadrado =
+  tocar, redondo = estado.
+- **No tocado**: la lógica (`toggleManual`, qué pasos son manuales); el ✓ verde de "hecho"
+  (semántica de confirmación, ya existente, no la libertad).
+- **Verificación**: Colchón (auto: 2 ✓ verdes + 1 punto pendiente); Optimización (3 casillas
+  manuales con relieve); el marcado manual sigue funcionando (✓ verde, toggle ida/vuelta); consola
+  limpia; `npm run build` OK. Marcadores de tamaño fijo → idénticos en móvil.

@@ -1747,14 +1747,20 @@ export function RutaCincoFases({ state, d, mobile }) {
                         aria-pressed={step.completed}
                         title="Tócalo para marcar o desmarcar"
                         style={{ flexShrink: 0, padding: 11, margin: -11, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', lineHeight: 0 }}>
-                        <span style={{ width: 22, height: 22, borderRadius: 5, background: step.completed ? T.green : 'transparent', border: '1.5px solid ' + (step.completed ? T.green : T.line), color: '#fff', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{step.completed ? '✓' : ''}</span>
+                        {/* CASILLA manual (cuadrada, tappable): cuando está vacía se ve como un
+                            control pulsable — fondo papel + borde marcado + relieve sutil — para
+                            que NO se confunda con el indicador de estado (redondo) de al lado. */}
+                        <span style={{ width: 22, height: 22, borderRadius: 5, background: step.completed ? T.green : T.paper, border: '1.5px solid ' + (step.completed ? T.green : T.muted), boxShadow: step.completed ? 'none' : '0 1px 2px rgba(26,22,18,0.12)', color: '#fff', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{step.completed ? '✓' : ''}</span>
                       </button>
                     ) : (
-                      // FIX 1 · INDICADOR de estado (redondo): lo detecta la app, NO es una
-                      // casilla que se marque. Sin cursor pointer, sin botón → se lee como
-                      // estado (hecho/pendiente). La forma redonda lo distingue del cuadrado.
+                      // INDICADOR de estado (redondo): lo detecta la app, NO es una casilla. Sin
+                      // botón, sin cursor pointer. Pendiente = punto pequeño muted (no un círculo
+                      // hueco con borde, que se leía como checkbox vacío y la gente intentaba
+                      // pulsarlo); hecho = ✓ en círculo verde. La forma/relleno lo distingue del cuadrado.
                       <span aria-hidden="true" title={isAutoCompleted ? 'Detectado automáticamente' : 'Pendiente'}
-                        style={{ flexShrink: 0, width: 22, height: 22, borderRadius: '50%', background: step.completed ? T.green : 'transparent', border: step.completed ? 'none' : '1.5px solid ' + T.line, color: '#fff', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, cursor: 'default' }}>{step.completed ? '✓' : ''}</span>
+                        style={{ flexShrink: 0, width: 22, height: 22, borderRadius: '50%', background: step.completed ? T.green : 'transparent', color: '#fff', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, cursor: 'default' }}>
+                        {step.completed ? '✓' : <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.faint, display: 'inline-block' }} />}
+                      </span>
                     )}
                     <div style={{ flex: 1, fontFamily: T.serif, fontSize: 17, color: T.ink, lineHeight: T.lh.normal }}>
                       {step.label}
