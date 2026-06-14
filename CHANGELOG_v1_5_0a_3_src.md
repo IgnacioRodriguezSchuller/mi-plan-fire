@@ -631,3 +631,21 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
   localStorage, baseline. Verde solo en el estado 'libre' (excepción documentada de libertad).
 - **Verificación**: 3 estados en navegador (Alex 'libre' → ★60 verde y 590k€; 'tarde' → 89 ámbar;
   objetivo imposible → sobrio, sin dígito); sin NaN; móvil 375×812; consola limpia; `npm run build` OK.
+
+### 2026-06-14 · Proyección · card "Siguiente paso" — vías de retiro temprano (Coast/Lean) + palanca +5pp
+
+- **Causa raíz**: la pantalla retrataba el destino ("En limpio") pero no decía qué hacer
+  después. Faltaba dirección y nombrar los hitos FIRE como vías del camino (no como identidad).
+- **Cambio**: motor en `useDerived` (reusa `seriesRealForDetect` + `ageHittingTarget`):
+  `coastEdad` (capitaliza a `fiTarget` sin aportar más; `rReal=(retorno−inflación)/100`),
+  `leanEdad`/`leanGastoMes`/`leanPct` (gasto esencial, default 0.70 en lectura),
+  `ahorroMas5Edad` (`extraMonthly` = 5% del ingreso). UI: card "Siguiente paso" bajo "En limpio"
+  según `destinoEstado`, vías nombradas "Coast FIRE"/"Lean FIRE" (nunca clasifican al usuario),
+  control `leanPct` 60/70/80, ancla `#proy-dial`, nav a Mes a mes vía `update({activeTab:'seguimiento'})`.
+- **No tocado**: `projectV2`/`projectDecumulation`/`migrateToV2` (solo se llaman con opciones
+  existentes), series dibujadas, claves localStorage, baseline. `leanPct` por defecto en el punto
+  de lectura (sin migración → `verify-state` 8/8 intacto). Verde en NINGÚN estado de esta card.
+- **Verificación**: Alex (`coastEdad 58,75 ≤ cruce 59,75`; `leanEdad 54,58`; `+5pp 57,83`;
+  `leanGastoMes 1378` a 70%); 'tarde' (+5pp → 80, Lean 82 < 88, borde ámbar); 'no-llega' (palanca
+  base sola / vía Lean si llega; `cruce null` sin crash); `leanPct` 60/70/80 monótono (79/82/84);
+  móvil 375×812; consola limpia; `npm run build` OK; verificadores en verde; hash baseline intacto.

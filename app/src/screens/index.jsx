@@ -2730,7 +2730,7 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
       </div>
 
       {/* ── DIAL (gasto declarado) · INVITACIÓN (sin declarar) ── */}
-      <div style={{ marginTop: mobile ? 18 : 22, paddingTop: mobile ? 18 : 22, borderTop: '1px solid ' + T.lineSoft }}>
+      <div id="proy-dial" style={{ marginTop: mobile ? 18 : 22, paddingTop: mobile ? 18 : 22, borderTop: '1px solid ' + T.lineSoft, scrollMarginTop: 16 }}>
         {declared && activeSeg ? (() => {
           const isPercent = activeSeg.type === 'percent';
           const income = d.currentIncome || 0;
@@ -2793,7 +2793,7 @@ export function ScreenProyeccion() {
   // Pantalla proyecta directamente con los parámetros del plan.
   // v1.4.0c · BIG-A · ScreenProyeccion ahora también edita tramos (income,
   // bonus, saving), eventos y asunciones del modelo (migrados desde Ajustes).
-  const { state, updatePlan, updateProfile } = useStore();
+  const { state, update, updatePlan, updateProfile } = useStore();
   const d = useDerived();
   const { profile, plan } = state;
   const mobile = useIsMobile();
@@ -3216,6 +3216,90 @@ export function ScreenProyeccion() {
             <>
               <div style={kicker}>aún fuera de alcance</div>
               <div style={{ ...frase, marginTop: 14 }}>Con los supuestos actuales no llegas a vivir solo de tu cartera antes de los 90. Tu número son {numero} en € de hoy.</div>
+            </>
+          );
+        })()}
+      </Card>
+
+      {/* "Siguiente paso" · dirección determinista (cero IA) según destinoEstado. Reusa
+          coastEdad/leanEdad/ahorroMas5Edad de useDerived. Dos vías nombradas como hitos
+          del camino (Coast/Lean FIRE), nunca clasifican ("eres un…"). Verde en NINGÚN
+          sitio. Borde izquierdo amber salvo en 'libre' (accent). Va DEBAJO de "En limpio". */}
+      <Card style={{ borderLeft: '3px solid ' + (d.destinoEstado === 'libre' ? T.accent : T.amber) }}>
+        <Label style={{ color: d.destinoEstado === 'libre' ? T.accent : T.amber }}>Siguiente paso</Label>
+        {(() => {
+          const estado = d.destinoEstado;
+          const cruce = d.cruceEdad;
+          const ceil = (x) => (x != null ? Math.ceil(x) : null);
+          const eurMes = (v) => fmtEur(v);
+          const frase = { fontFamily: T.serif, fontWeight: 400, fontSize: T.size.lead, lineHeight: 1.55, color: T.ink, marginTop: 12 };
+          const subKicker = { fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase', marginTop: 18 };
+          const viaFrase = { fontFamily: T.serif, fontWeight: 400, fontSize: T.size.body, lineHeight: T.lh.normal, color: T.muted, marginTop: 6 };
+          const linkBtn = { background: 'transparent', border: 'none', padding: 0, marginTop: 12, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, letterSpacing: T.tracking.wide, textTransform: 'uppercase', textAlign: 'left', display: 'inline-block' };
+          const strong = { color: T.ink, fontWeight: 600 };
+          const scrollDial = () => document.getElementById('proy-dial')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Control leanPct · 60/70/80% del gasto. Persiste vía updatePlan.
+          const leanControl = (
+            <div style={{ display: 'flex', gap: 6, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide }}>gasto esencial</span>
+              {[0.6, 0.7, 0.8].map((p) => {
+                const on = Math.abs((d.leanPct != null ? d.leanPct : 0.70) - p) < 0.001;
+                return (
+                  <button key={p} onClick={() => updatePlan({ leanPct: p })} aria-pressed={on} style={{
+                    fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '3px 9px', borderRadius: 999, cursor: 'pointer',
+                    border: '1px solid ' + (on ? T.ink : T.line), background: on ? T.ink : 'transparent', color: on ? T.bg : T.muted,
+                    letterSpacing: T.tracking.wide,
+                  }}>{Math.round(p * 100)}%</button>
+                );
+              })}
+            </div>
+          );
+          const leanVia = (lead) => (
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed ' + T.line }}>
+              <div style={subKicker}>Lean FIRE</div>
+              <div style={viaFrase}>{lead}</div>
+              {leanControl}
+            </div>
+          );
+
+          if (estado === 'libre') {
+            if (d.coastEdad != null && cruce != null && d.coastEdad < cruce) {
+              return (
+                <>
+                  <div style={subKicker}>Coast FIRE</div>
+                  <div style={frase}>Ya puedes bajar el ritmo: con lo acumulado, sin aportar un euro más, el interés te lleva a tu número. Cada aporte extra solo lo adelanta.</div>
+                </>
+              );
+            }
+            return (
+              <>
+                <div style={frase}>Vas en camino. Registra tus meses para ver tu avance real frente al plan.</div>
+                <button style={linkBtn} onClick={() => update({ activeTab: 'seguimiento' })}>Ir a Mes a mes →</button>
+              </>
+            );
+          }
+
+          if (estado === 'tarde') {
+            return (
+              <>
+                <div style={frase}>
+                  {d.ahorroMas5Edad != null
+                    ? <>Subir tu ahorro 5 puntos adelanta el cruce a los <strong style={strong}>{ceil(d.ahorroMas5Edad)}</strong>.</>
+                    : <>Subir tu ahorro acerca tu cruce. Ajusta el aporte abajo para verlo.</>}
+                </div>
+                <button style={linkBtn} onClick={scrollDial}>Ajustar el dial de aporte →</button>
+                {d.leanEdad != null && cruce != null && d.leanEdad < cruce &&
+                  leanVia(<>Si te bastara con lo esencial (~{eurMes(d.leanGastoMes)}/mes), serías libre a los <strong style={strong}>{ceil(d.leanEdad)}</strong>.</>)}
+              </>
+            );
+          }
+
+          // 'no-llega'
+          return (
+            <>
+              <div style={frase}>Sube el ahorro o baja el objetivo hasta que aparezca una edad de libertad.</div>
+              {d.leanEdad != null &&
+                leanVia(<>A gasto esencial (~{eurMes(d.leanGastoMes)}/mes) sí llegarías: libre a los <strong style={strong}>{ceil(d.leanEdad)}</strong>.</>)}
             </>
           );
         })()}

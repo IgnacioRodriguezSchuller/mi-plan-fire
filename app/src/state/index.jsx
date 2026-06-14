@@ -332,6 +332,46 @@ export function useDerived() {
     if (cruceEdad == null) destinoEstado = 'no-llega';
     else if (cruceEdad <= profile.retireAge) destinoEstado = 'libre';
     else destinoEstado = 'tarde';
+
+    // ── "Siguiente paso" · vías deterministas de retiro temprano (cero IA) ──
+    // Todo en € de hoy (real), reutilizando seriesRealForDetect (ritmo real a 90) y
+    // ageHittingTarget (que ya deflacta vía toRealEur). NO tocan projectV2 (solo lo
+    // llaman con opciones existentes). Estos derivados alimentan la card "Siguiente paso".
+    const retornoNom = plan.annualReturn != null ? plan.annualReturn : 8;
+    const inflPct = plan.inflationRate != null ? plan.inflationRate : 2.5;
+    // (1) Coast FIRE · primera edad desde la que, SIN aportar más, el capital real
+    // capitaliza hasta fiTarget en retireAge. rReal = (retorno − inflación)/100.
+    const rReal = (retornoNom - inflPct) / 100;
+    let coastEdad = null;
+    if (fiTarget > 0) {
+      for (let i = 0; i < seriesRealForDetect.length; i++) {
+        const row = seriesRealForDetect[i];
+        const real = toRealEur(row.portfolio || 0, Math.round((row.age - profile.age) * 12), plan.inflationRate);
+        const anios = profile.retireAge - row.age;
+        if (anios > 0 && real * Math.pow(1 + rReal, anios) >= fiTarget) { coastEdad = row.age; break; }
+      }
+    }
+    // (2) Lean FIRE · número con gasto recortado (leanPct del gasto vital). leanPct vive
+    // en el plan (default 0.70, ajustable; persiste vía updatePlan). Default en el PUNTO
+    // DE LECTURA — mismo patrón que withdrawalRate/inflationRate — para no tocar migrateToV2
+    // (rarezas intencionales del baseline) ni romper el verificador de roundtrip.
+    const leanPct = plan.leanPct != null ? plan.leanPct : 0.70;
+    const leanGastoMes = leanPct * monthlyLifeNow;
+    const fiTargetLean = leanGastoMes * 12 / wdr;
+    const leanEdad = fiTargetLean > 0 ? ageHittingTarget(seriesRealForDetect, fiTargetLean) : null;
+    // (3) +5 puntos de ahorro · misma base real + extraMonthly = 5% del ingreso de hoy.
+    const incomeNowForBoost = monthlyIncomeNow || 0;
+    const seriesAhorroMas5 = incomeNowForBoost > 0 ? projectV2(plan, profile, {
+      capital: plan.capital || 0,
+      startKey: startKeyForHistory,
+      endAge: DETECT_END_AGE,
+      includeHypothetical: false,
+      actualByKey,
+      effectiveReturn,
+      extraMonthly: 0.05 * incomeNowForBoost,
+    }) : null;
+    const ahorroMas5Edad = (seriesAhorroMas5 && fiTarget > 0) ? ageHittingTarget(seriesAhorroMas5, fiTarget) : null;
+
     // Plan curve including hypothetical events (for "if all goes well" view)
     const seriesPlanWithHypo = projectV2(plan, profile, {
       capital: currentPortfolio,
@@ -390,6 +430,8 @@ export function useDerived() {
       realVsPlanDelta, realVsPlanRatio,
       fiTarget, ageAtFiPlan, ageAtFiReal,
       cruceEdad, destinoEstado,
+      // "Siguiente paso" · vías deterministas (coast / lean / +5pp)
+      coastEdad, leanEdad, leanPct, leanGastoMes, ahorroMas5Edad,
       // v5 · "Antes de Mi Plan"
       effectiveReturn,
       usingDeclaredExpenses: useDeclaredExpensesNow,
