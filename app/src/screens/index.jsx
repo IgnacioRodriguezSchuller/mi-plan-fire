@@ -1780,46 +1780,38 @@ export function RutaCincoFases({ state, d, mobile }) {
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: T.faint, marginTop: 14 }}>Toca cualquier fase para ver sus pasos.</div>
       </div>
 
-      {/* Resumen + dirección (FUERA de la card) · "una mezcla": la edad de libertad MANDA
-          (héroe ★, verde — única excepción cromática), una frase de lectura hila los hitos
-          (te-adelanta + pensión) sin tres cifras compitiendo, y cierra en la dirección
-          (kicker "Siguiente paso", determinista). Sustituye la antigua fila de 3 hitos que
-          confundía (tres números sin jerarquía). */}
-      <div style={{ marginTop: mobile ? 22 : 30, paddingTop: mobile ? 20 : 24, borderTop: '1px solid ' + T.line }}>
-        {(() => {
-          // Color/forma por destino, NO por libertadAge≠null: el verde y el ★ SOLO en 'libre'
-          // (libertad plena por tu cuenta antes de jubilarte). 'tarde' llega, pero pasada la
-          // edad objetivo → ámbar sin ★ (mismo criterio cromático que "En limpio"). 'no-llega' → muted.
-          const est = d.destinoEstado;
-          const heroColor = est === 'libre' ? T.green : est === 'tarde' ? T.amber : T.muted;
-          const heroText = est === 'no-llega' ? '—' : (est === 'libre' ? '★ ' + libertadAge : '' + libertadAge);
-          const heroLabel = est === 'libre' ? 'eres libre' : est === 'tarde' ? 'libre, pero tarde' : 'todavía no llega';
-          return (
-            <>
-              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 40 : 52, color: heroColor, letterSpacing: T.tracking.display, lineHeight: 1.05 }}>{heroText}</div>
-              <div style={{ fontFamily: T.serif, fontWeight: 600, fontSize: T.size.lead, color: heroColor, marginTop: 2 }}>{heroLabel}</div>
-            </>
-          );
-        })()}
-        <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, marginTop: 10, lineHeight: T.lh.normal, maxWidth: 600 }}>
-          {momentumAge != null
-            ? <>A los <strong style={{ color: T.ink, fontWeight: 600 }}>{momentumAge}</strong> tu dinero ya te adelanta —el rendimiento anual supera a tu aporte— y la pensión pública entra a los <strong style={{ color: T.ink, fontWeight: 600 }}>{pensionAge}</strong>.</>
-            : <>Cuando empieces a aportar, el rendimiento acabará superando a tu aporte; la pensión pública entra a los <strong style={{ color: T.ink, fontWeight: 600 }}>{pensionAge}</strong>.</>}
-        </div>
+      {/* Retrato del destino + dirección · DOS cards al pie de la ruta, mismo patrón que
+          Proyección ("En limpio" + "Siguiente paso") para que las dos pantallas rimen. El
+          retrato es gemelo de "En limpio": Label + kicker de estado + cifra display (verde solo
+          en 'libre', ámbar 'tarde', sin cifra 'no-llega') + frase de lectura que hila los hitos. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: mobile ? 12 : 16, marginTop: mobile ? 16 : 20 }}>
+        <Card>
+          <Label style={{ color: T.faint }}>Tu destino</Label>
+          {(() => {
+            const est = d.destinoEstado;
+            const kicker = { fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, letterSpacing: T.tracking.wide, marginTop: 18 };
+            const cifra = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 2 };
+            const frase = { fontFamily: T.serif, fontSize: T.size.body, color: T.muted, marginTop: 12, lineHeight: T.lh.normal, maxWidth: 600 };
+            const reading = momentumAge != null
+              ? <>A los <strong style={{ color: T.ink, fontWeight: 600 }}>{momentumAge}</strong> tu dinero ya te adelanta —el rendimiento anual supera a tu aporte— y la pensión pública entra a los <strong style={{ color: T.ink, fontWeight: 600 }}>{pensionAge}</strong>.</>
+              : <>Cuando empieces a aportar, el rendimiento acabará superando a tu aporte; la pensión pública entra a los <strong style={{ color: T.ink, fontWeight: 600 }}>{pensionAge}</strong>.</>;
+            if (est === 'libre') {
+              return (<><div style={kicker}>libre a los</div><div style={{ ...cifra, color: T.green }}>★ {libertadAge}</div><div style={frase}>{reading}</div></>);
+            }
+            if (est === 'tarde') {
+              return (<><div style={kicker}>libre, pero tarde, a los</div><div style={{ ...cifra, color: T.amber }}>{libertadAge}</div><div style={frase}>{reading}</div></>);
+            }
+            return (<><div style={kicker}>todavía sin edad de libertad</div><div style={{ ...frase, marginTop: 14 }}>{reading}</div></>);
+          })()}
+        </Card>
         {(() => {
           const noMeses = !(d.filledMonths && d.filledMonths.length);
-          let frase, label, dest;
-          if (noMeses) { frase = 'Registra tu primer mes para seguir tu avance real.'; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; }
-          else if (d.destinoEstado === 'tarde') { frase = 'Llegas tarde a tu meta. Ajusta tu plan.'; label = 'Ir a Proyección →'; dest = 'proy'; }
-          else if (d.destinoEstado === 'no-llega') { frase = 'Aún sin edad de libertad. Ajusta ahorro u objetivo.'; label = 'Ir a Proyección →'; dest = 'proy'; }
-          else { frase = 'Vas en camino. Sigue tu avance mes a mes.'; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; }
-          return (
-            <div style={{ marginTop: 18 }}>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Siguiente paso</div>
-              <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, marginTop: 4, lineHeight: T.lh.normal }}>{frase}</div>
-              <button onClick={() => update({ activeTab: dest })} style={{ background: 'transparent', border: 'none', padding: 0, marginTop: 6, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, letterSpacing: T.tracking.wide, textTransform: 'uppercase', textAlign: 'left', display: 'inline-block' }}>{label}</button>
-            </div>
-          );
+          let frase, label, dest, tone;
+          if (noMeses) { frase = 'Registra tu primer mes para seguir tu avance real.'; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; tone = 'forward'; }
+          else if (d.destinoEstado === 'tarde') { frase = 'Llegas tarde a tu meta. Ajusta tu plan.'; label = 'Ir a Proyección →'; dest = 'proy'; tone = 'behind'; }
+          else if (d.destinoEstado === 'no-llega') { frase = 'Aún sin edad de libertad. Ajusta ahorro u objetivo.'; label = 'Ir a Proyección →'; dest = 'proy'; tone = 'behind'; }
+          else { frase = 'Vas en camino. Sigue tu avance mes a mes.'; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; tone = 'forward'; }
+          return <NextStep tone={tone} body={frase} action={{ label, onClick: () => update({ activeTab: dest }) }} />;
         })()}
       </div>
     </div>

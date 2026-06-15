@@ -803,3 +803,17 @@ lógica**; lleva todo al estándar existente (primitivas + tokens + jerarquía c
 - **Verificación**: 3 estados (libre 45 → verde + ★ verde; tarde 61 → ámbar + sin ★ + caption "fuera
   de la curva"; no-llega → sin ★ ni verde de cruce); el hero coincide con "En limpio"; consola limpia;
   `npm run build` OK.
+
+### 2026-06-15 · Hoy · el resumen de la ruta pasa a Card + reutiliza NextStep
+
+- **Causa raíz**: el "resumen + dirección" al pie de `RutaCincoFases` era **texto desnudo sobre el
+  fondo** (un `<div>` con `borderTop`), con la cifra hero en px crudos (`mobile?40:52`) y `lineHeight
+  1.05` — rompía el ritmo de cards de la pantalla (M1/M2/M3) y se leía como sin estilar.
+- **Cambio**: dos cards al pie (mismo patrón que Proyección "En limpio" + "Siguiente paso"): un
+  **retrato** (`Card` + `Label` "Tu destino" + kicker de estado + cifra `T.size.displayLg`/`T.lh.tight`/
+  `T.tracking.display` —verde 'libre', ámbar 'tarde', sin cifra 'no-llega'— + frase de lectura serif que
+  hila momentum + pensión) y la dirección vía la primitiva **`NextStep`**. Sin px ni lineHeight crudos;
+  márgenes al ritmo de Card.
+- **No tocado**: copy, reglas de dirección, `momentumAge`/`pensionAge`/`libertadAge`, motor.
+- **Verificación**: Plan 'tarde' → retrato (radius 14, "61" ámbar displayLg 44, lectura) + NextStep
+  (borde ámbar, link `Btn`); coincide con el hero/curva de Proyección; consola limpia; `npm run build` OK.
