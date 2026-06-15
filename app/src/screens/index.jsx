@@ -2734,7 +2734,7 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
           se actualiza al pasar el ratón por la curva. Por defecto, el punto a la jubilación. */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
         <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>A los {reading.age}</span>
-        <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>{fmtEur(reading.portfolio)}</span>
+        <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>{fmtEur(reading.portfolio)}</span>
       </div>
 
       {/* Leyenda mínima (una curva, no tres) */}

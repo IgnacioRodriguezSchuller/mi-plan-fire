@@ -862,6 +862,14 @@ diseñado* — composición, jerarquía y calidez — sin gamificar y sin romper
 - **Verificación**: chip ámbar perfilado (87%); banda P10/Mediana/P90 limpia en tinta; consola limpia;
   `npm run build` OK.
 
+### 2026-06-15 · Proyección · pulido: la lectura del chart deja de duplicar la banda de KPIs
+
+- **Cambio**: la cifra de lectura del chart ("A los X / Y€", scrub) baja de `displayMd` a `subtitle`.
+  Antes duplicaba como segundo héroe la "A los 60 / 1.22M€" de la banda de KPIs; ahora la banda es el
+  resumen y la lectura del chart es un readout secundario que sigue al ratón. Jerarquía: hero (44) >
+  banda KPIs (32) > lectura (22).
+- **Verificación**: sin duplicado-héroe; consola limpia; `npm run build` OK.
+
 ### 2026-06-15 · Proyección · "En limpio" gemela del retrato de Hoy
 
 - **Causa raíz**: la cifra de "En limpio" usaba `displayXxl` (40-64, mayor que el propio hero de la
