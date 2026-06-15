@@ -214,7 +214,7 @@ export function HeroCurve({ numberLabel, freeAge, style = {} }) {
   useEffect(() => { try { if (pathRef.current) setLen(pathRef.current.getTotalLength()); } catch (e) { /* jsdom */ } }, []);
   const drawn = prefersReduced() ? true : inView;
   return (
-    <svg ref={ref} viewBox="0 0 560 240" style={{ width: 'min(560px, 82vw)', height: 'auto', display: 'block', margin: '0 auto', ...style }}>
+    <svg ref={ref} viewBox="0 0 560 240" style={{ width: 'min(560px, 100%)', height: 'auto', display: 'block', margin: '0 auto', ...style }}>
       <line x1="20" y1="96" x2="540" y2="96" stroke={T.line} strokeWidth="1" strokeDasharray="5 6" />
       <text x="22" y="88" fontFamily={T.serif} fontStyle="italic" fontSize="15" fill={T.faint}>{numberLabel}</text>
       <path ref={pathRef} d="M20 222 C 200 218, 320 200, 380 138 C 440 78, 480 50, 540 30" fill="none" stroke={T.accent} strokeWidth="3"
@@ -282,7 +282,7 @@ export function LifeChart({ points, cruceAge, style = {} }) {
   const ticks = []; for (let a = Math.ceil(a0 / 10) * 10; a <= a1; a += 10) ticks.push(a);
   const last = points[points.length - 1];
   return (
-    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} style={{ width: 'min(660px, 90vw)', height: 'auto', display: 'block', margin: '0 auto', ...style }} aria-label="Línea de vida: patrimonio frente a tu número">
+    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} style={{ width: 'min(660px, 100%)', height: 'auto', display: 'block', margin: '0 auto', ...style }} aria-label="Línea de vida: patrimonio frente a tu número">
       <line x1={L} y1={H - B} x2={W - R} y2={H - B} stroke={T.lineSoft} strokeWidth="1" />
       <line x1={L} y1={TP} x2={L} y2={H - B} stroke={T.lineSoft} strokeWidth="1" />
       <path d={d('meta')} fill="none" stroke={T.line} strokeWidth="1.5" strokeDasharray="5 6" />
@@ -318,7 +318,7 @@ export function MonteCarloChart({ bands, retireAge, style = {} }) {
   const bottom = bands.slice().reverse().map((b) => `L${X(b.age).toFixed(1)} ${Y(b.p10 || 0).toFixed(1)}`).join(' ');
   const median = bands.map((b, i) => `${i ? 'L' : 'M'}${X(b.age).toFixed(1)} ${Y(b.p50 || 0).toFixed(1)}`).join(' ');
   return (
-    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} style={{ width: 'min(660px, 90vw)', height: 'auto', display: 'block', margin: '0 auto', ...style }} aria-label="Simulaciones Monte Carlo">
+    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} style={{ width: 'min(660px, 100%)', height: 'auto', display: 'block', margin: '0 auto', ...style }} aria-label="Simulaciones Monte Carlo">
       <line x1={L} y1={H - B} x2={W - R} y2={H - B} stroke={T.lineSoft} strokeWidth="1" />
       <line x1={X(retireAge)} y1={TP} x2={X(retireAge)} y2={H - B} stroke={T.line} strokeWidth="1" strokeDasharray="4 5" />
       <path d={`${top} ${bottom} Z`} fill={T.greenSoft} />

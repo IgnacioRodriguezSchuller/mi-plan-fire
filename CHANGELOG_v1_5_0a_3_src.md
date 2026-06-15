@@ -881,6 +881,22 @@ clara entre dato editable y calculado. **Sustituye** el diseño anterior de Proy
 `ScreenProyeccionLegacy`, referencia para Fase 2). Anula puntualmente —SOLO en esta sección— el
 "sin movimiento" de la doctrina previa, por decisión explícita del propietario.
 
+### 2026-06-15 · Proyección · Cartel · el contenido se queda DENTRO del encuadre en vistas estrechas
+
+- **Causa raíz**: el `PosterFrame` (fixed, contenido en el contenedor de la pestaña por el
+  `transform` de `.tab-enter`) queda a 16px de inset, pero la columna de spreads no tenía padding
+  horizontal → el contenido llenaba todo el ancho del contenedor y se salía del marco ~16px por lado
+  al estrechar la vista (los tramos de ingreso eran lo más visible). Las gráficas lo agravaban al
+  medir en `vw` (viewport) en vez de su contenedor.
+- **Cambio**: la columna de spreads (`ScreenProyeccion`) pasa a `max-width: 712 · margin: 0 auto ·
+  padding: 0 24px · box-sizing: border-box`, de modo que el contenido siempre cae por dentro del
+  inset del marco (con holgura) a cualquier ancho. Gráficas (`LifeChart`, `MonteCarloChart`,
+  `HeroCurve`) de `min(Xpx, NNvw)` → `min(Xpx, 100%)` para respetar su contenedor.
+- **No tocado**: el `PosterFrame` ni su `maxWidth`; el motor; el contenido/copy.
+- **Verificación**: cero desbordes y sin scroll horizontal a 315 / 400 / 600 / 1280 px (detector que
+  compara el rect de cada hoja contra los bordes internos del marco); hero de escritorio equilibrado
+  (columna 664 dentro del marco 688); consola limpia; `npm run build` OK.
+
 ### 2026-06-15 · Proyección · Cartel «completa» — contenido y lógica reales sobre el estilo
 
 - **Causa raíz**: la primera pasada del Cartel (entrada de abajo) aplicaba el ESTILO pero con

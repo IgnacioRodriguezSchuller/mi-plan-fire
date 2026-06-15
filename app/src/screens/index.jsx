@@ -2940,7 +2940,10 @@ export function ScreenProyeccion() {
   return (
     <div style={{ position: 'relative', paddingBottom: '6vh' }}>
       <PosterFrame top={mobile ? 66 : 86} />
-      <div style={{ position: 'relative', zIndex: 2 }}>
+      {/* La columna de contenido se mete DENTRO del encuadre: padding ≥ inset del marco
+          (16px) + holgura, y max-width por debajo del marco. Sin esto, a vistas estrechas
+          el contenido (tramos, gráficas) se salía del PosterFrame. */}
+      <div style={{ position: 'relative', zIndex: 2, maxWidth: 712, margin: '0 auto', padding: '0 24px', boxSizing: 'border-box' }}>
 
         {/* 1 · HERO */}
         <Spread>
