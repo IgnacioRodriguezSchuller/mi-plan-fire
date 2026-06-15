@@ -3210,57 +3210,45 @@ export function ScreenProyeccion() {
           Ancla del salto desde la píldora "SUPUESTOS" del inicio de la pantalla. */}
       <div id="proy-asunciones" aria-hidden="true" style={{ scrollMarginTop: 16 }} />
       <Card pad={mobile ? 16 : 24}>
-        <Label style={{ marginBottom: 14 }}>Asunciones del modelo</Label>
-        <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(2, 1fr)', gap: 14 }}>
-          {(() => {
-            const ret = activePlan.annualReturn != null ? activePlan.annualReturn : 8;
-            const warning = ret > 15
-              ? 'Por encima del 15% anual es expectativa muy optimista a largo plazo: ni los índices más agresivos lo han sostenido durante décadas. Considera bajarlo a un rango realista (6-9% para cartera global).'
-              : null;
-            return (
-              <RowWithWarning label={<Concept id="retorno-anual">Retorno anual</Concept>} warning={warning}>
-                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle }}>
-                  <EditableNumber value={ret} onChange={(v) => updatePlan({ annualReturn: v })} min={0} max={20} step={0.5} color={T.ink} /> %
-                </span>
-              </RowWithWarning>
-            );
-          })()}
-          {(() => {
-            const infl = activePlan.inflationRate != null ? activePlan.inflationRate : 2.5;
-            const warning = infl > 8
-              ? 'Por encima del 8% es hipótesis de inflación muy alta. España solo ha estado en ese rango en periodos cortos (años 70-80, crisis energéticas). Si modelas un escenario adverso, mantenlo; si no, baja a 2-3%.'
-              : null;
-            return (
-              <RowWithWarning label={<Concept id="inflacion">Inflación esperada</Concept>} warning={warning}>
-                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle }}>
-                  <EditableNumber value={infl} onChange={(v) => updatePlan({ inflationRate: v })} min={0} max={15} step={0.1} color={T.ink} /> %
-                </span>
-              </RowWithWarning>
-            );
-          })()}
-          {(() => {
-            const wdr = activePlan.withdrawalRate != null ? activePlan.withdrawalRate : 4.0;
-            const warning = wdr < 3
-              ? 'Por debajo del 3% es muy conservador: requerirá un patrimonio considerablemente mayor para cubrir el mismo gasto. Tiene sentido si planificas un retiro muy largo (40+ años) o quieres dejar herencia.'
-              : wdr > 6
-              ? 'Por encima del 6% es agresivo: la probabilidad de agotar la cartera antes de tiempo crece de forma significativa. Estudios recientes (Bengen 2025, Morningstar 2026) sitúan el rango seguro entre 3,5% y 4,7%.'
-              : null;
-            return (
-              <RowWithWarning label={<Concept id="tasa-retiro">Tasa de retiro</Concept>} warning={warning}>
-                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle }}>
-                  <EditableNumber value={wdr} onChange={(v) => updatePlan({ withdrawalRate: v })} min={2} max={8} step={0.1} color={T.ink} /> %
-                </span>
-              </RowWithWarning>
-            );
-          })()}
-          <Row label={<Concept id="esperanza-vida">Esperanza de vida</Concept>}>
-            <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle }}>
-              <EditableNumber value={activePlan.lifeExpectancy != null ? activePlan.lifeExpectancy : 90} onChange={(v) => updatePlan({ lifeExpectancy: v })} min={70} max={110} step={1} color={T.ink} /> años
-            </span>
-          </Row>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal, paddingTop: 8, borderTop: '1px dashed ' + T.line, marginTop: 4 }}>
-            Los valores por defecto son medias razonables a largo plazo. La tasa de retiro del 4% asume jubilación de ~30 años (estudio Trinity); para retiros más largos (40+ años) conviene bajar a 3-3,5%. Cambiar estos valores actualiza toda la proyección.
-          </div>
+        <Label style={{ marginBottom: 4 }}>Asunciones del modelo</Label>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal, marginBottom: 16 }}>
+          Toca cualquier cifra para ajustarla — recalcula toda la proyección.
+        </div>
+        {/* Banda de stats editable (mismo lenguaje que la fila de KPIs): eyebrow-concepto + cifra
+            display grande + aviso inline. Sustituye la lista "etiqueta / valor" plana. */}
+        {(() => {
+          const ret = activePlan.annualReturn != null ? activePlan.annualReturn : 8;
+          const infl = activePlan.inflationRate != null ? activePlan.inflationRate : 2.5;
+          const wdr = activePlan.withdrawalRate != null ? activePlan.withdrawalRate : 4.0;
+          const life = activePlan.lifeExpectancy != null ? activePlan.lifeExpectancy : 90;
+          const stats = [
+            { id: 'retorno-anual', label: 'Retorno anual', value: ret, on: (v) => updatePlan({ annualReturn: v }), min: 0, max: 20, step: 0.5, suffix: '%',
+              warning: ret > 15 ? 'Por encima del 15% anual es expectativa muy optimista a largo plazo: ni los índices más agresivos lo han sostenido durante décadas. Considera bajarlo a un rango realista (6-9% para cartera global).' : null },
+            { id: 'inflacion', label: 'Inflación esperada', value: infl, on: (v) => updatePlan({ inflationRate: v }), min: 0, max: 15, step: 0.1, suffix: '%',
+              warning: infl > 8 ? 'Por encima del 8% es hipótesis de inflación muy alta. España solo ha estado en ese rango en periodos cortos (años 70-80, crisis energéticas). Si modelas un escenario adverso, mantenlo; si no, baja a 2-3%.' : null },
+            { id: 'tasa-retiro', label: 'Tasa de retiro', value: wdr, on: (v) => updatePlan({ withdrawalRate: v }), min: 2, max: 8, step: 0.1, suffix: '%',
+              warning: wdr < 3 ? 'Por debajo del 3% es muy conservador: requerirá un patrimonio considerablemente mayor para cubrir el mismo gasto. Tiene sentido si planificas un retiro muy largo (40+ años) o quieres dejar herencia.'
+                : wdr > 6 ? 'Por encima del 6% es agresivo: la probabilidad de agotar la cartera antes de tiempo crece de forma significativa. Estudios recientes (Bengen 2025, Morningstar 2026) sitúan el rango seguro entre 3,5% y 4,7%.' : null },
+            { id: 'esperanza-vida', label: 'Esperanza de vida', value: life, on: (v) => updatePlan({ lifeExpectancy: v }), min: 70, max: 110, step: 1, suffix: 'años', warning: null },
+          ];
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 0 }}>
+              {stats.map((s, i) => (
+                <div key={s.id} style={{ paddingLeft: (!mobile && i > 0) ? 20 : (mobile && i % 2 ? 16 : 0), marginLeft: (!mobile && i > 0) ? 20 : 0, borderLeft: (!mobile && i > 0) ? '1px solid ' + T.lineSoft : 'none', marginTop: (mobile && i >= 2) ? 16 : 0 }}>
+                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>
+                    <Concept id={s.id}>{s.label}</Concept>
+                  </div>
+                  <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, marginTop: 4 }}>
+                    <EditableNumber value={s.value} onChange={s.on} min={s.min} max={s.max} step={s.step} color={T.ink} /> <span style={{ fontSize: T.size.body, color: T.muted }}>{s.suffix}</span>
+                  </div>
+                  {s.warning && <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.amber, fontSize: T.size.caption, marginTop: 6, lineHeight: T.lh.normal }}>{s.warning}</div>}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal, paddingTop: 14, borderTop: '1px dashed ' + T.line, marginTop: 18 }}>
+          Los valores por defecto son medias razonables a largo plazo. La tasa de retiro del 4% asume jubilación de ~30 años (estudio Trinity); para retiros más largos (40+ años) conviene bajar a 3-3,5%. Cambiar estos valores actualiza toda la proyección.
         </div>
       </Card>
 

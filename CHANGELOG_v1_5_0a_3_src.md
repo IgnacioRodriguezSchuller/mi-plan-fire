@@ -840,6 +840,17 @@ diseñado* — composición, jerarquía y calidez — sin gamificar y sin romper
 - **Verificación**: Proyección 'tarde' (hero/sol/En limpio/curva coherentes; banda de KPIs compuesta;
   chart con cuerpo); consola limpia; `npm run build` OK.
 
+### 2026-06-15 · Proyección · "Asunciones del modelo" como banda de stats editable
+
+- **Cambio**: la lista "etiqueta / valor" (`RowWithWarning` en 2 columnas) pasa a una **banda de
+  stats** (mismo lenguaje que la fila de KPIs): 4 celdas con divisores verticales, eyebrow-concepto
+  + cifra display editable (`displayMd`) + unidad muted + aviso inline. Más presente y compuesta;
+  sigue siendo editable.
+- **No tocado**: la primitiva `RowWithWarning` (no se toca; este card usa celdas propias), el motor,
+  los avisos (misma lógica de rangos).
+- **Verificación**: 4 cifras editables (8 % / 2,5 % / 4 % / 90 años) con presencia + divisores +
+  concept-links; consola limpia; `npm run build` OK.
+
 ### 2026-06-15 · Proyección · "En limpio" gemela del retrato de Hoy
 
 - **Causa raíz**: la cifra de "En limpio" usaba `displayXxl` (40-64, mayor que el propio hero de la
