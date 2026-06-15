@@ -251,3 +251,114 @@ export function MonteCarloBand({ survivors, lifeExp, p10, p50, p90 }) {
     </Reveal>
   );
 }
+
+// ── LifeChart · curva REAL de patrimonio vs número (data-driven), estilo Cartel ──
+// points: [{age, portfolio, meta}] anuales. La curva se dibuja al revelarse; el ★ se posa en el
+// cruce real (interpolado). Ejes y etiquetas en Fraunces cursiva. Colores por token.
+export function LifeChart({ points, cruceAge, style = {} }) {
+  const [ref, inView] = useReveal(0.18);
+  const pathRef = useRef(null);
+  const [len, setLen] = useState(0);
+  const W = 640, H = 320, L = 48, R = 18, TP = 22, B = 38;
+  const valid = points && points.length >= 2;
+  const d = valid ? path => points.map((p, i) => `${i ? 'L' : 'M'}${X(p.age).toFixed(1)} ${Y(p[path] || 0).toFixed(1)}`).join(' ') : () => '';
+  const a0 = valid ? points[0].age : 30, a1 = valid ? points[points.length - 1].age : 60;
+  const maxY = valid ? Math.max(1, ...points.map(p => Math.max(p.portfolio || 0, p.meta || 0))) * 1.06 : 1;
+  function X(age) { return L + (a1 === a0 ? 0 : (age - a0) / (a1 - a0)) * (W - L - R); }
+  function Y(v) { return H - B - (v / maxY) * (H - TP - B); }
+  useEffect(() => { try { if (pathRef.current) setLen(pathRef.current.getTotalLength()); } catch (e) { /* jsdom */ } }, [valid, a0, a1, maxY]);
+  if (!valid) return null;
+  const drawn = prefersReduced() ? true : inView;
+  let cx = null, cy = null;
+  if (cruceAge != null && cruceAge >= a0 && cruceAge <= a1) {
+    cx = X(cruceAge);
+    for (let i = 1; i < points.length; i++) {
+      if (points[i].age >= cruceAge) {
+        const p0 = points[i - 1], p1 = points[i], t = (cruceAge - p0.age) / ((p1.age - p0.age) || 1);
+        cy = Y((p0.portfolio || 0) + t * ((p1.portfolio || 0) - (p0.portfolio || 0))); break;
+      }
+    }
+  }
+  const ticks = []; for (let a = Math.ceil(a0 / 10) * 10; a <= a1; a += 10) ticks.push(a);
+  const last = points[points.length - 1];
+  return (
+    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} style={{ width: 'min(660px, 90vw)', height: 'auto', display: 'block', margin: '0 auto', ...style }} aria-label="Línea de vida: patrimonio frente a tu número">
+      <line x1={L} y1={H - B} x2={W - R} y2={H - B} stroke={T.lineSoft} strokeWidth="1" />
+      <line x1={L} y1={TP} x2={L} y2={H - B} stroke={T.lineSoft} strokeWidth="1" />
+      <path d={d('meta')} fill="none" stroke={T.line} strokeWidth="1.5" strokeDasharray="5 6" />
+      <path ref={pathRef} d={d('portfolio')} fill="none" stroke={T.accent} strokeWidth="3"
+        style={{ strokeDasharray: len || undefined, strokeDashoffset: drawn ? 0 : (len || 0), transition: 'stroke-dashoffset 2.2s cubic-bezier(.4,0,.1,1)' }} />
+      {cx != null && cy != null && (<>
+        <text x={cx - 5} y={cy - 11} fontFamily={T.serif} fontSize="22" fill={T.green}>★</text>
+        <text x={cx + 14} y={cy - 17} fontFamily={T.serif} fontStyle="italic" fontSize="14" fill={T.green}>libre · {Math.ceil(cruceAge)}</text>
+      </>)}
+      <text x={L + 8} y={Y(last.meta) + 18} fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.muted}>tu número</text>
+      <text x={W - R - 6} y={Y(last.portfolio) - 8} textAnchor="end" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.accent}>patrimonio</text>
+      {ticks.map((a) => <text key={a} x={X(a)} y={H - B + 18} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.faint}>{a}</text>)}
+      <text x={(L + W - R) / 2} y={H - 4} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.faint}>edad</text>
+    </svg>
+  );
+}
+
+// ── MonteCarloChart · nube REAL (banda P10–P90 + mediana), estilo Cartel ─────────
+export function MonteCarloChart({ bands, retireAge, style = {} }) {
+  const [ref, inView] = useReveal(0.18);
+  const pathRef = useRef(null);
+  const [len, setLen] = useState(0);
+  const W = 640, H = 320, L = 44, R = 18, TP = 20, B = 32;
+  const valid = bands && bands.length >= 2;
+  const a0 = valid ? bands[0].age : 30, a1 = valid ? bands[bands.length - 1].age : 90;
+  const maxY = valid ? Math.max(1, ...bands.map(b => b.p90 || 0)) * 1.05 : 1;
+  function X(age) { return L + (a1 === a0 ? 0 : (age - a0) / (a1 - a0)) * (W - L - R); }
+  function Y(v) { return H - B - (v / maxY) * (H - TP - B); }
+  useEffect(() => { try { if (pathRef.current) setLen(pathRef.current.getTotalLength()); } catch (e) { /* jsdom */ } }, [valid, a0, a1, maxY]);
+  if (!valid) return null;
+  const drawn = prefersReduced() ? true : inView;
+  const top = bands.map((b, i) => `${i ? 'L' : 'M'}${X(b.age).toFixed(1)} ${Y(b.p90 || 0).toFixed(1)}`).join(' ');
+  const bottom = bands.slice().reverse().map((b) => `L${X(b.age).toFixed(1)} ${Y(b.p10 || 0).toFixed(1)}`).join(' ');
+  const median = bands.map((b, i) => `${i ? 'L' : 'M'}${X(b.age).toFixed(1)} ${Y(b.p50 || 0).toFixed(1)}`).join(' ');
+  return (
+    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} style={{ width: 'min(660px, 90vw)', height: 'auto', display: 'block', margin: '0 auto', ...style }} aria-label="Simulaciones Monte Carlo">
+      <line x1={L} y1={H - B} x2={W - R} y2={H - B} stroke={T.lineSoft} strokeWidth="1" />
+      <line x1={X(retireAge)} y1={TP} x2={X(retireAge)} y2={H - B} stroke={T.line} strokeWidth="1" strokeDasharray="4 5" />
+      <path d={`${top} ${bottom} Z`} fill={T.greenSoft} />
+      <path ref={pathRef} d={median} fill="none" stroke={T.ink} strokeWidth="2.5"
+        style={{ strokeDasharray: len || undefined, strokeDashoffset: drawn ? 0 : (len || 0), transition: 'stroke-dashoffset 2.2s cubic-bezier(.4,0,.1,1)' }} />
+      <text x={L + 8} y={TP + 16} fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.muted}>acumulación</text>
+      <text x={X(retireAge) + 8} y={TP + 16} fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.muted}>jubilación</text>
+      {[a0, retireAge, a1].map((a) => <text key={a} x={X(a)} y={H - B + 16} textAnchor={a === a1 ? 'end' : a === a0 ? 'start' : 'middle'} fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.faint}>{a}</text>)}
+    </svg>
+  );
+}
+
+// ── Stats3 · fila de 3 estadísticos (cifra grande + glosa cursiva) ──────────────
+// item: { computed?, value?, format?, color?, em }. `computed` → count-up; `value` → estático.
+export function Stats3({ items, style = {} }) {
+  const numStyle = (color) => ({ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(28px, 3.8vw, 50px)', letterSpacing: '-.02em', lineHeight: 1, color: color || T.ink });
+  return (
+    <div style={{ display: 'flex', gap: 'clamp(28px, 5vw, 44px)', justifyContent: 'center', flexWrap: 'wrap', marginTop: 40, ...style }}>
+      {items.map((it, i) => (
+        <div key={i} style={{ minWidth: 120 }}>
+          {it.computed != null
+            ? <ComputedNumber value={it.computed} format={it.format || fmtMoneyBig} style={numStyle(it.color)} />
+            : <div style={numStyle(it.color)}>{it.value}</div>}
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 15, marginTop: 8, lineHeight: 1.3 }}>{it.em}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── TramoRow · fila editable de tramo (nombre + fechas + importe) ────────────────
+export function TramoRow({ name, dates, children, staticAmt }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 20, borderTop: '1px solid ' + T.lineSoft, padding: '18px 0', textAlign: 'left' }}>
+      <div style={{ fontFamily: T.serif, fontSize: 'clamp(17px, 2.1vw, 23px)', fontWeight: 500 }}>
+        {name}<em style={{ display: 'block', fontStyle: 'italic', fontSize: 14, color: T.faint, fontWeight: 400, marginTop: 4 }}>{dates}</em>
+      </div>
+      <div style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(18px, 2.3vw, 26px)', whiteSpace: 'nowrap', textAlign: 'right' }}>
+        {staticAmt != null ? staticAmt : <>{children} €/mes</>}
+      </div>
+    </div>
+  );
+}

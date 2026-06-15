@@ -13,6 +13,7 @@ _Actualizado: 2026-06-13_
 - **Verificadores:** content/state en verde; tokens/lib en su **estado conocido** (divergencias intencionales documentadas: Fraunces; `lostFirstYear`; aporte creciente del MC; `bandsByAge`; `projectDecumulation` pensión ×14/12 — H1).
 
 ## Hitos recientes (en git)
+- **Proyección · Cartel «completa»** (`2c816da`, sobre la Fase 1 `71896ba`): rediseño póster editorial con los 7 spreads y datos/lógica REALES — `LifeChart` y `MonteCarloChart` data-driven, `Stats3`, `CartelTramoRow`, derivación del número (gasto×12×25), tramos de ingreso editables. La línea de vida se proyecta hasta el cruce (`endAge` opcional de `projectV2`, aditivo) para mostrar el ★ en el caso 'tarde'. Recálculo en vivo verificado (ahorro y gasto). `ScreenProyeccionLegacy` se conserva como referencia para Fase 2.
 - **fiTarget sin descontar pensión** (`4f1561f`): "tu número" = gasto anual / tasa de retiro, sin restar la pensión; antes se anulaba a 0 cuando pensión ≥ gasto y borraba el ★. La pensión sigue en la simulación temporal (mejora durabilidad, no baja el objetivo). Copy de la card de pensión actualizado.
 - **Tanda de copy de supuestos** (`31046b7`, `c529577`): "En neto, como tu salario" en la progresión; "· 8 % anual asumido" en parado/invertido; línea de inflación condicional al modo bajo el desglose de la meta; píldora SUPUESTOS en Proyección con salto a la card; subrayado dashed accent en términos `Concept`.
 - **Ruta de fases usable en móvil** (`db55971`): indicadores de estado redondos vs casillas manuales cuadradas (Fase 3 ya no simula ser clicable); título sincronizado con la fase seleccionada + marca "ahora" en la activa; selección reforzada + scroll; hit area ≥44px.
@@ -38,6 +39,7 @@ _Actualizado: 2026-06-13_
 7. **[COPY · decidir]** Tensión vocabulario monetario: la regla v1.1.x prohíbe "€ de hoy" en JSX visible, pero la unificación nominal lo reintrodujo en Proyección. Resolver y re-auditar copy.
 8. **[PRO · lejano]** Exportación PDF profesional (listada como feature Pro "próximamente" en `CHANGELOG_v5_10.md`).
 9. **[MEDIO]** Modal "cálculo completo" · branding FIRE en logo/landing · onboarding con cumpleaños · auditoría "¿falta contenido?". *(a confirmar si "cálculo completo" se refiere al `SinMiPlanModal` ya existente o a otro.)*
+10. **[GRANDE · Cartel Fase 2]** Extraer los tokens/medidas del sistema Cartel (`app/src/ui/cartel.jsx`) y propagar la dirección póster a las demás pantallas (Hoy/Seguimiento/Plan), decidiendo qué de la doctrina "sin movimiento" se relaja fuera de Proyección. Retirar `ScreenProyeccionLegacy` cuando el Cartel sea definitivo.
 
 ## Preguntas abiertas / producto
 - Feedback de Juanjo (CFA): densidad · "cockpit" · "mucho número, poca dopamina". La tensión visualizar-vs-narrar queda pendiente pantalla a pantalla.

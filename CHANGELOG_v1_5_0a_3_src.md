@@ -881,6 +881,35 @@ clara entre dato editable y calculado. **Sustituye** el diseño anterior de Proy
 `ScreenProyeccionLegacy`, referencia para Fase 2). Anula puntualmente —SOLO en esta sección— el
 "sin movimiento" de la doctrina previa, por decisión explícita del propietario.
 
+### 2026-06-15 · Proyección · Cartel «completa» — contenido y lógica reales sobre el estilo
+
+- **Causa raíz**: la primera pasada del Cartel (entrada de abajo) aplicaba el ESTILO pero con
+  contenido simplificado. El propietario aportó `cartel-proyeccion-completa.html` como objetivo
+  («lo que deberías haber hecho»): mismo estilo, pero con el contenido y la lógica REALES de la
+  sección — cruce CALCULADO (no input), gráficas data-driven, derivación del número (gasto×12×25),
+  tramos de ingreso editables y nube Monte Carlo real.
+- **Componentes nuevos** (`app/src/ui/cartel.jsx`, +111 líneas): `LifeChart` (curva real de
+  patrimonio vs número, data-driven, ★ interpolada en el cruce), `MonteCarloChart` (banda P10–P90 +
+  mediana, split en jubilación), `Stats3` (3 cifras con count-up/estáticas) y `TramoRow` (fila
+  editable nombre+fechas+importe; se importa como `CartelTramoRow` para no colisionar con el
+  `TramoRow` legacy del editor de ingresos — la colisión rompía el build).
+- **`ScreenProyeccion`** reescrita a 7 spreads con datos reales: hero (estado/edad de cruce honestos
+  vía `destinoEstado`+`Math.ceil`), línea de vida + derivación del número, palanca (tasa de ahorro),
+  ingresos (tramos editables), asunciones (4 editables), ¿y te dura? (Monte Carlo) y cierre P10/Med/P90.
+  El diseño anterior queda como `ScreenProyeccionLegacy` (referencia Fase 2).
+- **Línea de vida hasta el cruce**: `lifePoints` se proyecta a `max(retireAge, ceil(cruce)+1)` (no
+  solo a `retireAge`) vía el `endAge` opcional de `projectV2` (aditivo, sin tocar la firma), para que
+  el ★ del cruce 'tarde' (>retireAge) caiga DENTRO del gráfico — antes la glosa prometía un ★ que no
+  se pintaba. `seriesBase`/`finalNominal` siguen a `retireAge` (la cifra "a los 60" no cambia).
+- **No tocado**: `projectV2`/`runMonteCarlo`/`migrateToV2` (solo se usa `endAge`, ya soportado);
+  otras pantallas; tokens; claves/campos del estado persistido.
+- **Verificación**: los 7 spreads renderizan con datos reales (Alex: 'tarde' 61, número 590.400 €,
+  Monte Carlo 86 % · P10 579k / Med 1,02M / P90 1,88M); recálculo en vivo confirmado con click real
+  (ahorro 18→45→30→18 ⇒ cruce 61→45→52→61; gasto 1.968→3.000 ⇒ número 590k→900k, cruce 61→67) y
+  estado restaurado a baseline; ★ del cruce visible ("libre · 61"); móvil 375×812 OK; consola limpia;
+  `npm run build` OK; verify-state/content PASS (tokens/lib solo divergencias conocidas); hash del
+  baseline intacto.
+
 ### 2026-06-15 · Proyección · sistema Cartel + cableado de inputs al motor
 
 - **Componentes** (`app/src/ui/cartel.jsx`): `PosterFrame`, `Spread`, `SectionTag`, `EditableValue`
