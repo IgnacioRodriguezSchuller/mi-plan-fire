@@ -155,6 +155,29 @@ export function Btn({ children, onClick, variant = 'primary', size = 'md', style
   );
 }
 
+// "Siguiente paso" · card de dirección unificada (Proyección, Hoy, Seguimiento). Una sola
+// anatomía: Card + borde-izquierdo de tono (accent = avanzas/ok · amber = atención/tarde —
+// NUNCA verde) + kicker Label "Siguiente paso" + prosa serif (lead) + link de acción
+// (Btn variant="text", el botón texto canónico). `body` = frase principal; `children` cuelga
+// estructura extra (p.ej. las vías Coast/Lean de Proyección).
+export function NextStep({ tone = 'forward', body, action, children, style = {} }) {
+  const c = tone === 'behind' ? T.amber : T.accent;
+  return (
+    <Card style={{ borderLeft: '3px solid ' + c, ...style }}>
+      <Label style={{ color: c }}>Siguiente paso</Label>
+      {body != null && (
+        <div style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.normal, color: T.ink, marginTop: 12 }}>{body}</div>
+      )}
+      {action && (
+        <div style={{ marginTop: 14 }}>
+          <Btn variant="text" size="sm" onClick={action.onClick}>{action.label}</Btn>
+        </div>
+      )}
+      {children}
+    </Card>
+  );
+}
+
 // Compact month picker (YYYY-MM input)
 export function MonthInput({ value, onChange, placeholder = '', allowEmpty = false }) {
   return (

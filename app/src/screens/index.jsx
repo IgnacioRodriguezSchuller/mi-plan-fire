@@ -16,7 +16,7 @@ import {
 } from '../lib/index.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import {
-  EditableNumber, Slider, Pill, Card, Label, Btn, MonthInput, Stat, SmallStat, Row, RowWithWarning,
+  EditableNumber, Slider, Pill, Card, Label, Btn, NextStep, MonthInput, Stat, SmallStat, Row, RowWithWarning,
   LegendChip, LearnIcon,
 } from '../ui/index.jsx'
 import {
@@ -3283,85 +3283,82 @@ export function ScreenProyeccion() {
           coastEdad/leanEdad/ahorroMas5Edad de useDerived. Dos vías nombradas como hitos
           del camino (Coast/Lean FIRE), nunca clasifican ("eres un…"). Verde en NINGÚN
           sitio. Borde izquierdo amber salvo en 'libre' (accent). Va DEBAJO de "En limpio". */}
-      <Card style={{ borderLeft: '3px solid ' + (d.destinoEstado === 'libre' ? T.accent : T.amber) }}>
-        <Label style={{ color: d.destinoEstado === 'libre' ? T.accent : T.amber }}>Siguiente paso</Label>
-        {(() => {
-          const estado = d.destinoEstado;
-          const cruce = d.cruceEdad;
-          const ceil = (x) => (x != null ? Math.ceil(x) : null);
-          const eurMes = (v) => fmtEur(v);
-          const frase = { fontFamily: T.serif, fontWeight: 400, fontSize: T.size.lead, lineHeight: 1.55, color: T.ink, marginTop: 12 };
-          const subKicker = { fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase', marginTop: 18 };
-          const viaFrase = { fontFamily: T.serif, fontWeight: 400, fontSize: T.size.body, lineHeight: T.lh.normal, color: T.muted, marginTop: 6 };
-          const linkBtn = { background: 'transparent', border: 'none', padding: 0, marginTop: 12, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, letterSpacing: T.tracking.wide, textTransform: 'uppercase', textAlign: 'left', display: 'inline-block' };
-          const strong = { color: T.ink, fontWeight: 600 };
-          const scrollDial = () => document.getElementById('proy-dial')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Control leanPct · 60/70/80% del gasto. Persiste vía updatePlan.
-          const leanControl = (
-            <div style={{ display: 'flex', gap: 6, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide }}>gasto esencial</span>
-              {[0.6, 0.7, 0.8].map((p) => {
-                const on = Math.abs((d.leanPct != null ? d.leanPct : 0.70) - p) < 0.001;
-                return (
-                  <button key={p} onClick={() => updatePlan({ leanPct: p })} aria-pressed={on} style={{
-                    fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '3px 9px', borderRadius: 999, cursor: 'pointer',
-                    border: '1px solid ' + (on ? T.ink : T.line), background: on ? T.ink : 'transparent', color: on ? T.bg : T.muted,
-                    letterSpacing: T.tracking.wide,
-                  }}>{Math.round(p * 100)}%</button>
-                );
-              })}
-            </div>
-          );
-          const leanVia = (lead) => (
-            <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed ' + T.line }}>
-              <div style={subKicker}>Lean FIRE</div>
-              <div style={viaFrase}>{lead}</div>
-              {leanControl}
-            </div>
-          );
-
-          if (estado === 'libre') {
-            if (d.coastEdad != null && cruce != null && d.coastEdad < cruce) {
+      {(() => {
+        const estado = d.destinoEstado;
+        const cruce = d.cruceEdad;
+        const ceil = (x) => (x != null ? Math.ceil(x) : null);
+        const eurMes = (v) => fmtEur(v);
+        const bodyStyle = { fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.normal, color: T.ink, marginTop: 12 };
+        const subKicker = { fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' };
+        const viaFrase = { fontFamily: T.serif, fontSize: T.size.body, lineHeight: T.lh.normal, color: T.muted, marginTop: 6 };
+        const strong = { color: T.ink, fontWeight: 600 };
+        const scrollDial = () => document.getElementById('proy-dial')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Control leanPct · 60/70/80% del gasto. Persiste vía updatePlan. Geometría Pill.
+        const leanControl = (
+          <div style={{ display: 'flex', gap: 6, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide }}>gasto esencial</span>
+            {[0.6, 0.7, 0.8].map((p) => {
+              const on = Math.abs((d.leanPct != null ? d.leanPct : 0.70) - p) < 0.001;
               return (
-                <>
-                  <div style={subKicker}>Coast FIRE</div>
-                  <div style={frase}>Ya puedes bajar el ritmo: con lo acumulado, sin aportar un euro más, el interés te lleva a tu número. Cada aporte extra solo lo adelanta.</div>
-                </>
+                <button key={p} onClick={() => updatePlan({ leanPct: p })} aria-pressed={on} style={{
+                  fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
+                  border: '1px solid ' + (on ? T.ink : T.line), background: on ? T.ink : 'transparent', color: on ? T.bg : T.muted,
+                  letterSpacing: T.tracking.wide,
+                }}>{Math.round(p * 100)}%</button>
               );
-            }
+            })}
+          </div>
+        );
+        // Vía Lean como sub-bloque colgado (children de NextStep), separado por filete.
+        const leanVia = (lead) => (
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed ' + T.line }}>
+            <div style={subKicker}>Lean FIRE</div>
+            <div style={viaFrase}>{lead}</div>
+            {leanControl}
+          </div>
+        );
+
+        if (estado === 'libre') {
+          if (d.coastEdad != null && cruce != null && d.coastEdad < cruce) {
             return (
-              <>
-                <div style={frase}>Vas en camino. Registra tus meses para ver tu avance real frente al plan.</div>
-                <button style={linkBtn} onClick={() => update({ activeTab: 'seguimiento' })}>Ir a Mes a mes →</button>
-              </>
+              <NextStep tone="forward">
+                <div style={{ ...subKicker, marginTop: 12 }}>Coast FIRE</div>
+                <div style={{ ...bodyStyle, marginTop: 6 }}>Ya puedes bajar el ritmo: con lo acumulado, sin aportar un euro más, el interés te lleva a tu número. Cada aporte extra solo lo adelanta.</div>
+              </NextStep>
             );
           }
-
-          if (estado === 'tarde') {
-            return (
-              <>
-                <div style={frase}>
-                  {d.ahorroMas5Edad != null
-                    ? <>Subir tu ahorro 5 puntos adelanta el cruce a los <strong style={strong}>{ceil(d.ahorroMas5Edad)}</strong>.</>
-                    : <>Subir tu ahorro acerca tu cruce. Ajusta el aporte abajo para verlo.</>}
-                </div>
-                <button style={linkBtn} onClick={scrollDial}>Ajustar el dial de aporte →</button>
-                {d.leanEdad != null && cruce != null && d.leanEdad < cruce &&
-                  leanVia(<>Si te bastara con lo esencial (~{eurMes(d.leanGastoMes)}/mes), serías libre a los <strong style={strong}>{ceil(d.leanEdad)}</strong>.</>)}
-              </>
-            );
-          }
-
-          // 'no-llega'
           return (
-            <>
-              <div style={frase}>Sube el ahorro o baja el objetivo hasta que aparezca una edad de libertad.</div>
-              {d.leanEdad != null &&
-                leanVia(<>A gasto esencial (~{eurMes(d.leanGastoMes)}/mes) sí llegarías: libre a los <strong style={strong}>{ceil(d.leanEdad)}</strong>.</>)}
-            </>
+            <NextStep
+              tone="forward"
+              body="Vas en camino. Registra tus meses para ver tu avance real frente al plan."
+              action={{ label: 'Ir a Mes a mes →', onClick: () => update({ activeTab: 'seguimiento' }) }}
+            />
           );
-        })()}
-      </Card>
+        }
+
+        if (estado === 'tarde') {
+          return (
+            <NextStep
+              tone="behind"
+              body={d.ahorroMas5Edad != null
+                ? <>Subir tu ahorro 5 puntos adelanta el cruce a los <strong style={strong}>{ceil(d.ahorroMas5Edad)}</strong>.</>
+                : <>Subir tu ahorro acerca tu cruce. Ajusta el aporte abajo para verlo.</>}
+              action={{ label: 'Ajustar el dial de aporte →', onClick: scrollDial }}
+            >
+              {d.leanEdad != null && cruce != null && d.leanEdad < cruce &&
+                leanVia(<>Si te bastara con lo esencial (~{eurMes(d.leanGastoMes)}/mes), serías libre a los <strong style={strong}>{ceil(d.leanEdad)}</strong>.</>)}
+            </NextStep>
+          );
+        }
+
+        // 'no-llega'
+        return (
+          <NextStep tone="behind" body="Sube el ahorro o baja el objetivo hasta que aparezca una edad de libertad.">
+            {d.leanEdad != null &&
+              leanVia(<>A gasto esencial (~{eurMes(d.leanGastoMes)}/mes) sí llegarías: libre a los <strong style={strong}>{ceil(d.leanEdad)}</strong>.</>)}
+          </NextStep>
+        );
+      })()}
 
       {wizardOpen && (
         <ProgressionWizard
@@ -3477,27 +3474,22 @@ export function ScreenSeguimiento() {
         {(() => {
           const noMeses = !(d.filledMonths && d.filledMonths.length);
           const ahead = !noMeses && d.avgActual >= d.currentAporte;
-          const borderColor = (noMeses || ahead) ? T.accent : T.amber;
-          let frase, label, action;
+          let frase, label, onClick;
           if (noMeses) {
             frase = 'Aún no registras meses. Anota el primero para comparar realidad y plan.';
             label = 'Registrar un mes →';
-            action = () => document.getElementById('seg-mensual')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            onClick = () => document.getElementById('seg-mensual')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           } else if (ahead) {
             frase = 'Vas por delante del plan. Mira cuánto adelanta tu fecha de libertad.';
             label = 'Ir a Proyección →';
-            action = () => update({ activeTab: 'proy' });
+            onClick = () => update({ activeTab: 'proy' });
           } else {
             frase = 'Vas por detrás del plan. Revisa tu aporte para recuperar el ritmo.';
             label = 'Ir a Proyección →';
-            action = () => update({ activeTab: 'proy' });
+            onClick = () => update({ activeTab: 'proy' });
           }
           return (
-            <Card style={{ borderLeft: '3px solid ' + borderColor }}>
-              <Label style={{ color: borderColor }}>Siguiente paso</Label>
-              <div style={{ fontFamily: T.serif, fontWeight: 400, fontSize: T.size.lead, lineHeight: 1.55, color: T.ink, marginTop: 12 }}>{frase}</div>
-              <button onClick={action} style={{ background: 'transparent', border: 'none', padding: 0, marginTop: 12, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, letterSpacing: T.tracking.wide, textTransform: 'uppercase', textAlign: 'left', display: 'inline-block' }}>{label}</button>
-            </Card>
+            <NextStep tone={(noMeses || ahead) ? 'forward' : 'behind'} body={frase} action={{ label, onClick }} />
           );
         })()}
       </section>

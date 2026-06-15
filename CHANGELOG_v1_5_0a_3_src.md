@@ -765,3 +765,26 @@ Documentadas para que nadie las "corrija" rompiendo la compatibilidad del estado
 - **No tocado**: nada más; misma posición y estilo (mono eyebrow faint) en `Onboarding()`.
 - **Verificación**: `npm run build` OK; la app arranca sin errores de consola; string sustituido en
   el componente que se muestra al elegir "escalonado" en la progresión salarial.
+
+---
+
+## Pase de unificación visual (redo de la capa visual de la narrativa de dirección)
+
+La narrativa de dirección (entradas anteriores) era correcta en copy pero su ejecución visual
+rompía el sistema de diseño (texto suelto sin Card, px/lineHeight crudos, 3 "Siguiente paso"
+distintos, link/pill a mano, contradicción 60/61 en el cruce). Este pase **no cambia copy ni
+lógica**; lleva todo al estándar existente (primitivas + tokens + jerarquía canónica).
+
+### 2026-06-15 · UI · primitiva NextStep + unifica los "Siguiente paso" de Proyección y Seguimiento
+
+- **Causa raíz**: las cards "Siguiente paso" estaban estilizadas de tres formas distintas y el link
+  de acción se hacía a mano (`Btn variant="text"` se usaba 0 veces) → inconsistencia visual.
+- **Cambio**: nueva primitiva `NextStep` en `ui/index.jsx` — `Card` + borde-izquierdo de tono
+  (`accent` = avanzas/ok · `amber` = atención/tarde, **nunca verde**) + `Label` "Siguiente paso" +
+  prosa serif lead + `Btn variant="text"` (primer uso del botón texto canónico). `ScreenProyeccion`
+  y `ScreenSeguimiento` migran a `NextStep`; los botones `leanPct` pasan a geometría `Pill` (4×10).
+- **No tocado**: copy, reglas deterministas, motor/`useDerived`. El bloque de Hoy se migra en su
+  propio commit (pasa a Card). 
+- **Verificación**: Proyección 'tarde' (borde amber, body + link `Btn` + vía Lean, 0 verdes);
+  Seguimiento 'por delante' (borde accent, `Card` radius 14 / pad 24, link `Btn`); consola limpia;
+  `npm run build` OK.
