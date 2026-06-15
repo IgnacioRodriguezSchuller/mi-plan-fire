@@ -2646,7 +2646,7 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
   const numeroHoy = Math.round(fiTargetReal);                              // número FIRE en € de HOY (real)
 
   const R = window.Recharts || {};
-  const { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceDot } = R;
+  const { ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceDot } = R;
 
   const xticks = [];
   for (let a = Math.ceil(currentAge / 10) * 10; a <= retireAge; a += 10) xticks.push(a);
@@ -2698,7 +2698,7 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
   const leanDot = dotAt(d.leanEdad);
 
   return (
-    <Card pad={mobile ? 16 : 26} style={{ minWidth: 0 }}>
+    <Card pad={mobile ? 18 : 30} style={{ minWidth: 0, background: 'radial-gradient(135% 125% at 100% 0%, ' + T.accentSoft + ' 0%, transparent 58%), ' + T.paper }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <Label>Tu línea de vida</Label>
@@ -2726,9 +2726,11 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
         </>
       )}
 
-      {/* Lectura del año recorrido (scrub) · por defecto el punto a la jubilación */}
-      <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.body, marginBottom: 10 }}>
-        A los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{reading.age}</strong>: <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(reading.portfolio)}</strong>
+      {/* Lectura del año recorrido (scrub) · stat protagonista (kicker + cifra display) que
+          se actualiza al pasar el ratón por la curva. Por defecto, el punto a la jubilación. */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
+        <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>A los {reading.age}</span>
+        <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>{fmtEur(reading.portfolio)}</span>
       </div>
 
       {/* Leyenda mínima (una curva, no tres) */}
@@ -2741,11 +2743,20 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
       </div>
 
       {ResponsiveContainer && lifeData.length > 1 ? (
-        <div style={{ width: '100%', height: mobile ? 240 : 300 }}>
+        <div style={{ width: '100%', height: mobile ? 260 : 340 }}>
           <ResponsiveContainer>
             <ComposedChart data={lifeData} margin={{ top: 16, right: 34, left: 18, bottom: 22 }}
               onMouseMove={(s) => { if (s && s.activePayload && s.activePayload.length) { const p = s.activePayload.find((x) => x.dataKey === 'portfolio'); if (p) setScrub({ age: s.activeLabel, portfolio: p.value }); } }}
               onMouseLeave={() => setScrub(null)}>
+              {/* Relleno tenue bajo la curva (accent → transparente) · da cuerpo y calidez a la
+                  gráfica, mismo lenguaje de degradado que el sol del hero. Sin gamificar. */}
+              <defs>
+                <linearGradient id="proyPortfolioFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={T.accent} stopOpacity={0.34} />
+                  <stop offset="55%" stopColor={T.accent} stopOpacity={0.11} />
+                  <stop offset="100%" stopColor={T.accent} stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid stroke={T.lineSoft} strokeDasharray="2 4" vertical={false} />
               <XAxis dataKey="age" type="number" domain={['dataMin', 'dataMax']} ticks={xticks}
                 tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
@@ -2756,13 +2767,19 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
                 label={{ value: realMode ? 'Patrimonio (€ de hoy)' : 'Patrimonio (€)', angle: -90, position: 'insideLeft', offset: 10, fill: T.muted, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, style: { textAnchor: 'middle' } }} />
               <Tooltip cursor={{ stroke: T.ink, strokeWidth: 1, opacity: 0.3 }} content={() => null} />
               <Line dataKey="meta" stroke={T.faint} strokeWidth={1.5} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
-              <Line dataKey="portfolio" stroke={T.accent} strokeWidth={2} dot={false} isAnimationActive={false} activeDot={{ r: 4, fill: T.accent }} />
+              {Area && <Area dataKey="portfolio" stroke="none" fill="url(#proyPortfolioFill)" isAnimationActive={false} activeDot={false} />}
+              <Line dataKey="portfolio" stroke={T.accent} strokeWidth={3} dot={false} isAnimationActive={false} activeDot={{ r: 5, fill: T.accent, stroke: T.paper, strokeWidth: 2 }} />
+              {/* Marcadores con halo (glow tenue) detrás del punto sólido · les da presencia
+                  sin gritar. Accent para vías; verde para el ★ de libertad. */}
+              {leanDot && <ReferenceDot x={leanDot.age} y={leanDot.portfolio} r={12} fill={T.accent} fillOpacity={0.13} stroke="none" />}
               {leanDot && (
                 <ReferenceDot x={leanDot.age} y={leanDot.portfolio} r={4} fill={T.paper} stroke={T.accent} strokeWidth={2} isFront />
               )}
+              {coastDot && <ReferenceDot x={coastDot.age} y={coastDot.portfolio} r={12} fill={T.accent} fillOpacity={0.13} stroke="none" />}
               {coastDot && (
                 <ReferenceDot x={coastDot.age} y={coastDot.portfolio} r={4} fill={T.accent} stroke={T.paper} strokeWidth={2} isFront />
               )}
+              {fiDot && <ReferenceDot x={fiDot.age} y={fiDot.portfolio} r={13} fill={T.green} fillOpacity={0.15} stroke="none" />}
               {fiDot && (
                 <ReferenceDot x={fiDot.age} y={fiDot.portfolio} r={5} fill={T.green} stroke={T.paper} strokeWidth={2} isFront
                   label={{ value: '★ ' + Math.ceil(ageAtFi) + ' · el cruce', position: fiLabelPos, offset: 12, fill: T.green, fontFamily: T.mono, fontSize: T.size.eyebrow, fontWeight: 700 }} />
@@ -3025,23 +3042,21 @@ export function ScreenProyeccion() {
               </div>
             </>
           )}
-          {/* KPIs de contexto (idénticos en ambos estados, sin competir con el héroe) */}
-          <div style={{ display: 'flex', gap: mobile ? 18 : 32, flexWrap: 'wrap', marginTop: 18 }}>
-            <div>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>A los {profile.retireAge}</div>
-              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, marginTop: 2 }}>{fmtEur(finalActive.portfolio)}</div>
-            </div>
-            <div>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>Tu número{realMode ? ' (hoy)' : ''}</div>
-              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, marginTop: 2 }}>{fmtEur(numeroDisplay)}</div>
-              {!realMode && (
-                <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.faint, marginTop: 2, lineHeight: T.lh.snug }}>≈ {fmtEur(fireTarget)} de hoy</div>
-              )}
-            </div>
-            <div>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>Pensión pública</div>
-              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, marginTop: 2 }}>desde los {pensionAge}</div>
-            </div>
+          {/* Banda de stats de contexto · compuesta (filete que la separa + divisores con oficio
+              + cifras display) en vez de tres "etiqueta + número" sueltos. Cifras descriptivas →
+              T.ink (sin color, doctrina). Misma info en ambos estados, sin competir con el héroe. */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: mobile ? 16 : 0, marginTop: 24, paddingTop: 18, borderTop: '1px solid ' + T.line }}>
+            {[
+              { label: 'A los ' + profile.retireAge, value: fmtEur(finalActive.portfolio), sub: null },
+              { label: 'Tu número' + (realMode ? ' (hoy)' : ''), value: fmtEur(numeroDisplay), sub: !realMode ? '≈ ' + fmtEur(fireTarget) + ' de hoy' : null },
+              { label: 'Pensión pública', value: 'desde los ' + pensionAge, sub: null },
+            ].map((s, i) => (
+              <div key={i} style={{ flex: mobile ? '1 1 100%' : '0 0 auto', paddingLeft: (!mobile && i > 0) ? 26 : 0, marginLeft: (!mobile && i > 0) ? 26 : 0, borderLeft: (!mobile && i > 0) ? '1px solid ' + T.lineSoft : 'none' }}>
+                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>{s.label}</div>
+                <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, marginTop: 4 }}>{s.value}</div>
+                {s.sub && <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.faint, marginTop: 3, lineHeight: T.lh.snug }}>{s.sub}</div>}
+              </div>
+            ))}
           </div>
           {hayPosibles && (
             <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.caption, marginTop: 14, lineHeight: T.lh.normal }}>

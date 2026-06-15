@@ -818,6 +818,28 @@ lógica**; lleva todo al estándar existente (primitivas + tokens + jerarquía c
 - **Verificación**: Plan 'tarde' → retrato (radius 14, "61" ámbar displayLg 44, lectura) + NextStep
   (borde ámbar, link `Btn`); coincide con el hero/curva de Proyección; consola limpia; `npm run build` OK.
 
+---
+
+## Elevación visual ("subir lo soso al nivel de los momentos buenos" — referencia: el M2 de Plan)
+
+Feedback: lo utilitario (gráficas frías, filas de cifras planas, chrome gris) desentona con los
+bloques ricos y compuestos (M2 "monedas", hero, sol). Objetivo: que cada bloque sea un *momento
+diseñado* — composición, jerarquía y calidez — sin gamificar y sin romper la disciplina de color
+(verde/acento reservados a oposición/payoff; cifras descriptivas en tinta).
+
+### 2026-06-15 · Proyección · "En limpio" gemela + chart y banda de KPIs elevados
+
+- **Cambio**: (1) **"En limpio"** gemela del hero retrato (cifra `displayLg` —no `displayXxl`—, ★ en
+  'libre', `lineHeight` token); (2) **chart "Tu línea de vida"**: relleno en degradado de 3 paradas
+  bajo la curva, línea 3px, marcadores con halo (glow), **stat de lectura protagonista** (kicker +
+  cifra `displayMd` que sigue al scrub), fondo de card cálido (lavado accent en esquina), plot más
+  alto; (3) la fila de KPIs pasa a **banda de stats compuesta** (filete superior, divisores
+  verticales, cifras `displayMd`, eyebrows en `muted`).
+- **No tocado**: motor/`useDerived`, copy, claves. Color: cifras descriptivas en `T.ink` (el degradado
+  del chart usa opacidad sobre `T.accent`, no un color nuevo).
+- **Verificación**: Proyección 'tarde' (hero/sol/En limpio/curva coherentes; banda de KPIs compuesta;
+  chart con cuerpo); consola limpia; `npm run build` OK.
+
 ### 2026-06-15 · Proyección · "En limpio" gemela del retrato de Hoy
 
 - **Causa raíz**: la cifra de "En limpio" usaba `displayXxl` (40-64, mayor que el propio hero de la
