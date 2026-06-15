@@ -870,6 +870,36 @@ diseñado* — composición, jerarquía y calidez — sin gamificar y sin romper
   banda KPIs (32) > lectura (22).
 - **Verificación**: sin duplicado-héroe; consola limpia; `npm run build` OK.
 
+---
+
+## Dirección «Cartel» (póster editorial) · Proyección · Fase 1
+
+Rediseño completo de Proyección al sistema «Cartel» (handoff del propietario: HANDOFF-proyeccion-
+cartel.md + maqueta cartel-proyeccion.html): Fraunces protagonista a gran tamaño, sin etiquetas
+mono, spreads centrados, movimiento al hacer scroll (respetando prefers-reduced-motion) y distinción
+clara entre dato editable y calculado. **Sustituye** el diseño anterior de Proyección (renombrado
+`ScreenProyeccionLegacy`, referencia para Fase 2). Anula puntualmente —SOLO en esta sección— el
+"sin movimiento" de la doctrina previa, por decisión explícita del propietario.
+
+### 2026-06-15 · Proyección · sistema Cartel + cableado de inputs al motor
+
+- **Componentes** (`app/src/ui/cartel.jsx`): `PosterFrame`, `Spread`, `SectionTag`, `EditableValue`
+  (input subrayado punteado + lápiz), `ComputedNumber` (count-up al revelarse), `LineIcon`,
+  `HeroCurve` (draw), `MonteCarloBand`; hooks `useReveal` (IntersectionObserver, re-dispara,
+  reduced-motion) + count-up. Paleta intacta (tokens); el `#f4a06a` de la maqueta se declara como
+  tinte claro de accent SOLO para la banda ink. `fmtNum` agrupa millares a mano (toLocaleString
+  es-ES no agrupa fiable en este motor).
+- **`ScreenProyeccion`** reescrita con 7 spreads (hero · hoy · el motor · el cruce · Monte Carlo ·
+  lo que pones tú · disclaimer). Inputs editables → motor EXISTENTE: edad→`retireAge`,
+  patrimonio→`capital`, aporte→tramo de ahorro (manteniendo % del ingreso), retorno/inflación/tasa/
+  vida/pensión→`plan`. Calculados: parado/invertido (`computeSinPlanKPIs`), patrimonio a la
+  jubilación, número FIRE, éxito Monte Carlo + P10/Mediana/P90 (`runMonteCarlo`). Editar recalcula
+  en vivo (sin sandbox activo, `updatePlan` escribe al plan real que la pantalla lee).
+- **No tocado**: otras pantallas; el motor; la versión anterior (`ScreenProyeccionLegacy`).
+- **Verificación**: los 6 spreads renderizan; cifras en vivo coherentes con el M1 de Plan
+  (parado 236k / invertido 1,22M) y Monte Carlo (91% · P10 595k / Med 1,03M / P90 1,84M);
+  agrupación de millares y "." del hero corregidos; consola limpia; `npm run build` OK.
+
 ### 2026-06-15 · Proyección · "En limpio" gemela del retrato de Hoy
 
 - **Causa raíz**: la cifra de "En limpio" usaba `displayXxl` (40-64, mayor que el propio hero de la

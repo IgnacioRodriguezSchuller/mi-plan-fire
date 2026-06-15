@@ -20,6 +20,10 @@ import {
   LegendChip, LearnIcon,
 } from '../ui/index.jsx'
 import {
+  PosterFrame, Spread, SectionTag, EditableValue, ComputedNumber, Reveal, LineIcon as CartelIcon,
+  HeroCurve, MonteCarloBand, fmtMoneyBig,
+} from '../ui/cartel.jsx'
+import {
   LineChart, Sparkline, LifecycleChart, LifecycleChartDual, MultiLineChart, FlowTimelineCard,
 } from '../charts/index.jsx'
 import {
@@ -2863,7 +2867,170 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
   );
 }
 
+// ── Dirección «Cartel» (póster editorial) · Fase 1 ──────────────────────────────
+// Reescritura de Proyección con el sistema Cartel (ui/cartel.jsx). Inputs editables
+// cableados al motor EXISTENTE (recalculan en vivo); resultados calculados con count-up al
+// revelarse. Paleta intacta · Fraunces display · sin etiquetas mono · prefers-reduced-motion.
+// La versión anterior queda como ScreenProyeccionLegacy (referencia para la Fase 2).
 export function ScreenProyeccion() {
+  const { state, updatePlan, updateProfile } = useStore();
+  const { profile, plan } = state;
+  const m = usePlanMutators();
+  const d = useDerived();
+  const mobile = useIsMobile();
+
+  // ── Editables (los pone el usuario) ──
+  const retireAge = profile.retireAge;
+  const capital = Math.round(plan.capital || 0);
+  const incomeNow = computeIncomeFor(plan, todayKey());
+  const aporte = Math.round(currentMonthlyAporte(plan) || 0);
+  const annualReturn = plan.annualReturn != null ? plan.annualReturn : 8;
+  const inflationRate = plan.inflationRate != null ? plan.inflationRate : 2.5;
+  const withdrawalRate = plan.withdrawalRate != null ? plan.withdrawalRate : 4;
+  const lifeExpectancy = plan.lifeExpectancy != null ? plan.lifeExpectancy : 90;
+  const pensionAge = (plan.publicPension && plan.publicPension.startAge) || 67;
+
+  // ── Calculados (los produce el motor) ──
+  const sinPlan = computeSinPlanKPIs(plan, profile);
+  const parado = Math.round(sinPlan.parkedFinalNominal || 0);
+  const invertido = Math.round(sinPlan.investedFinalNominal || 0);
+  const yearsToRetire = Math.max(1, retireAge - profile.age);
+  const fireTargetReal = Math.round(d.fiTarget || 0);                    // € de hoy
+  const fireTargetNom = Math.round(fireTargetReal * Math.pow(1 + inflationRate / 100, Math.max(0, retireAge - profile.age)));
+  const patrimonioRetire = invertido;                                    // nominal a la jubilación
+  const cruzaHolgado = patrimonioRetire >= fireTargetNom;
+
+  const mc = useMemo(() => {
+    try { return runMonteCarlo(plan, profile, { trials: 400, startCapital: d.currentPortfolio, includeHypothetical: false }); }
+    catch (e) { return null; }
+  }, [plan, profile, d.currentPortfolio]);
+  const successPct = mc ? Math.round(mc.successRate * 100) : 0;
+  const mcRow = (mc && mc.bandsByAge && mc.bandsByAge.length)
+    ? (mc.bandsByAge.find((r) => r.age === retireAge) || mc.bandsByAge[mc.bandsByAge.length - 1]) : null;
+  const p10 = mcRow ? mcRow.p10 : 0, p50 = mcRow ? mcRow.p50 : 0, p90 = mcRow ? mcRow.p90 : 0;
+
+  // ── Cableado: editar el aporte en € mantiene el % del ingreso (decisión de producto) ──
+  const setAporteEuros = (euros) => {
+    if (!incomeNow || incomeNow <= 0) return;
+    const pct = Math.max(0, Math.round((euros / incomeNow) * 1000) / 10);
+    const seg = findActiveSegment(plan.savingSegments, todayKey());
+    if (seg) m.updateSaving(seg.id, { type: 'percent', value: pct });
+  };
+  const dec = (x) => (Number.isInteger(x) ? 0 : 1);
+  const titleStyle = { fontFamily: T.serif, fontWeight: 600, lineHeight: 0.96, letterSpacing: '-.03em', color: T.ink, margin: 0 };
+  const megaStyle = (color) => ({ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(50px, 11vw, 132px)', lineHeight: 0.84, letterSpacing: '-.04em', color, margin: 0 });
+  const capStyle = { fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(19px, 2.2vw, 26px)', color: T.muted, maxWidth: '28ch', margin: '24px auto 0', lineHeight: 1.35 };
+  const paramVal = { fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(32px, 4.4vw, 50px)', letterSpacing: '-.02em', lineHeight: 0.9, color: T.ink };
+
+  return (
+    <div style={{ position: 'relative', paddingBottom: '6vh' }}>
+      <PosterFrame top={mobile ? 66 : 86} />
+      <div style={{ position: 'relative', zIndex: 2 }}>
+
+        {/* 1 · Hero */}
+        <Spread>
+          <Reveal><SectionTag>Proyección</SectionTag></Reveal>
+          <Reveal delay={60}>
+            <h1 style={{ ...titleStyle, fontSize: 'clamp(46px, 9vw, 116px)', marginTop: 12 }}>
+              Libre a los <span style={{ whiteSpace: 'nowrap' }}><EditableValue value={retireAge} onChange={(v) => updateProfile({ retireAge: Math.round(v) })} min={profile.age + 1} max={100} ariaLabel="Edad objetivo de libertad" />.</span>
+            </h1>
+          </Reveal>
+          <Reveal delay={120}>
+            <p style={{ ...capStyle, fontSize: 'clamp(20px, 2.3vw, 28px)', maxWidth: '26ch' }}>El día que tu dinero trabaja por ti, y tú decides.</p>
+          </Reveal>
+          <Reveal delay={160} style={{ marginTop: 40, width: '100%' }}>
+            <HeroCurve numberLabel={`tu número · ${fmtMoneyBig(fireTargetNom)}`} freeAge={retireAge} />
+          </Reveal>
+          <Reveal delay={220}>
+            <p style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: T.faint, marginTop: 30, lineHeight: 1.5 }}>
+              Los números <span style={{ color: T.accent, borderBottom: '1.5px dashed ' + T.accent, paddingBottom: 1 }}>subrayados</span> los pones tú. El resto los calcula tu plan.
+            </p>
+          </Reveal>
+        </Spread>
+
+        {/* 2 · Hoy */}
+        <Spread short>
+          <Reveal><CartelIcon id="patrimonio" size={72} color={T.ink} style={{ margin: '0 auto 10px' }} /></Reveal>
+          <Reveal delay={40}><SectionTag>Hoy</SectionTag></Reveal>
+          <Reveal delay={80}>
+            <p style={megaStyle(T.ink)}>
+              <EditableValue value={capital} onChange={(v) => updatePlan({ capital: Math.round(v) })} min={0} max={100000000} suffix="€" big ariaLabel="Patrimonio de hoy" />
+            </p>
+          </Reveal>
+          <Reveal delay={130}>
+            <p style={{ ...capStyle, maxWidth: '30ch' }}>
+              Y <EditableValue value={aporte} onChange={setAporteEuros} min={0} max={100000} suffix="€" ariaLabel="Aporte mensual" /> cada mes. Parece poco. El tiempo opina distinto.
+            </p>
+          </Reveal>
+        </Spread>
+
+        {/* 3 · El motor */}
+        <Spread>
+          <Reveal><CartelIcon id="interes-compuesto" size={84} color={T.accent} style={{ margin: '0 auto 10px' }} /></Reveal>
+          <Reveal delay={40}><SectionTag>El motor · multiplica el tiempo</SectionTag></Reveal>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6vh', alignItems: 'center', marginTop: '4vh' }}>
+            <div>
+              <ComputedNumber value={parado} style={megaStyle(T.faint)} ariaLabel={`Parado ${yearsToRetire} años`} />
+              <p style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(16px, 2vw, 22px)', color: T.muted, marginTop: 10 }}>si lo dejas parado, {yearsToRetire} años</p>
+            </div>
+            <div>
+              <ComputedNumber value={invertido} style={megaStyle(T.green)} ariaLabel={`Invertido ${yearsToRetire} años`} />
+              <p style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(16px, 2vw, 22px)', color: T.muted, marginTop: 10 }}>si lo inviertes, {yearsToRetire} años</p>
+            </div>
+          </div>
+        </Spread>
+
+        {/* 4 · El cruce */}
+        <Spread>
+          <Reveal><CartelIcon id="horizonte" size={84} color={T.ink} style={{ margin: '0 auto 10px' }} /></Reveal>
+          <Reveal delay={40}><SectionTag>El cruce</SectionTag></Reveal>
+          <ComputedNumber value={patrimonioRetire} style={{ ...megaStyle(T.accent), fontSize: 'clamp(56px, 12vw, 150px)', marginTop: 4 }} ariaLabel="Patrimonio a la jubilación" />
+          <Reveal delay={120}>
+            <p style={capStyle}>
+              A los {retireAge} {cruzaHolgado ? 'pasas' : 'rozas'} tu número FIRE — {fmtMoneyBig(fireTargetNom)}. {cruzaHolgado ? 'Lo cruzas con holgura.' : 'Súbelo ajustando abajo.'}
+            </p>
+          </Reveal>
+        </Spread>
+
+        {/* 5 · El abanico (Monte Carlo) */}
+        <Spread short>
+          <MonteCarloBand survivors={successPct} lifeExp={lifeExpectancy} p10={fmtMoneyBig(p10)} p50={fmtMoneyBig(p50)} p90={fmtMoneyBig(p90)} />
+        </Spread>
+
+        {/* 6 · Lo que pones tú */}
+        <Spread short>
+          <Reveal><SectionTag>Lo que pones tú</SectionTag></Reveal>
+          <Reveal delay={40}>
+            <p style={{ ...capStyle, fontSize: 'clamp(18px, 2.2vw, 26px)', maxWidth: '30ch', marginTop: 6 }}>Toca cualquier número para cambiarlo — el plan se recalcula solo.</p>
+          </Reveal>
+          <Reveal delay={80} style={{ marginTop: '5vh', width: '100%' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5vh 56px', justifyContent: 'center' }}>
+              {[
+                { id: 'retorno-anual', label: 'retorno anual', node: <EditableValue value={annualReturn} onChange={(v) => updatePlan({ annualReturn: v })} min={0} max={20} decimals={dec(annualReturn)} suffix="%" ariaLabel="Retorno anual" /> },
+                { id: 'inflacion', label: 'inflación', node: <EditableValue value={inflationRate} onChange={(v) => updatePlan({ inflationRate: v })} min={0} max={15} decimals={1} suffix="%" ariaLabel="Inflación" /> },
+                { id: 'tasa-retiro', label: 'tasa de retiro', node: <EditableValue value={withdrawalRate} onChange={(v) => updatePlan({ withdrawalRate: v })} min={2} max={8} decimals={dec(withdrawalRate)} suffix="%" ariaLabel="Tasa de retiro" /> },
+                { id: 'esperanza-vida', label: 'esperanza de vida', node: <EditableValue value={lifeExpectancy} onChange={(v) => updatePlan({ lifeExpectancy: Math.round(v) })} min={70} max={110} ariaLabel="Esperanza de vida" /> },
+                { id: 'pension', label: 'pensión pública desde', node: <EditableValue value={pensionAge} onChange={(v) => updatePlan({ publicPension: { ...(plan.publicPension || {}), startAge: Math.round(v) } })} min={60} max={75} ariaLabel="Edad de pensión pública" /> },
+              ].map((it) => (
+                <div key={it.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                  <CartelIcon id={it.id} size={42} color={T.accent} />
+                  <div style={paramVal}>{it.node}</div>
+                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: T.muted }}>{it.label}</div>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+          <Reveal delay={140}>
+            <p style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, color: T.faint, marginTop: 46 }}>Herramienta de proyección. No es asesoramiento financiero, ni garantiza rentabilidades.</p>
+          </Reveal>
+        </Spread>
+
+      </div>
+    </div>
+  );
+}
+
+export function ScreenProyeccionLegacy() {
   // Pantalla proyecta directamente con los parámetros del plan.
   // v1.4.0c · BIG-A · ScreenProyeccion ahora también edita tramos (income,
   // bonus, saving), eventos y asunciones del modelo (migrados desde Ajustes).
