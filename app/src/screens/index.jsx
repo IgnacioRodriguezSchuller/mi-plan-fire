@@ -2665,8 +2665,12 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
   // Así la etiqueta puede respirar lejos del cúmulo de la esquina (tick de meta superior +
   // final de la curva + eje Y) en vez de pisarse contra él. ageAtFi viene de d.ageAtFiReal
   // (no se recalcula); solo se posiciona la marca + etiqueta.
+  // El ★ del cruce SOLO cuando 'libre' (cruce ≤ jubilación, dentro de la curva). En 'tarde' el
+  // cruce cae tras la jubilación, fuera del dominio dibujado, y no debe pintarse verde "libre"
+  // (contradecía al hero ámbar). 'no-llega' tampoco tiene ★. Coherente con destinoEstado.
+  const cruceLibre = d.destinoEstado === 'libre';
   let fiDot = null;
-  if (ageAtFi != null && lifeData.length > 1) {
+  if (cruceLibre && lifeData.length > 1) {
     for (let i = 1; i < lifeData.length; i++) {
       if (lifeData[i].age >= ageAtFi) {
         const a0 = lifeData[i - 1], a1 = lifeData[i];
@@ -2741,7 +2745,7 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 18, borderTop: '1.5px dashed ' + T.faint, display: 'inline-block' }} />tu número</span>
         {leanDot && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: T.accent }}><span style={{ width: 8, height: 8, borderRadius: '50%', border: '1.5px solid ' + T.accent, display: 'inline-block' }} />lean {Math.ceil(d.leanEdad)}</span>}
         {coastDot && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: T.accent }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />coast {Math.ceil(d.coastEdad)}</span>}
-        {ageAtFi != null && <span style={{ color: T.green }}>★ libre a los {Math.round(ageAtFi)}</span>}
+        {cruceLibre && <span style={{ color: T.green }}>★ libre a los {Math.ceil(ageAtFi)}</span>}
       </div>
 
       {ResponsiveContainer && lifeData.length > 1 ? (
@@ -2769,7 +2773,7 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
               )}
               {fiDot && (
                 <ReferenceDot x={fiDot.age} y={fiDot.portfolio} r={5} fill={T.green} stroke={T.paper} strokeWidth={2} isFront
-                  label={{ value: '★ ' + Math.round(ageAtFi) + ' · el cruce', position: fiLabelPos, offset: 12, fill: T.green, fontFamily: T.mono, fontSize: T.size.eyebrow, fontWeight: 700 }} />
+                  label={{ value: '★ ' + Math.ceil(ageAtFi) + ' · el cruce', position: fiLabelPos, offset: 12, fill: T.green, fontFamily: T.mono, fontSize: T.size.eyebrow, fontWeight: 700 }} />
               )}
             </ComposedChart>
           </ResponsiveContainer>
@@ -2779,9 +2783,11 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
       )}
 
       <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal, marginTop: 8 }}>
-        {ageAtFi != null
-          ? `El ★ es el cruce: a los ${Math.round(ageAtFi)}, el ${wRate}% anual de tu cartera iguala tu gasto — dejas de necesitar un sueldo.`
-          : `Con este aporte, tu patrimonio no cruza tu número antes de los ${retireAge}. Ajusta el aporte abajo para acercar la línea a la meta.`}
+        {cruceLibre
+          ? `El ★ es el cruce: a los ${Math.ceil(ageAtFi)}, el ${wRate}% anual de tu cartera iguala tu gasto — dejas de necesitar un sueldo.`
+          : d.destinoEstado === 'tarde'
+            ? `Tu cartera cruza tu número a los ${Math.ceil(ageAtFi)}, más allá de tu jubilación (${retireAge}); por eso la curva no llega a marcarlo. Ajusta el aporte abajo para adelantarlo.`
+            : `Con este aporte, tu patrimonio no cruza tu número antes de los ${retireAge}. Ajusta el aporte abajo para acercar la línea a la meta.`}
       </div>
 
       {/* ── DIAL (gasto declarado) · INVITACIÓN (sin declarar) ── */}
@@ -2906,8 +2912,12 @@ export function ScreenProyeccion() {
   // Estado y edad SON ageAtFiReal —el mismo que alimenta el ★ de Plan—, NO un recomputo
   // paralelo: si la serie base alcanza el número FIRE en horizonte hay edad (LLEGA), si no,
   // ageAtFiReal es null (NO LLEGA). El número FIRE es d.fiTarget (€ de hoy).
-  const reachesFreedom = d.ageAtFiReal != null;
-  const libertadAge = reachesFreedom ? Math.round(d.ageAtFiReal) : null;   // misma fórmula que Plan
+  // Estado del destino · ÚNICA fuente (d.destinoEstado + d.cruceEdad de useDerived), coherente con
+  // "En limpio", "Siguiente paso" y el resumen de Plan. 'libre' = cruce ≤ jubilación (verde);
+  // 'tarde' = cruce DESPUÉS de la jubilación (ámbar, NO verde); 'no-llega' = sin cruce. Edad con
+  // Math.ceil (invariante 6), nunca Math.round → así no contradice al resto de la app.
+  const heroEstado = d.destinoEstado;
+  const libertadAge = d.cruceEdad != null ? Math.ceil(d.cruceEdad) : null;
   const fireTarget = d.fiTarget || 0;                                        // € de hoy
   const pensionAge = (plan.publicPension && plan.publicPension.startAge) || 67;
   // Brecha (estado NO LLEGA) en € de HOY (like-with-like vs fiTarget, que ya es real):
@@ -2934,13 +2944,16 @@ export function ScreenProyeccion() {
   // sutil, index.css; prefers-reduced-motion lo desactiva). El cielo de fondo es un wash cálido
   // estático que se derrama (sin caja). Contenido en la columna izquierda; el sol no pisa texto.
   const SUN_AGE_HIGH = 40, SUN_AGE_LOW = 70;
-  const sunReaches = d.ageAtFiReal != null;
+  // El sol concuerda con heroEstado: 'libre' por edad (alto/dorado si joven); 'tarde' atardecer
+  // bajo y ámbar (no del todo puesto, coherente con el hero ámbar); 'no-llega' puesta total.
   let sunT;
-  if (!sunReaches) {
+  if (heroEstado === 'no-llega') {
     sunT = 1;                                                                  // puesta (horizonte)
+  } else if (heroEstado === 'tarde') {
+    sunT = 0.85;                                                               // atardecer bajo (ámbar)
   } else {
-    const a = Math.min(Math.max(d.ageAtFiReal, SUN_AGE_HIGH), SUN_AGE_LOW);
-    sunT = ((a - SUN_AGE_HIGH) / (SUN_AGE_LOW - SUN_AGE_HIGH)) * 0.94;         // edad 70 → 0.94 (bajo, no del todo puesto)
+    const a = Math.min(Math.max(d.cruceEdad, SUN_AGE_HIGH), SUN_AGE_LOW);
+    sunT = ((a - SUN_AGE_HIGH) / (SUN_AGE_LOW - SUN_AGE_HIGH)) * 0.94;         // libre: por edad
   }
   // Geometría del arco: horizontal en cuarto de círculo (centrado → borde derecho); vertical = arco
   // sin (alto+mediodía cuando joven, media tarde hacia ~60) MÁS una caída extra que solo actúa en la
@@ -2983,10 +2996,10 @@ export function ScreenProyeccion() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, position: 'relative', zIndex: 1 }}>
         <div style={{ flex: 1, minWidth: 200 }}>
           <Label>Proyección</Label>
-          {reachesFreedom ? (
+          {heroEstado === 'libre' ? (
             <>
-              {/* ESTADO LLEGA · la EDAD es la protagonista. Verde = excepción doctrinal
-                  documentada (la edad de libertad, igual que el ★ de Plan). Fondo claro. */}
+              {/* LIBRE · la EDAD es la protagonista. Verde = excepción doctrinal documentada (la
+                  edad de libertad, igual que el ★ de Plan), SOLO aquí. */}
               <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 4, color: T.ink }}>
                 Eres libre a los <span style={{ color: T.green }}>{libertadAge}</span>.
               </div>
@@ -2994,10 +3007,21 @@ export function ScreenProyeccion() {
                 A esa edad las rentas de tu cartera cubren tu gasto: dejas de depender de un sueldo.
               </div>
             </>
+          ) : heroEstado === 'tarde' ? (
+            <>
+              {/* TARDE · llegas, pero pasada la edad de jubilación → ÁMBAR (no verde: no es libertad
+                  plena). Coherente con "En limpio" y el resumen de Plan. */}
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 4, color: T.ink }}>
+                Llegas a tu meta, pero <span style={{ color: T.amber }}>tarde</span>: a los <span style={{ color: T.amber }}>{libertadAge}</span>.
+              </div>
+              <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.body, marginTop: 8, lineHeight: T.lh.normal, maxWidth: 560 }}>
+                Cruzas después de la edad en que querías jubilarte ({profile.retireAge}). Ajusta tu aporte o tu horizonte ahí abajo para adelantarlo.
+              </div>
+            </>
           ) : (
             <>
-              {/* ESTADO NO LLEGA · la BRECHA, con la misma calma. La cifra a actuar va en
-                  T.accent; el gap sigue la MISMA unidad que el número de la fila KPI (realMode). */}
+              {/* NO LLEGA · la BRECHA, con la misma calma. La cifra a actuar va en T.accent; el gap
+                  sigue la MISMA unidad que el número de la fila KPI (realMode). */}
               <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 4, color: T.ink }}>
                 Con tu plan actual, todavía no llegas.
               </div>

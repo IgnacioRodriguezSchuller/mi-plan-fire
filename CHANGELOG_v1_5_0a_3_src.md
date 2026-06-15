@@ -788,3 +788,18 @@ lógica**; lleva todo al estándar existente (primitivas + tokens + jerarquía c
 - **Verificación**: Proyección 'tarde' (borde amber, body + link `Btn` + vía Lean, 0 verdes);
   Seguimiento 'por delante' (borde accent, `Card` radius 14 / pad 24, link `Btn`); consola limpia;
   `npm run build` OK.
+
+### 2026-06-15 · Proyección · reconcilia la edad de cruce — 'tarde' manda (hero + sol + ★ de la curva)
+
+- **Causa raíz**: el hero ("Eres libre a los 60", verde, vía `reachesFreedom` + `Math.round`) y el ★
+  de la curva contradecían a "En limpio"/"Siguiente paso"/resumen de Plan ("61 · tarde", ámbar, vía
+  `destinoEstado` + `Math.ceil`) cuando el cruce caía justo tras la jubilación (zona 60–61).
+- **Cambio** (solo render, sin tocar `useDerived`): hero, sol, ★ de la curva y pie del gráfico pasan
+  a regirse por `d.destinoEstado` + `Math.ceil(d.cruceEdad)`. 'libre' → "Eres libre a los X" verde +
+  sol por edad + ★ verde en la curva; 'tarde' → "Llegas a tu meta, pero tarde: a los X" ámbar + sol
+  bajo ámbar + SIN ★ (el cruce cae fuera del dominio de la curva); 'no-llega' → la brecha + puesta total.
+- **No tocado**: motor/`useDerived`/`projectV2`; la fila KPI; el verde del Monte Carlo ("X aguantan",
+  resultado positivo, semántica propia, no es libertad).
+- **Verificación**: 3 estados (libre 45 → verde + ★ verde; tarde 61 → ámbar + sin ★ + caption "fuera
+  de la curva"; no-llega → sin ★ ni verde de cruce); el hero coincide con "En limpio"; consola limpia;
+  `npm run build` OK.
