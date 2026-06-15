@@ -628,12 +628,15 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
             {result.trials} <Concept id="monte-carlo">simulaciones</Concept> de tu plan completo, con volatilidad de mercado real. Cada futuro es uno posible: la pregunta es en cuántos tu dinero aguanta hasta los {lifeExp}.
           </div>
         </div>
+        {/* Chip de robustez · antes era un bloque sólido saturado (gritaba); ahora chip perfilado
+            (cifra + borde en el color de estado sobre papel). Color semántico: la tasa de éxito ES
+            el mensaje (verde excelente · ámbar aceptable · rojo crítico). */}
         <div style={{
-          padding: '12px 18px', background: successColor, color: '#fff',
+          padding: '10px 18px', background: T.paper, border: '1.5px solid ' + successColor,
           borderRadius: 12, textAlign: 'center', flexShrink: 0,
         }}>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: 1, letterSpacing: T.tracking.display }}>{successPct}%</div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', opacity: 0.85, marginTop: 4 }}>{successZone}</div>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: 1, letterSpacing: T.tracking.display, color: successColor }}>{successPct}%</div>
+          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: successColor, marginTop: 4 }}>{successZone}</div>
         </div>
       </div>
 
@@ -709,19 +712,20 @@ export function MonteCarloCard({ plan, profile, d, realMode, inflRate }) {
         Hasta los {profile.retireAge} la nube es estrecha: todos los futuros acumulan parecido. Al jubilarte se abre — arriba los que crecen, abajo la cola que se agota antes de los {lifeExp}.
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, paddingTop: 12, borderTop: '1px dashed ' + T.lineSoft }}>
-        <div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.amber, letterSpacing: T.tracking.wider, textTransform: 'uppercase', marginBottom: 4 }}>p10 · {profile.retireAge}</div>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.amber, letterSpacing: T.tracking.tight }}>{fmtEur(retireRow ? retireRow.p10 : 0)}</div>
-        </div>
-        <div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, letterSpacing: T.tracking.wider, textTransform: 'uppercase', marginBottom: 4 }}>mediana · {profile.retireAge}</div>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.accent, letterSpacing: T.tracking.tight }}>{fmtEur(retireRow ? retireRow.p50 : 0)}</div>
-        </div>
-        <div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.ink, letterSpacing: T.tracking.wider, textTransform: 'uppercase', marginBottom: 4 }}>p90 · {profile.retireAge}</div>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(retireRow ? retireRow.p90 : 0)}</div>
-        </div>
+      {/* Rango de resultados a la jubilación · banda de stats (mismo lenguaje que KPIs/Asunciones):
+          eyebrow muted + cifra display en tinta + divisores. Las tres son descriptivas → tinta
+          (el rango lo explican las etiquetas p10/mediana/p90 y la nota inferior, no el color). */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, paddingTop: 14, borderTop: '1px solid ' + T.line }}>
+        {[
+          { label: 'P10 · ' + profile.retireAge, value: retireRow ? retireRow.p10 : 0 },
+          { label: 'Mediana · ' + profile.retireAge, value: retireRow ? retireRow.p50 : 0 },
+          { label: 'P90 · ' + profile.retireAge, value: retireRow ? retireRow.p90 : 0 },
+        ].map((s, i) => (
+          <div key={i} style={{ flex: '1 1 0', paddingLeft: i > 0 ? 18 : 0, marginLeft: i > 0 ? 18 : 0, borderLeft: i > 0 ? '1px solid ' + T.lineSoft : 'none' }}>
+            <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>{s.label}</div>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, marginTop: 4 }}>{fmtEur(s.value)}</div>
+          </div>
+        ))}
       </div>
 
       {/* Bloques "Si el plan falla" (depletionAgeStats) y CTA promocional

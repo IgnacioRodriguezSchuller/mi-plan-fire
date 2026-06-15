@@ -851,6 +851,17 @@ diseñado* — composición, jerarquía y calidez — sin gamificar y sin romper
 - **Verificación**: 4 cifras editables (8 % / 2,5 % / 4 % / 90 años) con presencia + divisores +
   concept-links; consola limpia; `npm run build` OK.
 
+### 2026-06-15 · Proyección · Monte Carlo: chip de robustez sin gritar + P10/Mediana/P90 como banda
+
+- **Cambio**: el badge "X% · Aceptable" deja de ser un **bloque sólido saturado** (gritaba) y pasa a
+  **chip perfilado** (cifra + borde en el color de estado, sobre papel) — sigue claro, ya no grita.
+  La fila **P10 / Mediana / P90** pasa a banda de stats (eyebrow muted + cifra display en tinta +
+  divisores), coherente con KPIs/Asunciones (antes: tres colores amber/accent/ink).
+- **No tocado**: la simulación, la nube/gráfica, la nota de riesgo. El color del chip es semántico
+  (la tasa de éxito ES el mensaje: verde excelente / ámbar aceptable / rojo crítico).
+- **Verificación**: chip ámbar perfilado (87%); banda P10/Mediana/P90 limpia en tinta; consola limpia;
+  `npm run build` OK.
+
 ### 2026-06-15 · Proyección · "En limpio" gemela del retrato de Hoy
 
 - **Causa raíz**: la cifra de "En limpio" usaba `displayXxl` (40-64, mayor que el propio hero de la
