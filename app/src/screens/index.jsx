@@ -3262,14 +3262,14 @@ export function ScreenProyeccion() {
           const edad = d.cruceEdad != null ? Math.ceil(d.cruceEdad) : null;
           const numero = fmtEur(d.fiTarget || 0);
           const kicker = { fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, letterSpacing: T.tracking.wide, marginTop: 18 };
-          const cifra = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXxl, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 2 };
-          const frase = { fontFamily: T.serif, fontWeight: 400, fontSize: T.size.lead, lineHeight: 1.55, color: T.ink, marginTop: 12 };
+          const cifra = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 2 };
+          const frase = { fontFamily: T.serif, fontWeight: 400, fontSize: T.size.lead, lineHeight: T.lh.normal, color: T.ink, marginTop: 12 };
           const notaHoy = { fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide, marginTop: 12 };
           if (estado === 'libre') {
             return (
               <>
                 <div style={kicker}>libre por tu cuenta a los</div>
-                <div style={{ ...cifra, color: T.green }}>{edad}</div>
+                <div style={{ ...cifra, color: T.green }}>★ {edad}</div>
                 <div style={frase}>Necesitas {numero} para vivir de tu cartera. La palanca es tu ahorro, no tu sueldo; la pensión es viento de cola.</div>
                 <div style={notaHoy}>cifra en € de hoy</div>
               </>

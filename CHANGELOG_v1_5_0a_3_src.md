@@ -817,3 +817,13 @@ lógica**; lleva todo al estándar existente (primitivas + tokens + jerarquía c
 - **No tocado**: copy, reglas de dirección, `momentumAge`/`pensionAge`/`libertadAge`, motor.
 - **Verificación**: Plan 'tarde' → retrato (radius 14, "61" ámbar displayLg 44, lectura) + NextStep
   (borde ámbar, link `Btn`); coincide con el hero/curva de Proyección; consola limpia; `npm run build` OK.
+
+### 2026-06-15 · Proyección · "En limpio" gemela del retrato de Hoy
+
+- **Causa raíz**: la cifra de "En limpio" usaba `displayXxl` (40-64, mayor que el propio hero de la
+  pantalla) y `lineHeight: 1.55` crudo → no rimaba con el retrato de Hoy ni con el hero.
+- **Cambio**: cifra `displayXxl` → `T.size.displayLg` (igual que Hoy y que el hero de Proyección);
+  `lineHeight 1.55` → `T.lh.normal`; ★ añadida a la cifra 'libre' (verde) para paridad con Hoy.
+- **No tocado**: copy, estados, motor, la nota "cifra en € de hoy".
+- **Verificación**: cifra 44px (= retrato de Hoy), ámbar en 'tarde', `lineHeight` 1.5; consola limpia;
+  `npm run build` OK.
