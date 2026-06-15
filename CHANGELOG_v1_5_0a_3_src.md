@@ -881,6 +881,19 @@ clara entre dato editable y calculado. **Sustituye** el diseño anterior de Proy
 `ScreenProyeccionLegacy`, referencia para Fase 2). Anula puntualmente —SOLO en esta sección— el
 "sin movimiento" de la doctrina previa, por decisión explícita del propietario.
 
+### 2026-06-16 · Motor · Fat FIRE (fatEdad) — vía determinista calcada de lean
+
+Parte de la Fase 2 del Cartel (portar funciones de la Proyección original): para mostrar los tipos
+de FIRE el motor necesitaba Fat, que no existía.
+- **Causa raíz**: `useDerived` derivaba Coast/Lean/+5pp pero no Fat FIRE.
+- **Cambio**: tras `leanEdad`, se deriva `fatPct` (default 1,5 × gasto vital, **en el punto de
+  lectura**), `fatGastoMes`, `fiTargetFat` y `fatEdad = ageHittingTarget(seriesRealForDetect, fiTargetFat)`
+  — calcado de lean, reusando la misma serie real y deflactado. Exportados `fatEdad/fatPct/fatGastoMes`.
+- **No tocado**: `projectV2`/`runMonteCarlo`/`migrateToV2` (`fatPct` NO entra en migrate, igual que
+  `leanPct`). `fatEdad` suele ser `null`/fuera de alcance → los consumidores lo guardan.
+- **Verificación**: `verify-state` PASS, `verify-lib` sin diffs nuevos (no cubre `useDerived`),
+  `npm run build` OK, consola limpia.
+
 ### 2026-06-15 · Proyección · Cartel · el contenido se queda DENTRO del encuadre en vistas estrechas
 
 - **Causa raíz**: el `PosterFrame` (fixed, contenido en el contenedor de la pestaña por el

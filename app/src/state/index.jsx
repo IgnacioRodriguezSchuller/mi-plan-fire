@@ -359,6 +359,14 @@ export function useDerived() {
     const leanGastoMes = leanPct * monthlyLifeNow;
     const fiTargetLean = leanGastoMes * 12 / wdr;
     const leanEdad = fiTargetLean > 0 ? ageHittingTarget(seriesRealForDetect, fiTargetLean) : null;
+    // (2b) Fat FIRE · número con gasto holgado (fatPct del gasto vital, default 1,5×). Mismo
+    // patrón que lean: fatPct vive en el plan con default EN LECTURA (no en migrateToV2) para no
+    // tocar las rarezas del baseline ni romper el roundtrip. fatEdad suele caer fuera de alcance
+    // (gasto mayor → objetivo mayor → más tarde o null); todos los consumidores guardan el null.
+    const fatPct = plan.fatPct != null ? plan.fatPct : 1.5;
+    const fatGastoMes = fatPct * monthlyLifeNow;
+    const fiTargetFat = fatGastoMes * 12 / wdr;
+    const fatEdad = fiTargetFat > 0 ? ageHittingTarget(seriesRealForDetect, fiTargetFat) : null;
     // (3) +5 puntos de ahorro · misma base real + extraMonthly = 5% del ingreso de hoy.
     const incomeNowForBoost = monthlyIncomeNow || 0;
     const seriesAhorroMas5 = incomeNowForBoost > 0 ? projectV2(plan, profile, {
@@ -430,8 +438,9 @@ export function useDerived() {
       realVsPlanDelta, realVsPlanRatio,
       fiTarget, ageAtFiPlan, ageAtFiReal,
       cruceEdad, destinoEstado,
-      // "Siguiente paso" · vías deterministas (coast / lean / +5pp)
+      // "Siguiente paso" · vías deterministas (coast / lean / fat / +5pp)
       coastEdad, leanEdad, leanPct, leanGastoMes, ahorroMas5Edad,
+      fatEdad, fatPct, fatGastoMes,
       // v5 · "Antes de Mi Plan"
       effectiveReturn,
       usingDeclaredExpenses: useDeclaredExpensesNow,
