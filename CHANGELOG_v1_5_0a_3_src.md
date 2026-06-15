@@ -827,3 +827,11 @@ lógica**; lleva todo al estándar existente (primitivas + tokens + jerarquía c
 - **No tocado**: copy, estados, motor, la nota "cifra en € de hoy".
 - **Verificación**: cifra 44px (= retrato de Hoy), ámbar en 'tarde', `lineHeight` 1.5; consola limpia;
   `npm run build` OK.
+
+### 2026-06-15 · Proyección · la pill de Supuestos adopta la geometría de `Pill`
+
+- **Causa raíz**: la pill estaba hecha a mano con padding `7×14` (más alta/chunky que la primitiva `Pill`).
+- **Cambio**: padding → `4×10` (geometría `Pill` estándar; radius 999, mono eyebrow, `tracking.wide`,
+  borde `T.line` ya coincidían). Sigue siendo `<button>` para el jump-link y para que el texto largo
+  envuelva en móvil (la `Pill` real es inline-flex y desbordaría).
+- **Verificación**: padding `4×10`, radius 999, borde `T.line`; `npm run build` OK.
