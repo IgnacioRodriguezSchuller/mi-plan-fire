@@ -333,6 +333,44 @@ export function useDerived() {
     else if (cruceEdad <= profile.retireAge) destinoEstado = 'libre';
     else destinoEstado = 'tarde';
 
+    // ── Veredicto ÚNICO "¿voy bien?" · fuente de verdad para Hoy/Seguimiento/KpiPill ──
+    // Antes TRES señales se contradecían en una misma sesión: destinoEstado (vs retireAge),
+    // realVsPlanDelta (cartera real vs plan en el último mes) y avgActual≥currentAporte
+    // (media de aportes vs lo prescrito hoy). Unificamos en ageAtFiReal vs ageAtFiPlan
+    // (misma métrica, € de hoy, horizonte de detección 90). Defaults en lectura; no toca
+    // projectV2/runMonteCarlo/migrateToV2. verdict ∈ {adelantado,en-linea,atrasado,no-llega,sin-datos}.
+    const VERDICT_TOL_YEARS = 0.5; // ±medio año → "en línea"
+    const gastoAnual = monthlyLifeNow * 12;
+    // Salvaguarda anti-regresión (HOY inalcanzable: fiTarget = gastoAnual/wdr ⇒ solo saltaría
+    // con withdrawalRate > 20 %). El fix 4f1561f quitó la resta de pensión de fiTarget; mantenemos
+    // el guard por si una regresión del modelo de pensión vuelve a colapsar el número: con pensión
+    // activa y fiTarget inverosímil, NO emitimos veredicto (el modelo de pensión se arregla en su
+    // propia sesión, no aquí).
+    const pensionEnabled = !!(plan.publicPension && plan.publicPension.enabled);
+    const fiTargetImplausible = pensionEnabled && fiTarget > 0 && fiTarget < gastoAnual * 5;
+    let verdict, verdictAge, verdictCopy;
+    if (fiTargetImplausible) {
+      verdict = 'sin-datos';
+      verdictAge = null;
+      verdictCopy = 'Pendiente de revisar el modelo de pensión.';
+    } else if (ageAtFiReal == null) {
+      verdictAge = null;
+      if (filledMonths.length === 0) { verdict = 'sin-datos'; verdictCopy = 'Aún sin datos para un veredicto: registra tu primer mes.'; }
+      else { verdict = 'no-llega'; verdictCopy = 'Con tu ritmo actual no llegas a tu número.'; }
+    } else {
+      verdictAge = ageAtFiReal;
+      if (ageAtFiPlan == null || Math.abs(ageAtFiReal - ageAtFiPlan) < VERDICT_TOL_YEARS) verdict = 'en-linea';
+      else if (ageAtFiReal < ageAtFiPlan) verdict = 'adelantado';
+      else verdict = 'atrasado';
+      const base = verdict === 'adelantado' ? 'Vas por delante de tu plan.'
+        : verdict === 'atrasado' ? 'Vas por detrás de tu plan.'
+        : 'Vas en línea con tu plan.';
+      // Matiz honesto: si la libertad llega después de la jubilación deseada, se dice (no se
+      // pierde el antiguo "libre, pero tarde"), pero en una ÚNICA fuente que todas las vistas leen.
+      const tarde = verdictAge > profile.retireAge + VERDICT_TOL_YEARS;
+      verdictCopy = tarde ? `${base} Tu libertad llega tras los ${profile.retireAge}.` : base;
+    }
+
     // ── "Siguiente paso" · vías deterministas de retiro temprano (cero IA) ──
     // Todo en € de hoy (real), reutilizando seriesRealForDetect (ritmo real a 90) y
     // ageHittingTarget (que ya deflacta vía toRealEur). NO tocan projectV2 (solo lo
@@ -438,6 +476,8 @@ export function useDerived() {
       realVsPlanDelta, realVsPlanRatio,
       fiTarget, ageAtFiPlan, ageAtFiReal,
       cruceEdad, destinoEstado,
+      // Veredicto único "¿voy bien?" (fuente de verdad para Hoy/Seguimiento/KpiPill)
+      verdict, verdictAge, verdictCopy,
       // "Siguiente paso" · vías deterministas (coast / lean / fat / +5pp)
       coastEdad, leanEdad, leanPct, leanGastoMes, ahorroMas5Edad,
       fatEdad, fatPct, fatGastoMes,

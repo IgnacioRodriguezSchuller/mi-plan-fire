@@ -1048,3 +1048,30 @@ de FIRE el motor necesitaba Fat, que no existía.
   borde `T.line` ya coincidían). Sigue siendo `<button>` para el jump-link y para que el texto largo
   envuelva en móvil (la `Pill` real es inline-flex y desbordaría).
 - **Verificación**: padding `4×10`, radius 999, borde `T.line`; `npm run build` OK.
+
+### 2026-06-16 · Hoy/Seguimiento · veredicto único "¿voy bien?" (fuente de verdad)
+
+- **Causa raíz**: tres señales independientes decidían si el usuario "va bien" y se contradecían en
+  la misma sesión: `destinoEstado` (`ageAtFiReal` vs `retireAge`) → "tarde"; `realVsPlanDelta`
+  (cartera real vs plan en el último mes registrado) → "por delante"; `avgActual ≥ currentAporte`
+  (media de aportes vs lo prescrito hoy) → "por detrás". No había una definición ÚNICA de "¿voy bien?".
+- **Cambio** (`state/index.jsx` · `useDerived`): nuevo `verdict ∈ {adelantado, en-linea, atrasado,
+  no-llega, sin-datos}` comparando `ageAtFiReal` vs `ageAtFiPlan` (±0,5 años → en línea), con
+  `verdictAge` (edad de libertad) y `verdictCopy` (frase sobria; conserva el matiz "libre, pero tarde"
+  cuando la libertad llega tras `retireAge`). Defaults EN LECTURA; no toca `projectV2`/`runMonteCarlo`/
+  `migrateToV2`. Salvaguarda anti-regresión: con pensión activa y `fiTarget < gastoAnual·5` (hoy
+  inalcanzable —requeriría `withdrawalRate>20 %`— porque `fiTarget = gastoAnual/wdr`; el fix `4f1561f`
+  ya quitó la resta de pensión) → `verdict='sin-datos'` "Pendiente de revisar el modelo de pensión"
+  (el modelo de pensión se arregla en su propia sesión, no aquí).
+- **Consumo** (`screens/index.jsx`): `ScreenHoy` ("Tu destino" + su NextStep), `ScreenSeguimiento`
+  ("plan vs realidad" + NextStep inferior) y `KpiPill` leen SOLO `verdict`/`verdictAge`/`verdictCopy`.
+  Se retira `avgActual ≥ currentAporte` como criterio de veredicto. El ★ edad de libertad sigue en
+  `T.green` (invariante de doctrina); el veredicto tiñe la FRASE (mapa `VERDICT_COLOR` en la vista →
+  color por tokens). El `KpiPill` pasa a mostrar la edad de libertad (antes `retireAge`).
+- **No tocado**: la Proyección «Cartel» (su hero sigue con `destinoEstado` libre/tarde — fuera de
+  scope; tensión residual anotada para follow-up); `migrateToV2`; firmas del motor; baseline congelado.
+- **Verificación**: demo canónico → Hoy y Seguimiento dicen LO MISMO ("Vas en línea con tu plan",
+  libertad ~60; real 59,8 vs plan 60,1) y el `KpiPill` muestra "★ 60"; guard demostrado forzando
+  `withdrawalRate=25 %`+pensión → "Pendiente de revisar el modelo de pensión" (destino y NextStep);
+  `npm run build` OK; verify-content/state PASS (tokens/lib solo divergencias conocidas); consola
+  limpia; hash del baseline intacto.

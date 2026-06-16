@@ -48,6 +48,12 @@ import { LandingPreOnboarding, Landing } from '../flows/index.jsx'
 // componentes distintos). Futuro: estado/toggle de usuario.
 const INCLUDE_POSSIBLE = false;
 
+// Mapeo del veredicto único (d.verdict de useDerived) a color de token y a tono de NextStep.
+// Vive en la vista para mantener "color solo por tokens T.*" (state no importa tokens).
+// Verde=adelantado, accent=en línea, ámbar=atrasado/no-llega, muted=sin-datos.
+const VERDICT_COLOR = { adelantado: T.green, 'en-linea': T.accent, atrasado: T.amber, 'no-llega': T.amber, 'sin-datos': T.muted };
+const VERDICT_NEXTSTEP_TONE = { adelantado: 'forward', 'en-linea': 'forward', atrasado: 'behind', 'no-llega': 'behind', 'sin-datos': 'forward' };
+
 export function TramoRow({ tramo, kind, hasOverlap, onChange, onDelete, onSplit }) {
   const [expanded, setExpanded] = useState(false);
   const isSaving = kind === 'saving';
@@ -1797,30 +1803,30 @@ export function RutaCincoFases({ state, d, mobile }) {
         <Card>
           <Label style={{ color: T.faint }}>Tu destino</Label>
           {(() => {
-            const est = d.destinoEstado;
+            const v = d.verdict;
             const kicker = { fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, letterSpacing: T.tracking.wide, marginTop: 18 };
             const cifra = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 2 };
             const frase = { fontFamily: T.serif, fontSize: T.size.body, color: T.muted, marginTop: 12, lineHeight: T.lh.normal, maxWidth: 600 };
             const reading = momentumAge != null
               ? <>A los <strong style={{ color: T.ink, fontWeight: 600 }}>{momentumAge}</strong> tu dinero ya te adelanta —el rendimiento anual supera a tu aporte— y la pensión pública entra a los <strong style={{ color: T.ink, fontWeight: 600 }}>{pensionAge}</strong>.</>
               : <>Cuando empieces a aportar, el rendimiento acabará superando a tu aporte; la pensión pública entra a los <strong style={{ color: T.ink, fontWeight: 600 }}>{pensionAge}</strong>.</>;
-            if (est === 'libre') {
-              return (<><div style={kicker}>libre a los</div><div style={{ ...cifra, color: T.green }}>★ {libertadAge}</div><div style={frase}>{reading}</div></>);
+            // Fuente única: veredicto vs plan (d.verdict/verdictAge/verdictCopy). El ★ edad de
+            // libertad SIEMPRE en T.green (invariante de doctrina); el veredicto tiñe la frase.
+            if (d.verdictAge != null) {
+              return (<><div style={kicker}>libre a los</div><div style={{ ...cifra, color: T.green }}>★ {Math.ceil(d.verdictAge)}</div><div style={{ ...frase, color: VERDICT_COLOR[v] }}>{d.verdictCopy}</div><div style={{ ...frase, marginTop: 8, color: T.faint }}>{reading}</div></>);
             }
-            if (est === 'tarde') {
-              return (<><div style={kicker}>libre, pero tarde, a los</div><div style={{ ...cifra, color: T.amber }}>{libertadAge}</div><div style={frase}>{reading}</div></>);
-            }
-            return (<><div style={kicker}>todavía sin edad de libertad</div><div style={{ ...frase, marginTop: 14 }}>{reading}</div></>);
+            return (<><div style={kicker}>{v === 'no-llega' ? 'todavía sin edad de libertad' : 'aún sin veredicto'}</div><div style={{ ...frase, marginTop: 14, color: VERDICT_COLOR[v] }}>{d.verdictCopy}</div><div style={{ ...frase, marginTop: 8, color: T.faint }}>{reading}</div></>);
           })()}
         </Card>
         {(() => {
+          const v = d.verdict;
           const noMeses = !(d.filledMonths && d.filledMonths.length);
-          let frase, label, dest, tone;
-          if (noMeses) { frase = 'Registra tu primer mes para seguir tu avance real.'; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; tone = 'forward'; }
-          else if (d.destinoEstado === 'tarde') { frase = 'Llegas tarde a tu meta. Ajusta tu plan.'; label = 'Ir a Proyección →'; dest = 'proy'; tone = 'behind'; }
-          else if (d.destinoEstado === 'no-llega') { frase = 'Aún sin edad de libertad. Ajusta ahorro u objetivo.'; label = 'Ir a Proyección →'; dest = 'proy'; tone = 'behind'; }
-          else { frase = 'Vas en camino. Sigue tu avance mes a mes.'; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; tone = 'forward'; }
-          return <NextStep tone={tone} body={frase} action={{ label, onClick: () => update({ activeTab: dest }) }} />;
+          let frase, label, dest;
+          if (v === 'sin-datos' && noMeses) { frase = 'Registra tu primer mes para seguir tu avance real.'; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; }
+          else if (v === 'atrasado' || v === 'no-llega') { frase = `${d.verdictCopy} Sube tu aporte o baja tu objetivo en Proyección.`; label = 'Ir a Proyección →'; dest = 'proy'; }
+          else if (v === 'sin-datos') { frase = d.verdictCopy; label = 'Ir a Proyección →'; dest = 'proy'; }
+          else { frase = `${d.verdictCopy} Sigue tu avance mes a mes.`; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; }
+          return <NextStep tone={VERDICT_NEXTSTEP_TONE[v]} body={frase} action={{ label, onClick: () => update({ activeTab: dest }) }} />;
         })()}
       </div>
     </div>
@@ -2338,11 +2344,9 @@ export function ScreenMesAMes() {
       {filled.length >= 3 ? (() => {
         const realAtLast = d.realPortfolioAtLastReg;
         const planAtLast = d.planPortfolioAtLastReg;
-        const delta = d.realVsPlanDelta;
-        const ratio = d.realVsPlanRatio;
-        const inLine = ratio != null && Math.abs(ratio - 1) < 0.01;
-        const ahead = !inLine && delta != null && delta > 0;
-        const realColor = inLine ? T.accent : ahead ? T.green : T.red;
+        // Color y mensaje desde la fuente única (d.verdict). El delta €/mes deja de decidir
+        // el veredicto (antes contradecía a Hoy); el gráfico hereda el mismo color.
+        const realColor = VERDICT_COLOR[d.verdict] || T.accent;
         const scenarios = [
           { label: 'Plan original', color: T.faint, series: d.seriesPlanFromStart, dashed: true },
           { label: 'Curva real', color: realColor, series: d.seriesRealFromStart, bold: true },
@@ -2362,20 +2366,9 @@ export function ScreenMesAMes() {
                 )}
               </div>
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 6, lineHeight: T.lh.normal }}>
-                {inLine ? (
-                  <>Vas en línea con tu plan.</>
-                ) : ahead ? (
-                  d.ageAtFiReal != null && d.ageAtFiPlan != null && d.ageAtFiReal < d.ageAtFiPlan ? (
-                    <>Vas por delante. A este ritmo, alcanzas la independencia financiera a los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{d.ageAtFiReal.toFixed(1)}</strong> en lugar de los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{d.ageAtFiPlan.toFixed(1)}</strong> originalmente previstos.</>
-                  ) : (
-                    <>Vas por delante: <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(delta)}</strong> por encima del plan original a esta fecha.</>
-                  )
-                ) : (
-                  d.ageAtFiReal != null && d.ageAtFiPlan != null && d.ageAtFiReal > d.ageAtFiPlan ? (
-                    <>Vas por detrás del plan original. Si esto se mantiene, tu independencia se retrasa hasta los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{d.ageAtFiReal.toFixed(1)}</strong> años.</>
-                  ) : (
-                    <>Vas por detrás del plan original: <strong style={{ color: T.red, fontStyle: 'normal' }}>{fmtEur(Math.abs(delta))}</strong> por debajo a esta fecha.</>
-                  )
+                {d.verdictCopy}
+                {d.verdictAge != null && d.ageAtFiPlan != null && (
+                  <> A este ritmo, tu independencia financiera cae a los <strong style={{ color: T.ink, fontStyle: 'normal' }}>{d.ageAtFiReal.toFixed(1)}</strong> (plan: <strong style={{ color: T.ink, fontStyle: 'normal' }}>{d.ageAtFiPlan.toFixed(1)}</strong>).</>
                 )}
               </div>
             </div>
@@ -3774,32 +3767,29 @@ export function ScreenSeguimiento() {
         <RepartoIngresoBlock />
       </section>
 
-      {/* Siguiente paso (P8) · dirección determinista según el RITMO de aporte: media de lo
-          aportado (avgActual) frente a lo que el plan pide ahora (currentAporte). Es el señal
-          más directo de "¿mantengo el ritmo?" en una pantalla de seguimiento mensual — no uso
-          realVsPlanDelta (con el tramo de ahorro arrancando hoy, lo planificado en meses
-          pasados es 0 → siempre "por delante") ni d.ahead (compara pace plano vs plan creciente
-          con IPC → casi siempre "por detrás"). Sin verde (aquí no hay libertad plena). */}
+      {/* Siguiente paso · fuente ÚNICA: d.verdict (ageAtFiReal vs ageAtFiPlan). Antes usaba
+          avgActual≥currentAporte (media de aportes vs lo prescrito hoy), que se contradecía con
+          el destino de Hoy y con el bloque "plan vs realidad" de arriba. Ahora los tres coinciden. */}
       <section>
         {(() => {
+          const v = d.verdict;
           const noMeses = !(d.filledMonths && d.filledMonths.length);
-          const ahead = !noMeses && d.avgActual >= d.currentAporte;
           let frase, label, onClick;
-          if (noMeses) {
+          if (noMeses || v === 'sin-datos') {
             frase = 'Aún no registras meses. Anota el primero para comparar realidad y plan.';
             label = 'Registrar un mes →';
             onClick = () => document.getElementById('seg-mensual')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          } else if (ahead) {
-            frase = 'Vas por delante del plan. Mira cuánto adelanta tu fecha de libertad.';
+          } else if (v === 'atrasado' || v === 'no-llega') {
+            frase = `${d.verdictCopy} Sube tu aporte o baja tu objetivo en Proyección.`;
             label = 'Ir a Proyección →';
             onClick = () => update({ activeTab: 'proy' });
           } else {
-            frase = 'Vas por detrás del plan. Revisa tu aporte para recuperar el ritmo.';
+            frase = `${d.verdictCopy} Mira cuánto adelanta tu fecha de libertad.`;
             label = 'Ir a Proyección →';
             onClick = () => update({ activeTab: 'proy' });
           }
           return (
-            <NextStep tone={(noMeses || ahead) ? 'forward' : 'behind'} body={frase} action={{ label, onClick }} />
+            <NextStep tone={VERDICT_NEXTSTEP_TONE[v]} body={frase} action={{ label, onClick }} />
           );
         })()}
       </section>
@@ -5463,15 +5453,16 @@ export function KpiPill({ onClick }) {
   // mantiene compacto. Usa el breakpoint del proyecto (useIsMobile).
   const sw = mobile ? 24 : 34, sh = mobile ? 9 : 12;
   return (
-    <button onClick={onClick} style={{
+    <button onClick={onClick} aria-label={`Edad de libertad ${d.verdictAge != null ? Math.ceil(d.verdictAge) : '—'}. Patrimonio proyectado ${fmtEur(d.finalPlan.portfolio)}. ${d.verdictCopy}`} style={{
       display: 'inline-flex', alignItems: 'center', gap: mobile ? 8 : 10,
       padding: mobile ? '5px 11px' : '8px 16px',
       background: T.ink, color: T.bg, borderRadius: 999,
       border: 'none', cursor: onClick ? 'pointer' : 'default',
       fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto',
     }}>
+      {/* Prefijo = edad de libertad (verdictAge), coherente con el hero (antes mostraba retireAge). */}
       <span style={{ fontFamily: T.mono, fontSize: mobile ? 9 : 11, letterSpacing: '0.12em', color: 'rgba(245,240,230,0.6)' }}>
-        {state.profile.retireAge}→
+        {d.verdictAge != null ? `★ ${Math.ceil(d.verdictAge)}` : `${state.profile.retireAge}→`}
       </span>
       <span style={{ fontStyle: 'italic', fontSize: mobile ? T.size.body : 20 }}>
         {/* Coherencia de cifras · patrimonio final en NOMINAL (sin deflactar): la app
