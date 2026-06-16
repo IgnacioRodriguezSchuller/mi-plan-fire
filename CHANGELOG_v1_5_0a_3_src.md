@@ -881,6 +881,22 @@ clara entre dato editable y calculado. **Sustituye** el diseño anterior de Proy
 `ScreenProyeccionLegacy`, referencia para Fase 2). Anula puntualmente —SOLO en esta sección— el
 "sin movimiento" de la doctrina previa, por decisión explícita del propietario.
 
+### 2026-06-16 · Proyección · declarar el gasto en detalle (overlay Cartel)
+
+- **Causa raíz**: el Cartel solo dejaba un gasto agrupado (`expenses.other`); faltaba el desglose por
+  categorías que afina el número real.
+- **Cambio**: nuevo overlay `GastoSheet` (estilo póster; **portado a `document.body`** con
+  `createPortal` para escapar el `transform` de `.tab-enter` —si no, el panel `position:fixed` caía
+  fuera del viewport—; scrim con `T.ink` + `opacity`, sin rgba literal). 5 categorías editables
+  (vivienda/comida/transporte/suscripciones/otros) + total en vivo; lee `plan.actualLife.expenses`
+  como borrador y al guardar escribe el MISMO payload que `ActualLifeOnboarding` (`completed:true` +
+  `expenses`), conservando `mortgage`/`allocation`. CTA «Desglosar mi gasto →» en la línea del número.
+  `useDerived` ya conmuta a `sumExpenses` → el número pasa a usar el gasto declarado.
+- **No tocado**: `ActualLifeOnboarding` (modal compartido por onboarding y «Sin mi plan»); el motor.
+- **Verificación**: overlay centrado en viewport (vía portal); Vivienda 2.000 → Guardar → el número
+  pasa a 24.000/año × 25 = 600.000 €; `mortgage`/`allocation` intactos; Escape/Cancelar/backdrop
+  cierran; demo restaurado; consola limpia; `npm run build` OK.
+
 ### 2026-06-16 · Proyección · control de IPC del salario (salaryInflationFactor)
 
 - **Causa raíz**: el Cartel no exponía el acoplamiento del salario al IPC que la pantalla original sí permitía.

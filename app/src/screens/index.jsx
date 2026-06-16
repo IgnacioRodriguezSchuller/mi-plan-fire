@@ -3,6 +3,7 @@
 // Paso 3 · Tanda final. Consolidada en un módulo por su acoplamiento (fragmentos
 // compartidos), para evitar imports circulares. Solo se añade imports/export.
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { T, WEB_URL } from '../tokens/index.js'
 import {
   project, monthlyForGoal, uid, todayKey, addMonthsKey,
@@ -2867,6 +2868,59 @@ function ProyeccionEngine({ d, plan, profile, mobile, realMode, inflRate, applyR
   );
 }
 
+// ── GastoSheet · overlay estilo Cartel para declarar el gasto en detalle ─────────
+// Reusa el payload de actualLife (mismo shape que ActualLifeOnboarding) pero con presentación
+// Cartel; NO toca el modal compartido. Lee plan.actualLife.expenses como borrador inicial (no
+// machaca un desglose previo) y conserva mortgage/allocation. El scrim usa T.ink + opacity (sin
+// rgba literal). Al guardar, el número FIRE pasa a usar sumExpenses (useDerived ya conmuta).
+const GASTO_CATS = [
+  { k: 'housing', label: 'Vivienda' },
+  { k: 'food', label: 'Comida' },
+  { k: 'transport', label: 'Transporte' },
+  { k: 'subscriptions', label: 'Suscripciones' },
+  { k: 'other', label: 'Otros' },
+];
+function GastoSheet({ open, onClose, initial, onSave }) {
+  const [draft, setDraft] = useState({});
+  useEffect(() => { if (open) setDraft({ ...(initial || {}) }); }, [open, initial]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+  if (!open) return null;
+  const total = GASTO_CATS.reduce((s, c) => s + (Number(draft[c.k]) || 0), 0);
+  const set = (k, v) => setDraft((d) => ({ ...d, [k]: Math.max(0, Math.round(v)) }));
+  const saveBtn = { background: T.accent, color: T.bg, border: 'none', borderRadius: 10, padding: '12px 28px', cursor: 'pointer', fontFamily: T.serif, fontSize: 17, fontWeight: 600, appearance: 'none', WebkitAppearance: 'none' };
+  const cancelBtn = { background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, color: T.muted, appearance: 'none', WebkitAppearance: 'none' };
+  // Portal a document.body: el overlay debe quedar FUERA del contenedor de la pestaña (.tab-enter
+  // tiene transform → position:fixed se ancla a él, no al viewport, y el panel caería fuera de pantalla).
+  const sheet = (
+    <div role="dialog" aria-modal="true" aria-label="Declarar el gasto" style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: T.ink, opacity: 0.45 }} />
+      <div style={{ position: 'relative', background: T.bg, border: '1px solid ' + T.line, borderRadius: 16, padding: 'clamp(28px, 5vw, 44px)', maxWidth: 460, width: '100%', maxHeight: '88vh', overflowY: 'auto', textAlign: 'center' }}>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(20px, 3vw, 26px)', color: T.accent, marginBottom: 6 }}>Tu gasto, en detalle</div>
+        <p style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, margin: '0 auto 18px', maxWidth: '32ch', lineHeight: 1.4 }}>Reparte lo que gastas cada mes. Tu número saldrá de aquí.</p>
+        {GASTO_CATS.map((c) => (
+          <div key={c.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, borderTop: '1px solid ' + T.lineSoft, padding: '14px 0', textAlign: 'left' }}>
+            <span style={{ fontFamily: T.serif, fontSize: 18 }}>{c.label}</span>
+            <span style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 19, whiteSpace: 'nowrap' }}><EditableValue value={draft[c.k] || 0} onChange={(v) => set(c.k, v)} min={0} max={100000} suffix="€/mes" ariaLabel={c.label} /></span>
+          </div>
+        ))}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '2px solid ' + T.line, paddingTop: 14, marginTop: 2, fontFamily: T.serif, fontWeight: 600, fontSize: 20 }}>
+          <span>Total</span><span style={{ color: T.accent }}>{fmtNum(total)} €/mes</span>
+        </div>
+        <div style={{ display: 'flex', gap: 16, marginTop: 26, justifyContent: 'center', alignItems: 'center' }}>
+          <button type="button" style={cancelBtn} onClick={onClose}>Cancelar</button>
+          <button type="button" style={saveBtn} onClick={() => { onSave(draft); onClose(); }}>Guardar</button>
+        </div>
+      </div>
+    </div>
+  );
+  return typeof document !== 'undefined' ? createPortal(sheet, document.body) : sheet;
+}
+
 // ── Dirección «Cartel» (póster editorial) · Fase 1 ──────────────────────────────
 // Reescritura de Proyección con el sistema Cartel (ui/cartel.jsx). Inputs editables
 // cableados al motor EXISTENTE (recalculan en vivo); resultados calculados con count-up al
@@ -2878,6 +2932,7 @@ export function ScreenProyeccion() {
   const m = usePlanMutators();
   const d = useDerived();
   const mobile = useIsMobile();
+  const [gastoSheetOpen, setGastoSheetOpen] = useState(false);
 
   // ── Editables ──
   const retireAge = profile.retireAge;
@@ -2942,6 +2997,9 @@ export function ScreenProyeccion() {
   // Default 1.0 (ya en migrateToV2). Lo lee projectV2 → recálculo en vivo. Distinto de inflationRate.
   const ipcPct = Math.round((plan.salaryInflationFactor != null ? plan.salaryInflationFactor : 1.0) * 100);
   const setIpcPct = (v) => updatePlan({ salaryInflationFactor: Math.max(0, Math.min(100, v)) / 100 });
+  // Guarda el desglose del overlay con el MISMO shape que ActualLifeOnboarding (completed + expenses),
+  // conservando mortgage/allocation. useDerived conmuta a gasto declarado (sumExpenses) → número real.
+  const saveExpenses = (exp) => updatePlan({ actualLife: { ...(plan.actualLife || {}), completed: true, expenses: { housing: Math.max(0, Math.round(exp.housing || 0)), food: Math.max(0, Math.round(exp.food || 0)), transport: Math.max(0, Math.round(exp.transport || 0)), subscriptions: Math.max(0, Math.round(exp.subscriptions || 0)), other: Math.max(0, Math.round(exp.other || 0)) } } });
   const tramoDates = (s) => `${readableMonth(s.from)} → ${s.to ? readableMonth(s.to) : 'sin fin'}`;
   const dec = (x) => (Number.isInteger(x) ? 0 : 1);
 
@@ -2988,6 +3046,7 @@ export function ScreenProyeccion() {
           <Reveal delay={40}><SectionTag>Tu línea de vida</SectionTag></Reveal>
           <Reveal delay={80} style={{ width: '100%' }}><LifeChart points={lifePoints} cruceAge={d.cruceEdad} markers={milestones} style={{ marginTop: 24 }} /></Reveal>
           <Reveal delay={120}><p style={cap}>Tu número — <EditableValue value={gasto} onChange={setGasto} min={0} max={100000} suffix="€/mes" ariaLabel="Gasto mensual" /> → {fmtNum(gasto * 12)} €/año × {fiMult} = {fmtNum(fireTargetReal)} € de hoy (regla del {withdrawalRate} %).</p></Reveal>
+          <Reveal delay={140}><button type="button" onClick={() => setGastoSheetOpen(true)} style={{ ...addTramoStyle, marginTop: 14 }}>Desglosar mi gasto →</button></Reveal>
           <Reveal delay={160}><p style={note}>Tu meta sube con los años porque tus gastos también subirán. El ★ es el cruce: a los {libreAge != null ? libreAge : '—'}, el {withdrawalRate} % anual de tu cartera iguala tu gasto.</p></Reveal>
           <Reveal delay={200}><p style={note}>Tipos de FIRE: <b style={{ color: T.accent }}>Lean</b> a los {leanAge != null ? leanAge : '—'} (gasto ajustado), <b style={{ color: T.accent }}>Coast</b> a los {coastAge != null ? coastAge : '—'} (dejas de aportar), <b style={{ color: T.green }}>FIRE pleno</b> a los {libreAge != null ? libreAge : '—'} (tu número) y <b style={{ color: T.muted }}>Fat</b> {fatAge != null ? `a los ${fatAge}` : 'fuera de alcance'} (vida holgada, ×1,5).</p></Reveal>
         </Spread>
@@ -3079,6 +3138,7 @@ export function ScreenProyeccion() {
         </Spread>
 
       </div>
+      <GastoSheet open={gastoSheetOpen} onClose={() => setGastoSheetOpen(false)} initial={plan.actualLife && plan.actualLife.expenses} onSave={saveExpenses} />
     </div>
   );
 }
