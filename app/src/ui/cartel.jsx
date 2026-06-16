@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { T } from '../tokens/index.js'
 import { parseSpanishNumber } from './index.jsx'
+import { readableMonth } from '../lib/index.js'
 
 // Tinte claro de accent SOLO para el realce de la banda ink (la maqueta usaba #f4a06a, que no
 // está en la paleta; lo declaramos aquí como derivado de accent, no como color nuevo suelto).
@@ -139,6 +140,35 @@ export function EditableValue({ value, onChange, min, max, decimals = 0, suffix 
       />
       {suffix ? <span style={{ marginLeft: '0.18em' }}>{suffix}</span> : null}
       <PencilIcon size={big ? '0.42em' : '0.55em'} />
+    </span>
+  );
+}
+
+// ── CartelMonthValue · mes editable (YYYY-MM) con la estética de EditableValue ──────
+// Modo lectura: texto «ene 2027» (o «sin fin») subrayado punteado + lápiz. Al activarlo,
+// muestra un <input type="month"> (selector nativo, fiable en móvil) con el mismo subrayado.
+// `appearance:none` obligatorio (invariante: modo oscuro macOS/iOS). allowEmpty → permite «sin fin».
+export function CartelMonthValue({ value, onChange, allowEmpty = false, ariaLabel }) {
+  const [editing, setEditing] = useState(false);
+  if (editing) {
+    return (
+      <input
+        type="month" autoFocus value={value || ''} aria-label={ariaLabel} spellCheck={false}
+        onChange={(e) => { const v = e.target.value || null; if (v || allowEmpty) onChange(v); }}
+        onBlur={() => setEditing(false)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Escape') e.target.blur(); }}
+        style={{ font: 'inherit', color: T.accent, background: 'transparent', border: 'none', borderBottom: '2px dashed ' + T.accent, outline: 'none', padding: '0 0.12em', borderRadius: 2, appearance: 'none', WebkitAppearance: 'none' }}
+      />
+    );
+  }
+  return (
+    <span
+      role="button" tabIndex={0} aria-label={ariaLabel}
+      onClick={() => setEditing(true)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditing(true); } }}
+      style={{ font: 'inherit', color: T.accent, borderBottom: '2px dashed ' + T.accent, cursor: 'text', borderRadius: 2, whiteSpace: 'nowrap' }}
+    >
+      {value ? readableMonth(value) : (allowEmpty ? 'sin fin' : '—')}<PencilIcon size="0.5em" />
     </span>
   );
 }
@@ -363,12 +393,26 @@ export function Stats3({ items, style = {} }) {
   );
 }
 
-// ── TramoRow · fila editable de tramo (nombre + fechas + importe) ────────────────
-export function TramoRow({ name, dates, children, staticAmt }) {
+// ── TramoRow · fila de tramo (nombre + fechas + importe). Aditivo: fromNode/toNode hacen
+// las fechas editables (CartelMonthValue) y onDelete añade un «borrar» discreto. Sin estos
+// props se comporta igual que antes (fila estática, p.ej. la del Aporte). ───────────────
+export function TramoRow({ name, dates, fromNode, toNode, children, staticAmt, onDelete }) {
+  const editableDates = fromNode != null || toNode != null;
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 20, borderTop: '1px solid ' + T.lineSoft, padding: '18px 0', textAlign: 'left' }}>
-      <div style={{ fontFamily: T.serif, fontSize: 'clamp(17px, 2.1vw, 23px)', fontWeight: 500 }}>
-        {name}<em style={{ display: 'block', fontStyle: 'italic', fontSize: 14, color: T.faint, fontWeight: 400, marginTop: 4 }}>{dates}</em>
+      <div style={{ fontFamily: T.serif, fontSize: 'clamp(17px, 2.1vw, 23px)', fontWeight: 500, minWidth: 0 }}>
+        {name}
+        <em style={{ display: 'block', fontStyle: 'italic', fontSize: 14, color: T.faint, fontWeight: 400, marginTop: 4 }}>
+          {editableDates ? <>{fromNode} → {toNode}</> : dates}
+        </em>
+        {onDelete ? (
+          <button
+            type="button" onClick={onDelete}
+            onMouseEnter={(e) => { e.currentTarget.style.color = T.red; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = T.faint; }}
+            style={{ marginTop: 6, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.faint, appearance: 'none', WebkitAppearance: 'none' }}
+          >borrar</button>
+        ) : null}
       </div>
       <div style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(18px, 2.3vw, 26px)', whiteSpace: 'nowrap', textAlign: 'right' }}>
         {staticAmt != null ? staticAmt : <>{children} €/mes</>}
