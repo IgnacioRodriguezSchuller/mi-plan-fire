@@ -881,6 +881,16 @@ clara entre dato editable y calculado. **Sustituye** el diseño anterior de Proy
 `ScreenProyeccionLegacy`, referencia para Fase 2). Anula puntualmente —SOLO en esta sección— el
 "sin movimiento" de la doctrina previa, por decisión explícita del propietario.
 
+### 2026-06-16 · Proyección · cierre con CTA «Ir a Mes a mes»
+
+- **Causa raíz**: el último spread era solo un disclaimer suelto; la pantalla no terminaba en una
+  dirección (la original sí llevaba a seguimiento).
+- **Cambio**: el spread 7 se reconvierte en un cierre — titular «Ahora, mes a mes.», lead y **CTA
+  primaria** (botón sólido accent, serif, no la `Btn` mono) → `update({ activeTab: 'seguimiento' })`.
+  El disclaimer se conserva degradado debajo en estilo `note`.
+- **No tocado**: el resto de spreads; el motor.
+- **Verificación**: la CTA navega a Seguimiento («Cómo va tu plan, mes a mes»); móvil 375 OK; consola limpia; build OK.
+
 ### 2026-06-16 · Proyección · declarar el gasto en detalle (overlay Cartel)
 
 - **Causa raíz**: el Cartel solo dejaba un gasto agrupado (`expenses.other`); faltaba el desglose por

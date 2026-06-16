@@ -2927,7 +2927,7 @@ function GastoSheet({ open, onClose, initial, onSave }) {
 // revelarse. Paleta intacta · Fraunces display · sin etiquetas mono · prefers-reduced-motion.
 // La versión anterior queda como ScreenProyeccionLegacy (referencia para la Fase 2).
 export function ScreenProyeccion() {
-  const { state, updatePlan, updateProfile } = useStore();
+  const { state, updatePlan, updateProfile, update } = useStore();
   const { profile, plan } = state;
   const m = usePlanMutators();
   const d = useDerived();
@@ -3010,6 +3010,8 @@ export function ScreenProyeccion() {
   const subhead = { fontFamily: T.serif, fontStyle: 'italic', fontSize: 17, color: T.accent, margin: '28px 0 0', textAlign: 'left', width: '100%', maxWidth: 600 };
   // Botón «+ añadir» en voz Cartel (serif itálica accent), NO la primitiva Btn (mono mayúscula).
   const addTramoStyle = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, color: T.accent, appearance: 'none', WebkitAppearance: 'none' };
+  // CTA primaria del cierre (sólido accent, serif) — no la Btn mono.
+  const ctaBtn = { background: T.accent, color: T.bg, border: 'none', borderRadius: 12, padding: '14px 32px', cursor: 'pointer', fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(17px, 2.2vw, 21px)', marginTop: 20, appearance: 'none', WebkitAppearance: 'none' };
   const paramVal = { fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(30px, 4vw, 48px)', letterSpacing: '-.02em', lineHeight: 0.9, color: T.ink };
 
   return (
@@ -3132,9 +3134,13 @@ export function ScreenProyeccion() {
           <Reveal delay={240}><p style={note}>En el {100 - successPct} % de simulaciones la cartera se agota antes de los {lifeExpectancy} — el riesgo de secuencia de retornos que la línea recta ignora.</p></Reveal>
         </Spread>
 
-        {/* 7 · DISCLAIMER */}
-        <Spread short style={{ minHeight: '44vh' }}>
-          <Reveal><p style={note}>Herramienta de proyección. No es asesoramiento financiero, ni garantiza rentabilidades.</p></Reveal>
+        {/* 7 · CIERRE · ir a Mes a mes */}
+        <Spread short style={{ minHeight: '60vh' }}>
+          <Reveal><SectionTag>Hasta aquí, el plan</SectionTag></Reveal>
+          <Reveal delay={50}><h2 style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(34px, 6.5vw, 80px)', lineHeight: 0.98, letterSpacing: '-.03em', margin: '8px 0 0', color: T.ink }}>Ahora, mes a mes.</h2></Reveal>
+          <Reveal delay={110}><p style={cap}>La proyección dibuja el destino. El seguimiento lo vuelve avance real: registra cada mes y compáralo con el plan.</p></Reveal>
+          <Reveal delay={170}><button type="button" onClick={() => update({ activeTab: 'seguimiento' })} style={ctaBtn}>Ir a Mes a mes →</button></Reveal>
+          <Reveal delay={230}><p style={{ ...note, marginTop: 30 }}>Herramienta de proyección. No es asesoramiento financiero, ni garantiza rentabilidades.</p></Reveal>
         </Spread>
 
       </div>
