@@ -2914,6 +2914,17 @@ export function ScreenProyeccion() {
     const yrs = r.age - currentAge;
     return { age: Math.round(r.age), portfolio: Math.round(r.portfolio || 0), meta: Math.round(fireTargetReal * Math.pow(1 + inflationRate / 100, yrs)) };
   }), [lifeSeries, fireTargetReal, inflationRate, currentAge]);
+  // Tipos de FIRE (vías deterministas del motor). Coast/Lean caen normalmente dentro del dominio
+  // de la curva; Fat suele quedar fuera (gasto ×1,5 → más tarde/null) → sin punto, pero nombrado
+  // en la leyenda. El ★ del cruce lo dibuja LifeChart vía cruceAge (no se duplica aquí).
+  const coastAge = d.coastEdad != null ? Math.ceil(d.coastEdad) : null;
+  const leanAge = d.leanEdad != null ? Math.ceil(d.leanEdad) : null;
+  const fatAge = d.fatEdad != null ? Math.ceil(d.fatEdad) : null;
+  const milestones = [
+    d.leanEdad != null && { age: d.leanEdad, color: T.accent, fill: false },
+    d.coastEdad != null && { age: d.coastEdad, color: T.accent, fill: true },
+    d.fatEdad != null && { age: d.fatEdad, color: T.muted, fill: false },
+  ].filter(Boolean);
 
   const mc = useMemo(() => { try { return runMonteCarlo(plan, profile, { trials: 400, startCapital: d.currentPortfolio, includeHypothetical: false }); } catch (e) { return null; } }, [plan, profile, d.currentPortfolio]);
   const successPct = mc ? Math.round(mc.successRate * 100) : 0;
@@ -2969,9 +2980,10 @@ export function ScreenProyeccion() {
         <Spread>
           <Reveal><CartelIcon id="interes-compuesto" size={72} color={T.accent} style={{ margin: '0 auto 6px' }} /></Reveal>
           <Reveal delay={40}><SectionTag>Tu línea de vida</SectionTag></Reveal>
-          <Reveal delay={80} style={{ width: '100%' }}><LifeChart points={lifePoints} cruceAge={d.cruceEdad} style={{ marginTop: 24 }} /></Reveal>
+          <Reveal delay={80} style={{ width: '100%' }}><LifeChart points={lifePoints} cruceAge={d.cruceEdad} markers={milestones} style={{ marginTop: 24 }} /></Reveal>
           <Reveal delay={120}><p style={cap}>Tu número — <EditableValue value={gasto} onChange={setGasto} min={0} max={100000} suffix="€/mes" ariaLabel="Gasto mensual" /> → {fmtNum(gasto * 12)} €/año × {fiMult} = {fmtNum(fireTargetReal)} € de hoy (regla del {withdrawalRate} %).</p></Reveal>
           <Reveal delay={160}><p style={note}>Tu meta sube con los años porque tus gastos también subirán. El ★ es el cruce: a los {libreAge != null ? libreAge : '—'}, el {withdrawalRate} % anual de tu cartera iguala tu gasto.</p></Reveal>
+          <Reveal delay={200}><p style={note}>Tipos de FIRE: <b style={{ color: T.accent }}>Lean</b> a los {leanAge != null ? leanAge : '—'} (gasto ajustado), <b style={{ color: T.accent }}>Coast</b> a los {coastAge != null ? coastAge : '—'} (dejas de aportar), <b style={{ color: T.green }}>FIRE pleno</b> a los {libreAge != null ? libreAge : '—'} (tu número) y <b style={{ color: T.muted }}>Fat</b> {fatAge != null ? `a los ${fatAge}` : 'fuera de alcance'} (vida holgada, ×1,5).</p></Reveal>
         </Spread>
 
         {/* 3 · LA PALANCA */}

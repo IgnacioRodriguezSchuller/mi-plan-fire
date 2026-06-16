@@ -881,6 +881,20 @@ clara entre dato editable y calculado. **Sustituye** el diseño anterior de Proy
 `ScreenProyeccionLegacy`, referencia para Fase 2). Anula puntualmente —SOLO en esta sección— el
 "sin movimiento" de la doctrina previa, por decisión explícita del propietario.
 
+### 2026-06-16 · Proyección · los tipos de FIRE en la línea de vida (Coast/Lean/Fat + ★)
+
+- **Causa raíz**: el Cartel no mostraba los tipos de FIRE que la pantalla original sí nombraba.
+- **Cambio**: `LifeChart` gana un prop **aditivo** `markers` (punto sólido/hueco + halo, fade ligado
+  al trazado; refactor de la interpolación a `ptAt(age)`; el ★ del cruce por defecto queda intacto).
+  `ScreenProyeccion` construye los hitos desde el motor (`d.leanEdad/coastEdad/fatEdad`, `Math.ceil`,
+  guardando nulls), los pinta en la curva y añade una leyenda «Tipos de FIRE» con color por tipo
+  (lean/coast → accent, FIRE pleno → verde, fat → muted).
+- **Dominio honesto**: la curva llega a `max(retireAge, cruce+1)`; los hitos fuera de rango (Fat suele
+  caer más allá) **no** se pintan pero **sí** se nombran en la leyenda (sin punto fantasma).
+- **No tocado**: el motor (solo se leen derivados); el ★ por defecto de `LifeChart` (markers default []).
+- **Verificación**: demo → Lean 55 / Coast 59 / FIRE 60 (★) / Fat 67 (leyenda, fuera de dominio); 2
+  puntos en curva + ★, leyenda color-coded; móvil 375 legible; `npm run build` OK; consola limpia.
+
 ### 2026-06-16 · Motor · Fat FIRE (fatEdad) — vía determinista calcada de lean
 
 Parte de la Fase 2 del Cartel (portar funciones de la Proyección original): para mostrar los tipos
