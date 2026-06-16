@@ -881,6 +881,21 @@ clara entre dato editable y calculado. **Sustituye** el diseño anterior de Proy
 `ScreenProyeccionLegacy`, referencia para Fase 2). Anula puntualmente —SOLO en esta sección— el
 "sin movimiento" de la doctrina previa, por decisión explícita del propietario.
 
+### 2026-06-16 · Proyección · tramos de ingreso/complemento editables en línea
+
+- **Causa raíz**: el Cartel solo dejaba editar el importe de cada tramo; faltaban fechas, añadir y
+  borrar (que la pantalla original sí tenía).
+- **Cambio**: nuevo primitivo `CartelMonthValue` (mes editable «ene 2027»/«sin fin», subrayado
+  punteado + lápiz; al activarse, `<input type="month">` nativo con `appearance:none`). `TramoRow`
+  (cartel) gana props **aditivos** `fromNode`/`toNode`/`onDelete`. El spread INGRESOS cablea fechas →
+  `m.updateIncome/updateBonus({from|to})`, borrar → `m.deleteIncome/deleteBonus` y botones «+ añadir»
+  (voz Cartel: serif itálica accent, **no** la primitiva `Btn` mono-mayúscula) → `m.addIncome/addBonus`.
+  Sin partir tramos ni gestión de solapes (por decisión del propietario).
+- **No tocado**: el motor; los mutadores (se reusan tal cual); la fila estática «Aporte».
+- **Verificación**: editar la fecha «Hasta» (jun→may 2029) round-trips vía `updateIncome` y recalcula;
+  añadir/borrar operativos; consola limpia; `npm run build` OK; móvil 375 legible (las dos fechas del
+  primer tramo envuelven a 2 líneas, dentro del encuadre).
+
 ### 2026-06-16 · Proyección · los tipos de FIRE en la línea de vida (Coast/Lean/Fat + ★)
 
 - **Causa raíz**: el Cartel no mostraba los tipos de FIRE que la pantalla original sí nombraba.
