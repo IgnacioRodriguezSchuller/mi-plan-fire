@@ -255,7 +255,7 @@ export function MonteCarloBand({ survivors, lifeExp, p10, p50, p90 }) {
 // ── LifeChart · curva REAL de patrimonio vs número (data-driven), estilo Cartel ──
 // points: [{age, portfolio, meta}] anuales. La curva se dibuja al revelarse; el ★ se posa en el
 // cruce real (interpolado). Ejes y etiquetas en Fraunces cursiva. Colores por token.
-export function LifeChart({ points, cruceAge, style = {} }) {
+export function LifeChart({ points, cruceAge, markers = [], style = {} }) {
   const [ref, inView] = useReveal(0.18);
   const pathRef = useRef(null);
   const [len, setLen] = useState(0);
@@ -269,16 +269,19 @@ export function LifeChart({ points, cruceAge, style = {} }) {
   useEffect(() => { try { if (pathRef.current) setLen(pathRef.current.getTotalLength()); } catch (e) { /* jsdom */ } }, [valid, a0, a1, maxY]);
   if (!valid) return null;
   const drawn = prefersReduced() ? true : inView;
-  let cx = null, cy = null;
-  if (cruceAge != null && cruceAge >= a0 && cruceAge <= a1) {
-    cx = X(cruceAge);
+  // Punto (x,y) sobre la curva de patrimonio a una edad dada, interpolando entre puntos anuales.
+  // Devuelve null fuera del dominio [a0,a1] (mismo guard que usaba el ★). Lo reusan el ★ y los markers.
+  const ptAt = (age) => {
+    if (age == null || age < a0 || age > a1) return null;
     for (let i = 1; i < points.length; i++) {
-      if (points[i].age >= cruceAge) {
-        const p0 = points[i - 1], p1 = points[i], t = (cruceAge - p0.age) / ((p1.age - p0.age) || 1);
-        cy = Y((p0.portfolio || 0) + t * ((p1.portfolio || 0) - (p0.portfolio || 0))); break;
+      if (points[i].age >= age) {
+        const p0 = points[i - 1], p1 = points[i], t = (age - p0.age) / ((p1.age - p0.age) || 1);
+        return { x: X(age), y: Y((p0.portfolio || 0) + t * ((p1.portfolio || 0) - (p0.portfolio || 0))) };
       }
     }
-  }
+    return null;
+  };
+  const cruce = ptAt(cruceAge);
   const ticks = []; for (let a = Math.ceil(a0 / 10) * 10; a <= a1; a += 10) ticks.push(a);
   const last = points[points.length - 1];
   return (
@@ -288,9 +291,20 @@ export function LifeChart({ points, cruceAge, style = {} }) {
       <path d={d('meta')} fill="none" stroke={T.line} strokeWidth="1.5" strokeDasharray="5 6" />
       <path ref={pathRef} d={d('portfolio')} fill="none" stroke={T.accent} strokeWidth="3"
         style={{ strokeDasharray: len || undefined, strokeDashoffset: drawn ? 0 : (len || 0), transition: 'stroke-dashoffset 2.2s cubic-bezier(.4,0,.1,1)' }} />
-      {cx != null && cy != null && (<>
-        <text x={cx - 5} y={cy - 11} fontFamily={T.serif} fontSize="22" fill={T.green}>★</text>
-        <text x={cx + 14} y={cy - 17} fontFamily={T.serif} fontStyle="italic" fontSize="14" fill={T.green}>libre · {Math.ceil(cruceAge)}</text>
+      {(markers || []).map((m, i) => {
+        const pt = ptAt(m.age);
+        if (!pt) return null;
+        return (
+          <g key={i} style={{ opacity: drawn ? 1 : 0, transition: 'opacity .6s ease 1.6s' }}>
+            <circle cx={pt.x} cy={pt.y} r="7" fill={T.bg} />
+            <circle cx={pt.x} cy={pt.y} r="5" fill={m.fill ? m.color : T.bg} stroke={m.color} strokeWidth="2" />
+            {m.label ? <text x={pt.x} y={pt.y - 12} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="12" fill={m.color}>{m.label}</text> : null}
+          </g>
+        );
+      })}
+      {cruce && (<>
+        <text x={cruce.x - 5} y={cruce.y - 11} fontFamily={T.serif} fontSize="22" fill={T.green}>★</text>
+        <text x={cruce.x + 14} y={cruce.y - 17} fontFamily={T.serif} fontStyle="italic" fontSize="14" fill={T.green}>libre · {Math.ceil(cruceAge)}</text>
       </>)}
       <text x={L + 8} y={Y(last.meta) + 18} fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.muted}>tu número</text>
       <text x={W - R - 6} y={Y(last.portfolio) - 8} textAnchor="end" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.accent}>patrimonio</text>
