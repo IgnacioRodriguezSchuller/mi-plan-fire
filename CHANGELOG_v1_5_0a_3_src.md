@@ -1094,3 +1094,23 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: build OK; verify-content/state PASS (tokens/lib solo divergencias conocidas);
   consola limpia; demo canónico → "Entrada del piso"/"Año sabático" completas, una sola entrada de
   presentación en Datos, `KpiPill` cursor pointer + transición; hash del baseline intacto.
+
+### 2026-06-16 · Limpieza · retirada de la Proyección antigua (código muerto) (cascada S3)
+
+- **Causa raíz**: la Proyección anterior (`ScreenProyeccionLegacy`/`ProyeccionEngine`) no la monta ningún
+  tab desde el Cartel; arrastraba helpers y cards solo suyos (FN3/CN2). El baseline congelado ya es la red
+  de regresión, así que se elimina en vez de archivar.
+- **Cambio** (`screens/index.jsx`): borrados `ScreenProyeccionLegacy`, `ProyeccionEngine`, el `TramoRow`
+  *legacy* (`{tramo,kind,…}`, exclusivo de `TramoListEditor`), `TramoListEditor`, `EventListEditor`,
+  `RetirementCard` (sin usos) y `MonteCarloCard` (solo usada por la Legacy; superada por
+  `MonteCarloChart`/`MonteCarloBand` del Cartel). Retirados 9 imports que quedaron muertos
+  (`detectSegmentOverlaps`, `fmtEurFull`, `Slider`, `MonthInput`, `RowWithWarning`, `Sparkline`,
+  `LifecycleChart`, `LifecycleChartDual`, `ProgressionWizard`).
+- **No tocado**: el `TramoRow` del **Cartel** (`cartel.jsx`, `{name,dates,…}`, usado en vivo por
+  `ScreenProyeccion`); `DisplayModeToggle` y `WhatIfCard` (definiciones conservadas, huérfanas, para
+  rescate en S5/S7); `MonthlyFlowCard` (vivo vía `MonthlyFlowBlock`→Seguimiento) y `HouseholdSummaryCard`
+  (vivo en `ScreenHoy`); el flag `INCLUDE_POSSIBLE` (sigue usado por `ScreenProyeccion`); motor;
+  `migrateToV2`; baseline congelado.
+- **Verificación**: cero refs colgadas (grep); `DisplayModeToggle`/`WhatIfCard` siguen definidos (grep);
+  build OK; verify-content/state PASS (tokens=2 Fraunces, lib=11 — solo divergencias conocidas, sin nuevas);
+  recargada la app, Proyección y Seguimiento renderizan, consola limpia; hash del baseline intacto.
