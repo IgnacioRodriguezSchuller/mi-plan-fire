@@ -1114,3 +1114,23 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: cero refs colgadas (grep); `DisplayModeToggle`/`WhatIfCard` siguen definidos (grep);
   build OK; verify-content/state PASS (tokens=2 Fraunces, lib=11 — solo divergencias conocidas, sin nuevas);
   recargada la app, Proyección y Seguimiento renderizan, consola limpia; hash del baseline intacto.
+
+### 2026-06-16 · Cartel · primitivas reutilizables + tokenización (cascada S6)
+
+- **Causa raíz**: dos dialectos visuales (Cartel serif vs eyebrows mono-MAYÚSCULAS) sin primitivas comunes
+  (ED1/ED2/ED4); rgba sueltos en el Cartel (ED6). Decisión de producto: voz tipográfica única serif.
+- **Cambio** (`ui/cartel.jsx`): nuevas primitivas `CartelCard` (tarjeta editorial, borde por `tone`),
+  `CartelBtn` (serif, variant `primary`/`text`, sin uppercase) y `CartelLabel` (eyebrow serif), más el helper
+  `cartelNums` (figuras tabulares para columnas; si Fraunces no expone tnum, combinar con `textAlign:right`).
+  Extraídos los 3 rgba a constantes nombradas (`POSTER_FRAME_BORDER`, `ON_INK_LABEL`, `ON_INK_FAINT` —
+  mover, no inventar). En `ScreenProyeccion` se tokenizan `ctaBtn`/`addTramoStyle` → `CartelBtn` («Ir a Mes a
+  mes», «+ añadir tramo/complemento», «Desglosar mi gasto»). Galería (`?gallery`): nueva sección con las
+  primitivas + columna numérica alineada.
+- **No tocado**: el objeto `T` (incl. `T.mono`, conservado DEFINIDO sin uso vivo nuevo → verify-tokens sin
+  diffs nuevos); el render visual de Proyección (CartelBtn replica los estilos inline); motor; `migrateToV2`;
+  baseline. DOCTRINA P4 y ESTADO #10 actualizados (diglosia derogada → una sola voz serif).
+- **Verificación**: build OK; verify-tokens=2 (Fraunces), content/state PASS, lib sin nuevos; galería muestra
+  `CartelCard`/`CartelBtn`/`CartelLabel` + columna alineada; Proyección renderiza con los CartelBtn (hero +
+  «+ añadir» + «Desglosar» + «Ir a Mes a mes») y **consola limpia** (cero errores nuevos tras re-navegar; se
+  corrigió en el propio paso una 4ª referencia *spread* a `addTramoStyle` que rompía el render); hash del
+  baseline intacto.

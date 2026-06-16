@@ -23,6 +23,7 @@ import {
 import {
   PosterFrame, Spread, SectionTag, EditableValue, CartelMonthValue, ComputedNumber, Reveal, LineIcon as CartelIcon,
   LifeChart, MonteCarloChart, Stats3, TramoRow as CartelTramoRow, fmtMoneyBig, fmtNum,
+  CartelBtn,
 } from '../ui/cartel.jsx'
 import {
   LineChart, MultiLineChart, FlowTimelineCard,
@@ -2099,10 +2100,7 @@ export function ScreenProyeccion() {
   const cap = { fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(17px, 2vw, 24px)', color: T.muted, maxWidth: '34ch', margin: '22px auto 0', lineHeight: 1.4 };
   const note = { fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(15px, 1.8vw, 20px)', color: T.faint, maxWidth: '48ch', margin: '18px auto 0', lineHeight: 1.5 };
   const subhead = { fontFamily: T.serif, fontStyle: 'italic', fontSize: 17, color: T.accent, margin: '28px 0 0', textAlign: 'left', width: '100%', maxWidth: 600 };
-  // Botón «+ añadir» en voz Cartel (serif itálica accent), NO la primitiva Btn (mono mayúscula).
-  const addTramoStyle = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, color: T.accent, appearance: 'none', WebkitAppearance: 'none' };
-  // CTA primaria del cierre (sólido accent, serif) — no la Btn mono.
-  const ctaBtn = { background: T.accent, color: T.bg, border: 'none', borderRadius: 12, padding: '14px 32px', cursor: 'pointer', fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(17px, 2.2vw, 21px)', marginTop: 20, appearance: 'none', WebkitAppearance: 'none' };
+  // CTA y «+ añadir» usan ahora la primitiva CartelBtn (cartel.jsx) — voz serif unificada (S6).
   const paramVal = { fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(30px, 4vw, 48px)', letterSpacing: '-.02em', lineHeight: 0.9, color: T.ink };
 
   return (
@@ -2139,7 +2137,7 @@ export function ScreenProyeccion() {
           <Reveal delay={40}><SectionTag>Tu línea de vida</SectionTag></Reveal>
           <Reveal delay={80} style={{ width: '100%' }}><LifeChart points={lifePoints} cruceAge={d.cruceEdad} markers={milestones} style={{ marginTop: 24 }} /></Reveal>
           <Reveal delay={120}><p style={cap}>Tu número — <EditableValue value={gasto} onChange={setGasto} min={0} max={100000} suffix="€/mes" ariaLabel="Gasto mensual" /> → {fmtNum(gasto * 12)} €/año × {fiMult} = {fmtNum(fireTargetReal)} € de hoy (regla del {withdrawalRate} %).</p></Reveal>
-          <Reveal delay={140}><button type="button" onClick={() => setGastoSheetOpen(true)} style={{ ...addTramoStyle, marginTop: 14 }}>Desglosar mi gasto →</button></Reveal>
+          <Reveal delay={140}><CartelBtn variant="text" onClick={() => setGastoSheetOpen(true)} style={{ marginTop: 14 }}>Desglosar mi gasto →</CartelBtn></Reveal>
           <Reveal delay={160}><p style={note}>Tu meta sube con los años porque tus gastos también subirán. El ★ es el cruce: a los {libreAge != null ? libreAge : '—'}, el {withdrawalRate} % anual de tu cartera iguala tu gasto.</p></Reveal>
           <Reveal delay={200}><p style={note}>Tipos de FIRE: <b style={{ color: T.accent }}>Lean</b> a los {leanAge != null ? leanAge : '—'} (gasto ajustado), <b style={{ color: T.accent }}>Coast</b> a los {coastAge != null ? coastAge : '—'} (dejas de aportar), <b style={{ color: T.green }}>FIRE pleno</b> a los {libreAge != null ? libreAge : '—'} (tu número) y <b style={{ color: T.muted }}>Fat</b> {fatAge != null ? `a los ${fatAge}` : 'fuera de alcance'} (vida holgada, ×1,5).</p></Reveal>
         </Spread>
@@ -2169,7 +2167,7 @@ export function ScreenProyeccion() {
                 <EditableValue value={Math.round(s.amount || 0)} onChange={(v) => m.updateIncome(s.id, { amount: Math.round(v) })} min={0} max={100000} ariaLabel={`Importe ${s.label || 'salario'}`} />
               </CartelTramoRow>
             ))}
-            <div style={{ textAlign: 'left', marginTop: 12 }}><button type="button" onClick={() => m.addIncome()} style={addTramoStyle}>+ añadir tramo de salario</button></div>
+            <div style={{ textAlign: 'left', marginTop: 12 }}><CartelBtn variant="text" onClick={() => m.addIncome()}>+ añadir tramo de salario</CartelBtn></div>
             <div style={subhead}>Complementos</div>
             {(plan.bonusSegments || []).map((s) => (
               <CartelTramoRow key={s.id} name={s.label || 'Complemento'}
@@ -2179,7 +2177,7 @@ export function ScreenProyeccion() {
                 <EditableValue value={Math.round(s.amount || 0)} onChange={(v) => m.updateBonus(s.id, { amount: Math.round(v) })} min={0} max={100000} ariaLabel={`Importe ${s.label || 'complemento'}`} />
               </CartelTramoRow>
             ))}
-            <div style={{ textAlign: 'left', marginTop: 12 }}><button type="button" onClick={() => m.addBonus()} style={addTramoStyle}>+ añadir complemento</button></div>
+            <div style={{ textAlign: 'left', marginTop: 12 }}><CartelBtn variant="text" onClick={() => m.addBonus()}>+ añadir complemento</CartelBtn></div>
             <div style={subhead}>Aporte</div>
             <CartelTramoRow name={`Aporte ${savingsPct} % del ingreso`} dates={savingSeg ? tramoDates(savingSeg) : ''} staticAmt={`≈ ${fmtNum(aporte)} €/mes`} />
           </Reveal>
@@ -2230,7 +2228,7 @@ export function ScreenProyeccion() {
           <Reveal><SectionTag>Hasta aquí, el plan</SectionTag></Reveal>
           <Reveal delay={50}><h2 style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(34px, 6.5vw, 80px)', lineHeight: 0.98, letterSpacing: '-.03em', margin: '8px 0 0', color: T.ink }}>Ahora, mes a mes.</h2></Reveal>
           <Reveal delay={110}><p style={cap}>La proyección dibuja el destino. El seguimiento lo vuelve avance real: registra cada mes y compáralo con el plan.</p></Reveal>
-          <Reveal delay={170}><button type="button" onClick={() => update({ activeTab: 'seguimiento' })} style={ctaBtn}>Ir a Mes a mes →</button></Reveal>
+          <Reveal delay={170}><CartelBtn onClick={() => update({ activeTab: 'seguimiento' })} style={{ marginTop: 20 }}>Ir a Mes a mes →</CartelBtn></Reveal>
         </Spread>
 
       </div>

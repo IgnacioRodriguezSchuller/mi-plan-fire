@@ -17,6 +17,7 @@ import {
 } from '../modals/index.jsx'
 import { TABLON, LEARN_CORPUS } from '../content/index.js'
 import { LandingPreOnboarding, Landing } from '../flows/index.jsx'
+import { CartelCard, CartelBtn, CartelLabel, cartelNums } from '../ui/cartel.jsx'
 
 function Section({ name, note, children }) {
   return (
@@ -240,6 +241,29 @@ export default function Gallery() {
             <div style={{ fontFamily: T.mono, fontSize: 9, color: T.faint, marginTop: 4, wordBreak: 'break-word', letterSpacing: '0.04em' }}>{id}</div>
           </div>
         ))}
+      </Section>
+
+      <Section name="ui/cartel · primitivas (S6)" note="voz serif única — para propagar a Hoy/Seguimiento/Datos">
+        <CartelCard style={{ width: 280 }}>
+          <CartelLabel>Etiqueta serif</CartelLabel>
+          <div style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 28, marginTop: 6 }}>CartelCard</div>
+          <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, marginTop: 8 }}>Tarjeta editorial (borde por tono, serif).</div>
+        </CartelCard>
+        <CartelCard tone={T.accent} style={{ width: 280 }}>
+          <CartelLabel>tone = T.accent</CartelLabel>
+          <div style={{ display: 'flex', gap: 12, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <CartelBtn onClick={() => {}}>Primario</CartelBtn>
+            <CartelBtn variant="text" onClick={() => {}}>+ enlace</CartelBtn>
+          </div>
+        </CartelCard>
+        <CartelCard style={{ width: 220 }}>
+          <CartelLabel>cartelNums · columna alineada</CartelLabel>
+          <div style={{ marginTop: 8 }}>
+            {[1440, 960, 12500, 240].map((n, i) => (
+              <div key={i} style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 20, textAlign: 'right', ...cartelNums }}>{n.toLocaleString('es-ES')} €</div>
+            ))}
+          </div>
+        </CartelCard>
       </Section>
 
       <Section name="content/ · TABLON" note={`${TABLON.length} temas · corpus ${Object.keys(LEARN_CORPUS).length} conceptos`}>

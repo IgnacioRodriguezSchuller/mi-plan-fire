@@ -11,6 +11,16 @@ import { readableMonth } from '../lib/index.js'
 // está en la paleta; lo declaramos aquí como derivado de accent, no como color nuevo suelto).
 export const ACCENT_LIGHT = '#f4a06a';
 
+// Derivados de token con alpha (no son colores nuevos): se nombran para no dejar rgba sueltos en
+// el JSX (invariante "color solo por T.*"). "mover, no inventar valores" (cascada S6 · ED6).
+export const POSTER_FRAME_BORDER = 'rgba(26,22,18,.28)';  // T.ink con alpha · borde del marco
+export const ON_INK_LABEL = 'rgba(255,253,247,.72)';      // T.bg con alpha · etiqueta sobre banda ink
+export const ON_INK_FAINT = 'rgba(255,253,247,.7)';       // T.bg con alpha · stat "peor 10%" sobre ink
+
+// Cifras en columna (MonthRow, calendario): figuras tabulares para que alineen. Si Fraunces no
+// expone tnum en algún motor, combinar con textAlign:'right' + ancho fijo (ver S9).
+export const cartelNums = { fontVariantNumeric: 'lining-nums tabular-nums' };
+
 const prefersReduced = () =>
   typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -204,7 +214,7 @@ export function PosterFrame({ top = 78, maxWidth = 760 }) {
       position: 'fixed', top, bottom: 18, zIndex: 1, pointerEvents: 'none',
       left: `max(16px, calc((100% - ${maxWidth}px) / 2))`,
       right: `max(16px, calc((100% - ${maxWidth}px) / 2))`,
-      border: '1px solid rgba(26,22,18,.28)',
+      border: '1px solid ' + POSTER_FRAME_BORDER,
     }}>
       <i style={corner({ top: -1, left: -1, borderRight: 0, borderBottom: 0 })} />
       <i style={corner({ top: -1, right: -1, borderLeft: 0, borderBottom: 0 })} />
@@ -262,7 +272,7 @@ export function MonteCarloBand({ survivors, lifeExp, p10, p50, p90 }) {
   const stat = (label, value, color) => (
     <Reveal style={{ flex: '1 1 0', minWidth: 120 }}>
       <div style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(30px, 5vw, 56px)', letterSpacing: '-.03em', lineHeight: 0.9, color }}>{value}</div>
-      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: 'rgba(255,253,247,.72)', marginTop: 10 }}>{label}</div>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: ON_INK_LABEL, marginTop: 10 }}>{label}</div>
     </Reveal>
   );
   return (
@@ -273,7 +283,7 @@ export function MonteCarloBand({ survivors, lifeExp, p10, p50, p90 }) {
           Probamos cien futuros. <b style={{ fontStyle: 'normal', fontWeight: 600, color: ACCENT_LIGHT }}>{survivors} aguantan</b> hasta los {lifeExp}.
         </h2>
         <div style={{ display: 'flex', gap: 'clamp(28px, 5vw, 56px)', flexWrap: 'wrap', justifyContent: 'center', marginTop: 'clamp(28px, 6vh, 56px)' }}>
-          {stat('el peor 10%', p10, 'rgba(255,253,247,.7)')}
+          {stat('el peor 10%', p10, ON_INK_FAINT)}
           {stat('mediana', p50, T.bg)}
           {stat('el mejor 10%', p90, ACCENT_LIGHT)}
         </div>
@@ -418,6 +428,39 @@ export function TramoRow({ name, dates, fromNode, toNode, children, staticAmt, o
       <div style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(18px, 2.3vw, 26px)', whiteSpace: 'nowrap', textAlign: 'right' }}>
         {staticAmt != null ? staticAmt : <>{children} €/mes</>}
       </div>
+    </div>
+  );
+}
+
+// ── Primitivas Cartel reutilizables (cascada S6) · una sola voz serif para propagar a las demás
+// pantallas (Hoy/Seguimiento/Datos) en S8/S9. Sustituyen al dialecto mono-MAYÚSCULAS antiguo. ──
+
+// Tarjeta editorial. tone colorea el borde (default T.line; T.amber/T.accent para énfasis).
+export function CartelCard({ children, tone, style = {} }) {
+  return (
+    <div style={{ background: T.bg, border: '1px solid ' + (tone || T.line), borderRadius: 16, padding: 'clamp(18px, 3vw, 28px)', fontFamily: T.serif, ...style }}>
+      {children}
+    </div>
+  );
+}
+
+// Botón Cartel: serif, sin uppercase. variant 'primary' (fondo accent) | 'text' (enlace itálico accent).
+export function CartelBtn({ children, onClick, variant = 'primary', type = 'button', style = {}, ...rest }) {
+  const base = { cursor: 'pointer', fontFamily: T.serif, appearance: 'none', WebkitAppearance: 'none' };
+  const primary = { ...base, background: T.accent, color: T.bg, border: 'none', borderRadius: 12, padding: '14px 32px', fontWeight: 600, fontSize: 'clamp(17px, 2.2vw, 21px)' };
+  const text = { ...base, background: 'none', border: 'none', padding: 0, fontStyle: 'italic', fontSize: 16, color: T.accent };
+  return (
+    <button type={type} onClick={onClick} style={{ ...(variant === 'text' ? text : primary), ...style }} {...rest}>
+      {children}
+    </button>
+  );
+}
+
+// Eyebrow/etiqueta en serif (sustituye el eyebrow mono-MAYÚSCULAS del dialecto antiguo).
+export function CartelLabel({ children, style = {} }) {
+  return (
+    <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0, ...style }}>
+      {children}
     </div>
   );
 }

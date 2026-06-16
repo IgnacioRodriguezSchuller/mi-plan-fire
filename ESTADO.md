@@ -40,7 +40,7 @@ _Actualizado: 2026-06-13_
 7. **[COPY · decidir]** Tensión vocabulario monetario: la regla v1.1.x prohíbe "€ de hoy" en JSX visible, pero la unificación nominal lo reintrodujo en Proyección. Resolver y re-auditar copy.
 8. **[PRO · lejano]** Exportación PDF profesional (listada como feature Pro "próximamente" en `CHANGELOG_v5_10.md`).
 9. **[MEDIO]** Modal "cálculo completo" · branding FIRE en logo/landing · onboarding con cumpleaños · auditoría "¿falta contenido?". *(a confirmar si "cálculo completo" se refiere al `SinMiPlanModal` ya existente o a otro.)*
-10. **[GRANDE · Cartel Fase 2]** Extraer los tokens/medidas del sistema Cartel (`app/src/ui/cartel.jsx`) y propagar la dirección póster a las demás pantallas (Hoy/Seguimiento/Plan), decidiendo qué de la doctrina "sin movimiento" se relaja fuera de Proyección. Retirar `ScreenProyeccionLegacy` cuando el Cartel sea definitivo.
+10. **[GRANDE · Cartel Fase 2 · EN CURSO]** Propagar la dirección póster a las demás pantallas. **Hecho:** S3 retiró `ScreenProyeccionLegacy`/`ProyeccionEngine` (código muerto); S6 creó las primitivas `CartelCard`/`CartelBtn`/`CartelLabel`/`cartelNums` en `ui/cartel.jsx`, tokenizó los rgba sueltos y `ctaBtn`/`addTramoStyle`, y registró la **decisión: diglosia derogada → una sola voz serif** (DOCTRINA P4 actualizada; `T.mono` se conserva definido, sin uso vivo nuevo). **Pendiente:** migrar `ScreenHoy` (S8), `ScreenSeguimiento` y `ScreenAjustes` (S9) a las primitivas; decidir qué de "sin movimiento" se relaja fuera de Proyección.
 
 ## Preguntas abiertas / producto
 - Feedback de Juanjo (CFA): densidad · "cockpit" · "mucho número, poca dopamina". La tensión visualizar-vs-narrar queda pendiente pantalla a pantalla.
