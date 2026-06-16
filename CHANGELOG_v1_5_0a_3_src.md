@@ -881,6 +881,15 @@ clara entre dato editable y calculado. **Sustituye** el diseño anterior de Proy
 `ScreenProyeccionLegacy`, referencia para Fase 2). Anula puntualmente —SOLO en esta sección— el
 "sin movimiento" de la doctrina previa, por decisión explícita del propietario.
 
+### 2026-06-16 · LifeChart · la etiqueta del ★ no se sale del encuadre cerca del borde
+
+- **Causa raíz**: con el cruce cerca del borde derecho de la curva (p.ej. demo 'libre' a los 60, con
+  el dominio acabando a los 61), la etiqueta «libre · N» (anclada a la derecha del punto) se salía
+  ~16px del `PosterFrame`.
+- **Cambio**: si `cruce.x` está a menos de 96 u del borde derecho, la etiqueta se ancla a la izquierda
+  (`textAnchor:'end'`, x − 12). En el resto de casos, sin cambios.
+- **Verificación**: detector de desbordes a 1280 → 0 (antes 1); sin scroll horizontal; consola limpia.
+
 ### 2026-06-16 · Proyección · cierre con CTA «Ir a Mes a mes»
 
 - **Causa raíz**: el último spread era solo un disclaimer suelto; la pantalla no terminaba en una

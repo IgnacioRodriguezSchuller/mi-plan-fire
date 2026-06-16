@@ -334,7 +334,8 @@ export function LifeChart({ points, cruceAge, markers = [], style = {} }) {
       })}
       {cruce && (<>
         <text x={cruce.x - 5} y={cruce.y - 11} fontFamily={T.serif} fontSize="22" fill={T.green}>★</text>
-        <text x={cruce.x + 14} y={cruce.y - 17} fontFamily={T.serif} fontStyle="italic" fontSize="14" fill={T.green}>libre · {Math.ceil(cruceAge)}</text>
+        {/* Si el cruce cae cerca del borde derecho, la etiqueta se ancla a la izquierda para no salirse. */}
+        <text x={cruce.x > W - R - 96 ? cruce.x - 12 : cruce.x + 14} y={cruce.y - 17} textAnchor={cruce.x > W - R - 96 ? 'end' : 'start'} fontFamily={T.serif} fontStyle="italic" fontSize="14" fill={T.green}>libre · {Math.ceil(cruceAge)}</text>
       </>)}
       <text x={L + 8} y={Y(last.meta) + 18} fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.muted}>tu número</text>
       <text x={W - R - 6} y={Y(last.portfolio) - 8} textAnchor="end" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.accent}>patrimonio</text>
