@@ -1272,6 +1272,8 @@ export function ScreenHoy({ goTo }) {
   // v1.2.0 · KPIs destilados de Sin Mi Plan para el Movimiento 1.B.
   const sinPlanKPIs = useMemo(() => computeSinPlanKPIs(plan, profile), [plan, profile]);
   const [showSinPlanModal, setShowSinPlanModal] = useState(false);
+  const [verMasFuturo, setVerMasFuturo] = useState(false);  // S8 · colapsa el detalle del futuro (densidad GX2)
+  const inlineLink = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: T.serif, fontWeight: 600, color: T.accent, fontSize: 'inherit', appearance: 'none', WebkitAppearance: 'none' };
 
   // ── Layout · el ancho/centrado de la columna lo da ahora el Shell (CONTENT_MAX),
   //    compartido por todas las pantallas. Aquí solo el aire vertical. ──
@@ -1297,10 +1299,23 @@ export function ScreenHoy({ goTo }) {
       {/* Household multi-account summary (only renders if list.length > 1) */}
       <HouseholdSummaryCard />
 
+      {/* Empieza aquí · guía de 3 pasos para usuario nuevo (GX5); desaparece al completar datos clave. */}
+      {(income <= 0 || !al.completed) && (
+        <CartelCard tone={T.accent}>
+          <CartelLabel style={{ color: T.accent }}>Empieza aquí</CartelLabel>
+          <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, margin: '8px 0 14px', lineHeight: T.lh.normal }}>Tres pasos para que el plan sea tuyo:</div>
+          <ol style={{ margin: 0, paddingLeft: 22, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: 1.8 }}>
+            <li>Define tu ingreso y tu aporte en <button onClick={() => goTo('proy')} style={inlineLink}>Proyección</button>.</li>
+            <li>Declara tu gasto y tu asignación en <button onClick={() => goTo('ajustes')} style={inlineLink}>Datos</button>.</li>
+            <li>Registra tu primer mes en <button onClick={() => goTo('seguimiento')} style={inlineLink}>Seguimiento</button>.</li>
+          </ol>
+        </CartelCard>
+      )}
+
       {/* ─────────────── Movimiento 1 · Dónde estás ─────────────── */}
       <section>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
-          <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.faint, letterSpacing: T.tracking.widest }}>01</span>
+          <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.accent, letterSpacing: 0 }}>01</span>
           <h2 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: DISPLAY_MD, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Dónde estás</h2>
         </div>
 
@@ -1371,7 +1386,7 @@ export function ScreenHoy({ goTo }) {
                 </OnboardingHelp>
               </div>
             )}
-            <div><Btn variant="ghost" size="sm" onClick={() => setShowSinPlanModal(true)}>Ver el cálculo completo →</Btn></div>
+            <div><CartelBtn variant="text" onClick={() => setShowSinPlanModal(true)}>Ver el cálculo completo →</CartelBtn></div>
           </div>
           );
         })()}
@@ -1381,7 +1396,7 @@ export function ScreenHoy({ goTo }) {
       {/* ─────────────── Movimiento 2 · Lo que podría ser ─────────────── */}
       <section>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
-          <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.faint, letterSpacing: T.tracking.widest }}>02</span>
+          <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.accent, letterSpacing: 0 }}>02</span>
           <h2 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: DISPLAY_MD, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Hacia dónde puedes ir</h2>
         </div>
 
@@ -1467,13 +1482,18 @@ export function ScreenHoy({ goTo }) {
                   <>
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 21 : 24, color: T.muted, letterSpacing: T.tracking.tight, lineHeight: 1.15 }}>{headL1}</div>
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 27 : 33, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1.1, marginTop: 4 }}>{headL2}</div>
-                    {monedas()}
-                    {/* Recordatorio (real) EN VIVO · aterriza el patrimonio nominal de las
-                        monedas a € de hoy, justo debajo y antes de la renta. Si cambia la
-                        inflación, finalReal se recalcula solo (las cifras nominales no). */}
-                    <div style={{ fontFamily: T.serif, color: T.muted, fontSize: 16, lineHeight: T.lh.normal, marginTop: mobile ? 14 : 16 }}>
-                      Recuerda: ajustado por la inflación, ese patrimonio equivale a <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong> de 2026.
-                    </div>
+                    {/* Densidad (S8 · GX2): las monedas y el recordatorio real se colapsan tras
+                        «Ver el detalle →» para que el foco por defecto sea el titular + la renta. */}
+                    {verMasFuturo ? (
+                      <>
+                        {monedas()}
+                        <div style={{ fontFamily: T.serif, color: T.muted, fontSize: 16, lineHeight: T.lh.normal, marginTop: mobile ? 14 : 16 }}>
+                          Recuerda: ajustado por la inflación, ese patrimonio equivale a <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong> de 2026.
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ marginTop: 12 }}><CartelBtn variant="text" onClick={() => setVerMasFuturo(true)}>Ver el detalle →</CartelBtn></div>
+                    )}
                   </>
                 )}
                 {/* Cierre · renta NOMINAL del primer año de jubilación + su aclaración en
@@ -1497,14 +1517,14 @@ export function ScreenHoy({ goTo }) {
 
         {/* CTA Proyección (Monte Carlo destilado vive en Proyección) */}
         <div style={{ marginTop: 20, paddingTop: 18, borderTop: '1px dashed ' + T.lineSoft, display: 'flex', justifyContent: 'flex-end' }}>
-          <Btn variant="ghost" size="sm" onClick={() => goTo('proy')}>Profundizar en Proyección →</Btn>
+          <CartelBtn variant="text" onClick={() => goTo('proy')}>Profundizar en Proyección →</CartelBtn>
         </div>
       </section>
 
       {/* ─────────────── Movimiento 3 · Tu ruta ─────────────── */}
       <section>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
-          <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.faint, letterSpacing: T.tracking.widest }}>03</span>
+          <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.accent, letterSpacing: 0 }}>03</span>
           <h2 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: DISPLAY_MD, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Tu ruta</h2>
         </div>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, maxWidth: 720, marginBottom: 18 }}>

@@ -1183,3 +1183,20 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
   +50 → «libre a los 60», +200 → «libre a los 57 — adelantas 3 años»; `savingSegments` NO cambia al
   previsualizar (preview puro); 0 errores de consola; hash del baseline intacto.
+
+### 2026-06-16 · Hoy · «Empieza aquí» + densidad + chrome Cartel (cascada S8, parcial)
+
+- **Causa raíz**: `ScreenHoy` densa (~12 bloques, GX2) y en dialecto mono; sin guía de primer uso (GX5).
+- **Cambio** (`screens/index.jsx`): (1) bloque **«Empieza aquí»** (CartelCard, 3 pasos con enlaces a
+  Proyección/Datos/Seguimiento) visible solo si falta ingreso o gasto declarado (GX5). (2) Densidad: el
+  detalle del futuro (monedas + recordatorio real del M2) se colapsa tras «Ver el detalle →» (queda el
+  titular «multiplica por X» + la renta). (3) Chrome Cartel: numeración de sección 01/02/03 a serif itálica
+  accent; CTAs «Ver el cálculo completo»/«Profundizar en Proyección» → `CartelBtn`.
+- **Parcial / pendiente**: la migración fina de las eyebrows de tarjeta («TU PATRIMONIO», «CADA MES
+  APARTAS», «PARADO/INVERTIDO») y `cardStyle`→`CartelCard` de M1/M2 queda para cerrar la Fase 2 de Hoy (no
+  se hace a medias para no dejar un híbrido inconsistente en una sola pasada). El destino+veredicto ya vive
+  en `RutaCincoFases` (M3).
+- **No tocado**: las cifras/lógica de M1/M2/M3 (solo presentación); motor; `migrateToV2`; baseline.
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
+  «Empieza aquí» visible (al.completed=false), numeración serif, CTAs Cartel, detalle del futuro colapsable;
+  0 errores de consola; hash del baseline intacto.
