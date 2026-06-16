@@ -1678,7 +1678,7 @@ export function ScreenMesAMes() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
       <div>
-        <Label>Mes a mes</Label>
+        <CartelLabel>Mes a mes</CartelLabel>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4, textWrap: 'pretty' }}>
           Llevas <em style={{ color: T.accent }}>{filled.length} {filled.length === 1 ? 'mes registrado' : 'meses registrados'}</em>.
           <span style={{ color: T.muted }}> Lo que apuntes aquí mueve la curva del futuro.</span>
@@ -1714,7 +1714,7 @@ export function ScreenMesAMes() {
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8, gap: 10, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <Label>Tu plan vs tu realidad</Label>
+              <CartelLabel>Tu plan vs tu realidad</CartelLabel>
               <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, marginTop: 4, lineHeight: T.lh.snug }}>
                 {realAtLast != null && (
                   <>
@@ -1741,7 +1741,7 @@ export function ScreenMesAMes() {
         );
       })() : (
         <Card style={{ borderStyle: 'dashed' }}>
-          <Label>Tu plan vs tu realidad</Label>
+          <CartelLabel>Tu plan vs tu realidad</CartelLabel>
           <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, fontStyle: 'italic', marginTop: 8, lineHeight: T.lh.normal }}>
             Aún no hay suficientes datos. Registra al menos <strong style={{ color: T.ink, fontStyle: 'normal' }}>3 meses</strong> y verás aquí la curva de tu plan original comparada con la curva real reconstruida.
             <br />
@@ -1762,7 +1762,7 @@ export function ScreenMesAMes() {
         ))}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 14, borderTop: '1px dashed ' + T.line, flexWrap: 'wrap' }}>
-        <Btn variant="ghost" size="sm" onClick={() => setShowCalendar(true)}>Ver calendario completo →</Btn>
+        <CartelBtn variant="text" onClick={() => setShowCalendar(true)}>Ver calendario completo →</CartelBtn>
       </div>
       <div style={{ paddingTop: 14 }}>
         <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, fontStyle: 'italic', lineHeight: T.lh.normal }}>
@@ -2271,7 +2271,7 @@ export function HitosEditor() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div>
-        <Label>Hitos</Label>
+        <CartelLabel>Hitos</CartelLabel>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 4, lineHeight: T.lh.normal }}>
           Metas intermedias en tu camino. Define el importe en euros de 2026 (poder adquisitivo actual); Mi Plan FIRE ajusta por <Concept id="inflacion">inflación</Concept> hasta la fecha objetivo.
         </div>
@@ -2291,7 +2291,7 @@ export function HitosEditor() {
           ))}
         </div>
         <Card>
-          <Label style={{ marginBottom: 14 }}>Añadir una meta</Label>
+          <CartelLabel style={{ marginBottom: 14 }}>Añadir una meta</CartelLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input value={newGoal.name} onChange={(e) => setNewGoal({ ...newGoal, name: e.target.value })} placeholder="Ej. coche eléctrico"
               style={{ fontFamily: T.serif, fontSize: T.size.lead, padding: '10px 12px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 8, outline: 'none', color: T.ink }} />
@@ -2330,7 +2330,7 @@ export function ScreenSeguimiento() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 40 }}>
       <div>
-        <Label>Seguimiento</Label>
+        <CartelLabel>Seguimiento</CartelLabel>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4 }}>
           Cómo va tu plan, mes a mes.
         </div>
@@ -2763,7 +2763,7 @@ export function ScreenAjustes() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
       <div>
-        <Label>Datos</Label>
+        <CartelLabel>Datos</CartelLabel>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4 }}>
           Quién eres y dónde están tus cuentas.
         </div>
@@ -2774,7 +2774,7 @@ export function ScreenAjustes() {
 
       {/* PERFIL — v1.4.0c · BIG-A · podado: solo campos personales. Las 4 asunciones del modelo (retorno, inflación, tasa retiro, esperanza vida) se mueven a ScreenProyeccion → "Asunciones del modelo". */}
       <Card pad={mobile ? 16 : 24}>
-        <Label style={{ marginBottom: 14 }}>Tu perfil</Label>
+        <CartelLabel style={{ marginBottom: 14 }}>Tu perfil</CartelLabel>
         <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(2, 1fr)', gap: 14 }}>
           <Row label="Nombre">
             <input value={state.profile.name || ''} onChange={(e) => updateProfile({ name: e.target.value })}
@@ -2811,7 +2811,7 @@ export function ScreenAjustes() {
 
       {/* SITUACIÓN ECONÓMICA · re-editar gastos/hipoteca/asignación (antes solo en onboarding · FN1/CN1) */}
       <Card>
-        <Label style={{ marginBottom: 14 }}>Tu situación económica</Label>
+        <CartelLabel style={{ marginBottom: 14 }}>Tu situación económica</CartelLabel>
         <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal, maxWidth: 640 }}>
           Tu gasto mensual, la hipoteca y cómo repartes tu capital entre cuentas. Alimenta «tu número» y el rendimiento de tu cartera.
         </div>
@@ -2822,7 +2822,7 @@ export function ScreenAjustes() {
 
       {/* DATOS */}
       <Card>
-        <Label style={{ marginBottom: 14 }}>Tus datos</Label>
+        <CartelLabel style={{ marginBottom: 14 }}>Tus datos</CartelLabel>
         <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal }}>
           Todo se guarda en tu dispositivo. Nada sale de aquí.
         </div>

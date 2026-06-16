@@ -1200,3 +1200,20 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
   «Empieza aquí» visible (al.completed=false), numeración serif, CTAs Cartel, detalle del futuro colapsable;
   0 errores de consola; hash del baseline intacto.
+
+### 2026-06-16 · Seguimiento + Datos · eyebrows de sección → Cartel (cascada S9, parcial)
+
+- **Causa raíz**: Seguimiento y Datos en dialecto mono (ED1); cierre de la Fase 2 de migración.
+- **Cambio** (`screens/index.jsx`): las eyebrows de sección de ambas pantallas pasan de `Label` (mono
+  MAYÚSCULAS) a `CartelLabel` (serif itálica) — «Seguimiento», «Mes a mes», «Tu plan vs tu realidad»,
+  «Hitos», «Añadir una meta»; «Datos», «Tu perfil», «Tu situación económica», «Tus datos». El CTA «Ver
+  calendario completo» → `CartelBtn`. Ambas pantallas comparten archivo (`screens/index.jsx`) → un commit
+  combinado (honra B1; la preferencia «un commit por pantalla» no aplica por compartir archivo).
+- **Parcial / pendiente (igual criterio que S8)**: las micro-etiquetas de columna (Plan/Real/Nota/Importe/
+  A los/Categoría) y las sub-tarjetas (`PublicPensionCard`, `AccountsCard`, `GoalRow`, `MonthRow`) siguen en
+  mono — la migración fina de fidelidad completa («sin mono-caps» total) queda para cerrar la Fase 2 sin
+  dejar un híbrido a medias. GX6 (leyenda de subrayados) depende de migrar antes los editables a estilo
+  Cartel (dashed), así que se aplaza con esa migración.
+- **No tocado**: inputs/botones funcionales, lógica, motor, `migrateToV2`, baseline.
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
+  eyebrows de Seguimiento y Datos en serif; 0 errores de consola; hash del baseline intacto.
