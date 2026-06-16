@@ -30,7 +30,7 @@ import {
 } from '../charts/index.jsx'
 import {
   TABLON, LEARN_CORPUS, CATEGORY_LABELS, GOAL_CATEGORIES, GOAL_CATEGORY_LABEL, LEARN_DISCLAIMER,
-  LEARN_LEVELS, LEARN_LEVEL_LABELS, LEARN_LEVEL_SUB, LEARN_LEVEL_BY_ID,
+  LEARN_LEVELS, LEARN_LEVEL_LABELS, LEARN_LEVEL_SUB, LEARN_LEVEL_BY_ID, GLOSSARY_ALIASES,
 } from '../content/index.js'
 import {
   ConfirmModal, WhyDifferentModal, MonthlyCalendarModal, PublicPensionDisclaimerModal,
@@ -1472,7 +1472,7 @@ export function ScreenHoy({ goTo }) {
                         monedas a € de hoy, justo debajo y antes de la renta. Si cambia la
                         inflación, finalReal se recalcula solo (las cifras nominales no). */}
                     <div style={{ fontFamily: T.serif, color: T.muted, fontSize: 16, lineHeight: T.lh.normal, marginTop: mobile ? 14 : 16 }}>
-                      Recuerda: ajustado por la inflación, ese patrimonio equivale a <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong> de hoy.
+                      Recuerda: ajustado por la inflación, ese patrimonio equivale a <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong> de 2026.
                     </div>
                   </>
                 )}
@@ -1480,12 +1480,12 @@ export function ScreenHoy({ goTo }) {
                     € de hoy (real) + veredicto de suficiencia. Ambas cifras EN VIVO.
                     borderTop solo si hay monedas+recordatorio arriba. */}
                 <div style={{ ...(ratioValido ? { borderTop: '1px solid ' + T.lineSoft, marginTop: mobile ? 20 : 26, paddingTop: mobile ? 18 : 22 } : {}), fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 21 : 24, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: 1.3 }}>
-                  Y te dan <span style={{ color: T.amber }}>{fmtEur(retirementMonthly)}</span>/mes cuando te jubiles — es decir, {fmtEur(retirementMonthlyReal)} de hoy: {rentaTail}.
+                  Y te dan <span style={{ color: T.amber }}>{fmtEur(retirementMonthly)}</span>/mes cuando te jubiles — es decir, {fmtEur(retirementMonthlyReal)} de 2026: {rentaTail}.
                 </div>
               </div>
             )}
             <OnboardingHelp title="Supuestos">
-              Cifras en euros nominales (los que tendrás en el futuro); el recordatorio las ajusta a € de hoy por la inflación. Asumiendo {planReturn}% de rentabilidad media anual y una tasa de retiro del {withdrawalRate}%. La edad de libertad sale de tu ritmo de ahorro real — todo configurable en Proyección.
+              Cifras en euros nominales (los que tendrás en el futuro); el recordatorio las ajusta a € de 2026 por la inflación. Asumiendo {planReturn}% de rentabilidad media anual y una tasa de retiro del {withdrawalRate}%. La edad de libertad sale de tu ritmo de ahorro real — todo configurable en Proyección.
             </OnboardingHelp>
           </div>
           );
@@ -2058,6 +2058,10 @@ export function ScreenProyeccion() {
   const seriesBase = useMemo(() => projectV2(plan, profile, { capital: d.currentPortfolio, includeHypothetical: false }), [plan, profile, d.currentPortfolio]);
   const seriesPos = useMemo(() => projectV2(plan, profile, { capital: d.currentPortfolio, includeHypothetical: true }), [plan, profile, d.currentPortfolio]);
   const finalNominal = seriesBase.length ? Math.round(seriesBase[seriesBase.length - 1].portfolio || 0) : 0;
+  // Modo real (toggle en Asunciones): deflacta las cifras nominales a € del año base. Default nominal.
+  const realMode = state.displayMode === 'real';
+  const deflator = Math.pow(1 + inflationRate / 100, Math.max(0, retireAge - currentAge));
+  const finalReal = Math.round(finalNominal / deflator);
   const finalConPosible = seriesPos.length ? Math.round(seriesPos[seriesPos.length - 1].portfolio || 0) : 0;
   const hayPosibles = Math.abs(finalConPosible - finalNominal) > 1000;
   // La curva de vida se proyecta hasta el cruce (no solo hasta retireAge): si llegas «tarde»
@@ -2130,9 +2134,10 @@ export function ScreenProyeccion() {
             </h1>
           </Reveal>
           <Reveal delay={110}><p style={{ ...cap, fontSize: 'clamp(18px, 2.1vw, 26px)', maxWidth: '32ch' }}>A esa edad las rentas de tu cartera cubren tu gasto: dejas de depender de un sueldo.</p></Reveal>
+          {d.verdictCopy && <Reveal delay={130}><p style={{ ...cap, fontStyle: 'italic', color: VERDICT_COLOR[d.verdict] || T.muted, marginTop: 6 }}>{d.verdictCopy}</p></Reveal>}
           <Reveal delay={150}><Stats3 items={[
-            { computed: finalNominal, em: `a los ${retireAge}` },
-            { computed: fireTargetNom, color: T.accent, em: `tu número · ≈ ${fmtMoneyBig(fireTargetReal)} de hoy` },
+            { computed: realMode ? finalReal : finalNominal, em: `a los ${retireAge}` },
+            { computed: realMode ? fireTargetReal : fireTargetNom, color: T.accent, em: realMode ? 'tu número' : `tu número · ≈ ${fmtMoneyBig(fireTargetReal)} de 2026` },
             { value: pensionAge, em: 'pensión pública, desde los' },
           ]} /></Reveal>
           {hayPosibles && <Reveal delay={200}><p style={note}>Con los eventos posibles incluidos, a los {retireAge} llegarías a {fmtMoneyBig(finalConPosible)}.</p></Reveal>}
@@ -2144,7 +2149,7 @@ export function ScreenProyeccion() {
           <Reveal><CartelIcon id="interes-compuesto" size={72} color={T.accent} style={{ margin: '0 auto 6px' }} /></Reveal>
           <Reveal delay={40}><SectionTag>Tu línea de vida</SectionTag></Reveal>
           <Reveal delay={80} style={{ width: '100%' }}><LifeChart points={lifePoints} cruceAge={d.cruceEdad} markers={milestones} style={{ marginTop: 24 }} /></Reveal>
-          <Reveal delay={120}><p style={cap}>Tu número — <EditableValue value={gasto} onChange={setGasto} min={0} max={100000} suffix="€/mes" ariaLabel="Gasto mensual" /> → {fmtNum(gasto * 12)} €/año × {fiMult} = {fmtNum(fireTargetReal)} € de hoy (regla del {withdrawalRate} %).</p></Reveal>
+          <Reveal delay={120}><p style={cap}>Tu número — <EditableValue value={gasto} onChange={setGasto} min={0} max={100000} suffix="€/mes" ariaLabel="Gasto mensual" /> → {fmtNum(gasto * 12)} €/año × {fiMult} = {fmtNum(fireTargetReal)} € de 2026 (regla del {withdrawalRate} %).</p></Reveal>
           <Reveal delay={140}><CartelBtn variant="text" onClick={() => setGastoSheetOpen(true)} style={{ marginTop: 14 }}>Desglosar mi gasto →</CartelBtn></Reveal>
           <Reveal delay={160}><p style={note}>Tu meta sube con los años porque tus gastos también subirán. El ★ es el cruce: a los {libreAge != null ? libreAge : '—'}, el {withdrawalRate} % anual de tu cartera iguala tu gasto.</p></Reveal>
           <Reveal delay={200}><p style={note}>Tipos de FIRE: <b style={{ color: T.accent }}>Lean</b> a los {leanAge != null ? leanAge : '—'} (gasto ajustado), <b style={{ color: T.accent }}>Coast</b> a los {coastAge != null ? coastAge : '—'} (dejas de aportar), <b style={{ color: T.green }}>FIRE pleno</b> a los {libreAge != null ? libreAge : '—'} (tu número) y <b style={{ color: T.muted }}>Fat</b> {fatAge != null ? `a los ${fatAge}` : 'fuera de alcance'} (vida holgada, ×1,5).</p></Reveal>
@@ -2212,6 +2217,8 @@ export function ScreenProyeccion() {
             </div>
           </Reveal>
           <Reveal delay={120}><p style={note}>Medias razonables a largo plazo. El 4 % asume ~30 años de jubilación (estudio Trinity); para 40+ años, baja a 3–3,5 %. Cambiarlos actualiza toda la proyección.</p></Reveal>
+          <Reveal delay={160} style={{ marginTop: '3vh' }}><DisplayModeToggle /></Reveal>
+          <Reveal delay={200}><p style={note}>Las cifras se muestran en valor nominal (lo que tendrás) o, con el ajuste activado, en poder adquisitivo de hoy.</p></Reveal>
         </Spread>
 
         {/* 6 · ¿Y TE DURA? */}
@@ -2224,9 +2231,9 @@ export function ScreenProyeccion() {
           <Reveal delay={150} style={{ width: '100%' }}><MonteCarloChart bands={bands} retireAge={retireAge} style={{ marginTop: 24 }} /></Reveal>
           <Reveal delay={180}><p style={note}>Hasta los {retireAge} la nube es estrecha: todos los futuros acumulan parecido. Al jubilarte se abre — arriba los que crecen, abajo la cola que se agota antes de los {lifeExpectancy}.</p></Reveal>
           <Reveal delay={210}><Stats3 items={[
-            { value: fmtMoneyBig(p10), em: `P10 · ${retireAge} (el peor 10 %)` },
-            { value: fmtMoneyBig(p50), em: `mediana · ${retireAge}` },
-            { value: fmtMoneyBig(p90), color: T.accent, em: `P90 · ${retireAge} (el mejor 10 %)` },
+            { value: fmtMoneyBig(realMode ? p10 / deflator : p10), em: `P10 · ${retireAge} (el peor 10 %)` },
+            { value: fmtMoneyBig(realMode ? p50 / deflator : p50), em: `mediana · ${retireAge}` },
+            { value: fmtMoneyBig(realMode ? p90 / deflator : p90), color: T.accent, em: `P90 · ${retireAge} (el mejor 10 %)` },
           ]} /></Reveal>
           <Reveal delay={240}><p style={note}>En el {100 - successPct} % de simulaciones la cartera se agota antes de los {lifeExpectancy} — el riesgo de secuencia de retornos que la línea recta ignora.</p></Reveal>
         </Spread>
@@ -2255,7 +2262,7 @@ export function HitosEditor() {
       <div>
         <Label>Hitos</Label>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 4, lineHeight: T.lh.normal }}>
-          Metas intermedias en tu camino. Define el importe en euros de hoy (poder adquisitivo actual); Mi Plan FIRE ajusta por <Concept id="inflacion">inflación</Concept> hasta la fecha objetivo.
+          Metas intermedias en tu camino. Define el importe en euros de 2026 (poder adquisitivo actual); Mi Plan FIRE ajusta por <Concept id="inflacion">inflación</Concept> hasta la fecha objetivo.
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
@@ -3819,7 +3826,9 @@ export function ScreenAprende() {
   const filteredConcepts = allConcepts.filter(c => {
     if (!searchTerm) return true;
     const q = searchTerm.toLowerCase();
-    return c.title.toLowerCase().includes(q) || (c.short && c.short.toLowerCase().includes(q));
+    if (c.title.toLowerCase().includes(q) || (c.short && c.short.toLowerCase().includes(q))) return true;
+    // Alias de términos (p.ej. "tu número" → regla-4) sin tocar LEARN_CORPUS (CO4).
+    return Object.keys(GLOSSARY_ALIASES).some(a => GLOSSARY_ALIASES[a] === c.id && a.includes(q));
   });
 
   // Conceptos por nivel.

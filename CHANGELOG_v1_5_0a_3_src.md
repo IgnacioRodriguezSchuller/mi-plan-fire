@@ -1150,3 +1150,22 @@ de FIRE el motor necesitaba Fat, que no existía.
   GastoSheet→ExpensesForm renderiza (5 categorías + Guardar/Cancelar), «Editar gastos y asignación →» en
   Datos abre el wizard `ActualLifeOnboarding` prefillado; **0 errores de consola** en los caminos tocados;
   hash del baseline intacto.
+
+### 2026-06-16 · Proyección/Hoy/Seguimiento · vocabulario + modo real + hero al veredicto (cascada S5)
+
+- **Causa raíz**: «€ de hoy» ambiguo en JSX (CO1); modo real sin exponer (FN6); el hero de Proyección
+  seguía con `destinoEstado` aparte del veredicto (ST4 residual); «tu número» sin entrada localizable en el
+  glosario (CO4).
+- **Cambio**: (1) `DisplayModeToggle` expuesto en el spread «Asunciones» de `ScreenProyeccion`; `realMode =
+  state.displayMode==='real'` (default nominal) conmuta las cifras del hero (capital + «tu número») y los
+  P10/mediana/P90 de «¿Y te dura?» (deflactadas por `deflator`). (2) Barrido «€ de hoy» → «€ de 2026» (año
+  base) en todo el JSX visible (Proyección, Hoy, Seguimiento); en modo real la primaria ya es real y se omite
+  el recordatorio. (3) El hero de Proyección reusa `verdictCopy` (línea de apoyo, tono por veredicto) →
+  alineado con Hoy/Seguimiento, sin un segundo criterio paralelo a `destinoEstado`. (4) `GLOSSARY_ALIASES`
+  (`content/index.js`, additivo, SIN tocar `LEARN_CORPUS`): la búsqueda de Aprende resuelve «tu número»/«mi
+  número» → `regla-4`.
+- **No tocado**: `LEARN_CORPUS`; firmas del motor; `migrateToV2`; el objeto `T`; baseline.
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
+  el toggle conmuta «tu número» nominal (≈590k de 2026 + recordatorio) ↔ real (590k, sin recordatorio); cero
+  «€ de hoy» visible (quedan 2 en comentarios); buscar «tu número» en el Glosario surface «Regla del 4 %»; 0
+  errores de consola en Hoy/Proyección; hash del baseline intacto.

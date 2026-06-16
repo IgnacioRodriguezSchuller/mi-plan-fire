@@ -488,6 +488,15 @@ export const GOAL_CATEGORY_LABEL = (() => {
 
 export const LEARN_DISCLAIMER = 'Mi Plan FIRE es una herramienta de planificación financiera personal. No es un servicio de asesoramiento financiero ni de inversión. El contenido educativo tiene carácter exclusivamente informativo y formativo. No constituye recomendación personalizada de inversión, asesoramiento financiero, fiscal o legal. Las decisiones financieras son responsabilidad exclusiva del usuario. Las menciones a tipos de productos (fondos indexados, ETFs, planes de pensiones) son referencias genéricas a categorías reguladas, no recomendaciones específicas. Las proyecciones son estimaciones basadas en supuestos: el comportamiento real puede diferir. Rentabilidades pasadas no garantizan rentabilidades futuras. Los datos fiscales corresponden a normativa vigente en mayo 2026; reformas posteriores pueden alterarlos.';
 
+// Alias de términos del producto → id de LEARN_CORPUS, para que la búsqueda del Glosario los
+// encuentre SIN tocar el corpus cerrado (CO4). "tu número" es la cifra de la regla del 4 %.
+export const GLOSSARY_ALIASES = {
+  'tu número': 'regla-4',
+  'tu numero': 'regla-4',
+  'mi número': 'regla-4',
+  'mi numero': 'regla-4',
+};
+
 export const LEARN_LEVELS = {
   esencial: [
     'interes-compuesto', 'retorno-anual', 'inflacion', 'volatilidad',
