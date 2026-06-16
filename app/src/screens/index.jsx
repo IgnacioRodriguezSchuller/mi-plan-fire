@@ -3133,7 +3133,6 @@ export function ScreenProyeccion() {
           <Reveal delay={50}><h2 style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(34px, 6.5vw, 80px)', lineHeight: 0.98, letterSpacing: '-.03em', margin: '8px 0 0', color: T.ink }}>Ahora, mes a mes.</h2></Reveal>
           <Reveal delay={110}><p style={cap}>La proyección dibuja el destino. El seguimiento lo vuelve avance real: registra cada mes y compáralo con el plan.</p></Reveal>
           <Reveal delay={170}><button type="button" onClick={() => update({ activeTab: 'seguimiento' })} style={ctaBtn}>Ir a Mes a mes →</button></Reveal>
-          <Reveal delay={230}><p style={{ ...note, marginTop: 30 }}>Herramienta de proyección. No es asesoramiento financiero, ni garantiza rentabilidades.</p></Reveal>
         </Spread>
 
       </div>
@@ -3840,7 +3839,7 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
         <div style={{ flex: '1 1 100%', minWidth: 0, paddingRight: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
             <input value={goal.name} onChange={(e) => onChange({ name: e.target.value })}
-              style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, background: 'transparent', border: 'none', outline: 'none', color: T.ink, padding: 0, flex: '1 1 60%', minWidth: 100 }} />
+              style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, background: 'transparent', border: 'none', outline: 'none', color: T.ink, padding: 0, flex: '1 1 100%', minWidth: 0 }} />
             <Pill color={onTrack ? T.green : T.amber} bg={onTrack ? T.greenSoft : 'rgba(180,83,9,0.10)'} border="transparent" style={{ fontSize: T.size.eyebrow, padding: '3px 8px' }}>
               {onTrack ? 'En camino' : 'Falta'}
             </Pill>
@@ -4258,10 +4257,6 @@ export function ScreenAjustes() {
             fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, background: 'transparent',
             border: 'none', cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase', padding: 0,
           }}>Ver presentación de Mi Plan FIRE →</button>
-          <button onClick={() => window.__openLanding && window.__openLanding()} style={{
-            fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, background: 'transparent',
-            border: 'none', cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase', padding: 0,
-          }}>Ver presentación visual antigua →</button>
         </div>
       </Card>
 
@@ -5449,15 +5444,17 @@ export function KpiPill({ onClick }) {
   const d = useDerived();
   const { state } = useStore();
   const mobile = useIsMobile();
+  const [hover, setHover] = useState(false);
   // Más presencia en escritorio (tamaño/padding/sparkline mayores); en móvil se
   // mantiene compacto. Usa el breakpoint del proyecto (useIsMobile).
   const sw = mobile ? 24 : 34, sh = mobile ? 9 : 12;
   return (
-    <button onClick={onClick} aria-label={`Edad de libertad ${d.verdictAge != null ? Math.ceil(d.verdictAge) : '—'}. Patrimonio proyectado ${fmtEur(d.finalPlan.portfolio)}. ${d.verdictCopy}`} style={{
+    <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} aria-label={`Edad de libertad ${d.verdictAge != null ? Math.ceil(d.verdictAge) : '—'}. Patrimonio proyectado ${fmtEur(d.finalPlan.portfolio)}. ${d.verdictCopy}`} style={{
       display: 'inline-flex', alignItems: 'center', gap: mobile ? 8 : 10,
       padding: mobile ? '5px 11px' : '8px 16px',
       background: T.ink, color: T.bg, borderRadius: 999,
-      border: 'none', cursor: onClick ? 'pointer' : 'default',
+      border: 'none', cursor: 'pointer',
+      opacity: hover ? 0.88 : 1, transition: 'opacity .15s ease',
       fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto',
     }}>
       {/* Prefijo = edad de libertad (verdictAge), coherente con el hero (antes mostraba retireAge). */}

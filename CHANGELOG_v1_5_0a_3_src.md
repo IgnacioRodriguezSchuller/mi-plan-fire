@@ -1075,3 +1075,22 @@ de FIRE el motor necesitaba Fat, que no existía.
   `withdrawalRate=25 %`+pensión → "Pendiente de revisar el modelo de pensión" (destino y NextStep);
   `npm run build` OK; verify-content/state PASS (tokens/lib solo divergencias conocidas); consola
   limpia; hash del baseline intacto.
+
+### 2026-06-16 · Hoy/Seguimiento/Proyección · quick wins (cascada S2)
+
+- **Causa raíz**: pulidos independientes — ED3 (nombre de meta recortado bajo el chip "En camino"),
+  CN3 (dos entradas de presentación en Datos), CO2 (disclaimer duplicado en el cierre del Cartel),
+  CN4 (`KpiPill` sin afford. de clicable). GX3 ya resuelto en `2dea6f8` (no-op verificado).
+- **Cambio** (`screens/index.jsx`): (ED3) `GoalRow` — el `<input>` del nombre pasa a `flex:'1 1 100%'`
+  + `minWidth:0` y el chip de estado baja de línea → el nombre usa el ancho completo de la tarjeta.
+  (CN3) `ScreenAjustes` — retirada "Ver presentación visual antigua" (`__openLanding`); queda solo
+  "Ver presentación de Mi Plan FIRE" (`__openRevisitLanding`). (CO2) `ScreenProyeccion` — eliminado el
+  disclaimer del spread CIERRE; queda el del footer (única aparición). (CN4) `KpiPill` — `cursor:pointer`
+  explícito + hover (opacidad con transición).
+- **No tocado**: el global `window.__openLanding` (se conserva definido, sin uso vivo, para no tocar
+  `Shell`); motor; `migrateToV2`; baseline.
+- **Pendiente menor**: nombres de meta muy largos ("Independencia financiera") aún rozan ~15 px el
+  ancho de la tarjeta estrecha en el grid a 2 columnas → se resuelve de raíz en S9 (Seguimiento → Cartel).
+- **Verificación**: build OK; verify-content/state PASS (tokens/lib solo divergencias conocidas);
+  consola limpia; demo canónico → "Entrada del piso"/"Año sabático" completas, una sola entrada de
+  presentación en Datos, `KpiPill` cursor pointer + transición; hash del baseline intacto.
