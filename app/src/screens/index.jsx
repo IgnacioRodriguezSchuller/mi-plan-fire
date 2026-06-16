@@ -1972,9 +1972,33 @@ const GASTO_CATS = [
   { k: 'subscriptions', label: 'Suscripciones' },
   { k: 'other', label: 'Otros' },
 ];
+// Formulario de gasto reutilizable (5 categorías + total en vivo, primitivas Cartel). Lo usa
+// GastoSheet (overlay) y queda disponible para deduplicar con el paso de gastos de
+// ActualLifeOnboarding (FN2). Se monta fresco en cada apertura → init del borrador en mount.
+function ExpensesForm({ initial, onSave, onCancel }) {
+  const [draft, setDraft] = useState(() => ({ ...(initial || {}) }));
+  const total = GASTO_CATS.reduce((s, c) => s + (Number(draft[c.k]) || 0), 0);
+  const set = (k, v) => setDraft((d) => ({ ...d, [k]: Math.max(0, Math.round(v)) }));
+  return (
+    <>
+      {GASTO_CATS.map((c) => (
+        <div key={c.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, borderTop: '1px solid ' + T.lineSoft, padding: '14px 0', textAlign: 'left' }}>
+          <span style={{ fontFamily: T.serif, fontSize: 18 }}>{c.label}</span>
+          <span style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 19, whiteSpace: 'nowrap' }}><EditableValue value={draft[c.k] || 0} onChange={(v) => set(c.k, v)} min={0} max={100000} suffix="€/mes" ariaLabel={c.label} /></span>
+        </div>
+      ))}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '2px solid ' + T.line, paddingTop: 14, marginTop: 2, fontFamily: T.serif, fontWeight: 600, fontSize: 20 }}>
+        <span>Total</span><span style={{ color: T.accent }}>{fmtNum(total)} €/mes</span>
+      </div>
+      <div style={{ display: 'flex', gap: 16, marginTop: 26, justifyContent: 'center', alignItems: 'center' }}>
+        <CartelBtn variant="text" onClick={onCancel}>Cancelar</CartelBtn>
+        <CartelBtn onClick={() => onSave(draft)} style={{ borderRadius: 10, padding: '12px 28px', fontSize: 17 }}>Guardar</CartelBtn>
+      </div>
+    </>
+  );
+}
+
 function GastoSheet({ open, onClose, initial, onSave }) {
-  const [draft, setDraft] = useState({});
-  useEffect(() => { if (open) setDraft({ ...(initial || {}) }); }, [open, initial]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -1982,10 +2006,6 @@ function GastoSheet({ open, onClose, initial, onSave }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
   if (!open) return null;
-  const total = GASTO_CATS.reduce((s, c) => s + (Number(draft[c.k]) || 0), 0);
-  const set = (k, v) => setDraft((d) => ({ ...d, [k]: Math.max(0, Math.round(v)) }));
-  const saveBtn = { background: T.accent, color: T.bg, border: 'none', borderRadius: 10, padding: '12px 28px', cursor: 'pointer', fontFamily: T.serif, fontSize: 17, fontWeight: 600, appearance: 'none', WebkitAppearance: 'none' };
-  const cancelBtn = { background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, color: T.muted, appearance: 'none', WebkitAppearance: 'none' };
   // Portal a document.body: el overlay debe quedar FUERA del contenedor de la pestaña (.tab-enter
   // tiene transform → position:fixed se ancla a él, no al viewport, y el panel caería fuera de pantalla).
   const sheet = (
@@ -1994,19 +2014,7 @@ function GastoSheet({ open, onClose, initial, onSave }) {
       <div style={{ position: 'relative', background: T.bg, border: '1px solid ' + T.line, borderRadius: 16, padding: 'clamp(28px, 5vw, 44px)', maxWidth: 460, width: '100%', maxHeight: '88vh', overflowY: 'auto', textAlign: 'center' }}>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(20px, 3vw, 26px)', color: T.accent, marginBottom: 6 }}>Tu gasto, en detalle</div>
         <p style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, margin: '0 auto 18px', maxWidth: '32ch', lineHeight: 1.4 }}>Reparte lo que gastas cada mes. Tu número saldrá de aquí.</p>
-        {GASTO_CATS.map((c) => (
-          <div key={c.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, borderTop: '1px solid ' + T.lineSoft, padding: '14px 0', textAlign: 'left' }}>
-            <span style={{ fontFamily: T.serif, fontSize: 18 }}>{c.label}</span>
-            <span style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 19, whiteSpace: 'nowrap' }}><EditableValue value={draft[c.k] || 0} onChange={(v) => set(c.k, v)} min={0} max={100000} suffix="€/mes" ariaLabel={c.label} /></span>
-          </div>
-        ))}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '2px solid ' + T.line, paddingTop: 14, marginTop: 2, fontFamily: T.serif, fontWeight: 600, fontSize: 20 }}>
-          <span>Total</span><span style={{ color: T.accent }}>{fmtNum(total)} €/mes</span>
-        </div>
-        <div style={{ display: 'flex', gap: 16, marginTop: 26, justifyContent: 'center', alignItems: 'center' }}>
-          <button type="button" style={cancelBtn} onClick={onClose}>Cancelar</button>
-          <button type="button" style={saveBtn} onClick={() => { onSave(draft); onClose(); }}>Guardar</button>
-        </div>
+        <ExpensesForm initial={initial} onSave={(d) => { onSave(d); onClose(); }} onCancel={onClose} />
       </div>
     </div>
   );
@@ -2732,6 +2740,7 @@ export function ScreenAjustes() {
   const { state, activePlan,
     resetAll, reonboard, seedDemoConfirm, updatePlan, update, updateProfile } = useStore();
   const mobile = useIsMobile();
+  const [showEditLife, setShowEditLife] = useState(false);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
@@ -2782,6 +2791,17 @@ export function ScreenAjustes() {
       {/* CUENTAS */}
       <AccountsCard />
 
+      {/* SITUACIÓN ECONÓMICA · re-editar gastos/hipoteca/asignación (antes solo en onboarding · FN1/CN1) */}
+      <Card>
+        <Label style={{ marginBottom: 14 }}>Tu situación económica</Label>
+        <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal, maxWidth: 640 }}>
+          Tu gasto mensual, la hipoteca y cómo repartes tu capital entre cuentas. Alimenta «tu número» y el rendimiento de tu cartera.
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
+          <Btn variant="ghost" size="sm" onClick={() => setShowEditLife(true)}>Editar gastos y asignación →</Btn>
+        </div>
+      </Card>
+
       {/* DATOS */}
       <Card>
         <Label style={{ marginBottom: 14 }}>Tus datos</Label>
@@ -2825,6 +2845,14 @@ export function ScreenAjustes() {
         </div>
       </Card>
 
+      {/* Editar situación económica · reusa ActualLifeOnboarding (prefilla de plan.actualLife);
+          mismo patrón que ScreenSinMiPlan. No cambia el shape persistido. */}
+      {showEditLife && (
+        <ActualLifeOnboarding
+          onClose={() => setShowEditLife(false)}
+          onComplete={(payload) => { updatePlan({ actualLife: payload }); setShowEditLife(false); }}
+        />
+      )}
     </div>
   );
 }

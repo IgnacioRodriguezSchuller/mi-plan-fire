@@ -1134,3 +1134,19 @@ de FIRE el motor necesitaba Fat, que no existía.
   «+ añadir» + «Desglosar» + «Ir a Mes a mes») y **consola limpia** (cero errores nuevos tras re-navegar; se
   corrigió en el propio paso una 4ª referencia *spread* a `addTramoStyle` que rompía el render); hash del
   baseline intacto.
+
+### 2026-06-16 · Datos/Proyección · editar gastos+asignación desde Datos + ExpensesForm (cascada S4)
+
+- **Causa raíz**: la asignación de activos (y la hipoteca) solo eran editables rehaciendo el onboarding
+  (FN1/CN1); los gastos se editaban por dos vías independientes (GastoSheet ↔ paso de gastos del onboarding,
+  FN2).
+- **Cambio** (`screens/index.jsx`): extraído `ExpensesForm({initial,onSave,onCancel})` (5 categorías + total
+  en vivo, botones `CartelBtn`); `GastoSheet` ahora lo usa (mismo overlay portal). En `ScreenAjustes`, nueva
+  tarjeta «Tu situación económica» con «Editar gastos y asignación →» que abre `ActualLifeOnboarding`
+  (prefilla de `plan.actualLife`; `onComplete → updatePlan({actualLife})`), mismo patrón que `ScreenSinMiPlan`.
+- **No tocado**: el shape de `plan.actualLife`; `ActualLifeOnboarding` (se reusa tal cual, sin romper sus
+  llamadores onboarding/«Sin mi plan»); motor; `migrateToV2`; baseline.
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
+  GastoSheet→ExpensesForm renderiza (5 categorías + Guardar/Cancelar), «Editar gastos y asignación →» en
+  Datos abre el wizard `ActualLifeOnboarding` prefillado; **0 errores de consola** en los caminos tocados;
+  hash del baseline intacto.
