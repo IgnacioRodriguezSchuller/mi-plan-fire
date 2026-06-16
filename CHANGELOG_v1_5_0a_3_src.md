@@ -1169,3 +1169,17 @@ de FIRE el motor necesitaba Fat, que no existía.
   el toggle conmuta «tu número» nominal (≈590k de 2026 + recordatorio) ↔ real (590k, sin recordatorio); cero
   «€ de hoy» visible (quedan 2 en comentarios); buscar «tu número» en el Glosario surface «Regla del 4 %»; 0
   errores de consola en Hoy/Proyección; hash del baseline intacto.
+
+### 2026-06-16 · Proyección · sandbox «¿y si subo el aporte?» integrado (WhatIfCard) (cascada S7)
+
+- **Causa raíz**: `WhatIfCard` estaba definida pero huérfana (FN4); mostraba un Δ de patrimonio, no la nueva
+  edad de libertad, y en dialecto antiguo.
+- **Cambio** (`screens/index.jsx`): reescrita con primitivas Cartel (`CartelCard`/`CartelLabel`/`CartelBtn`/
+  `EditableValue`) e integrada en el spread «La palanca» de `ScreenProyeccion`. Proyecta con +bump €/mes
+  (`projectV2` extraMonthly, endAge 90) y halla la **nueva edad de libertad** (cruce real con `fiTarget`
+  deflactado, misma lógica determinista que `useDerived`). Es PREVISUALIZACIÓN: no persiste hasta «Aplicar
+  al plan →» (guided-confirmation).
+- **No tocado**: el motor (solo opciones existentes de `projectV2`); `migrateToV2`; baseline.
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
+  +50 → «libre a los 60», +200 → «libre a los 57 — adelantas 3 años»; `savingSegments` NO cambia al
+  previsualizar (preview puro); 0 errores de consola; hash del baseline intacto.

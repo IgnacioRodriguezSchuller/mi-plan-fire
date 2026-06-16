@@ -23,7 +23,7 @@ import {
 import {
   PosterFrame, Spread, SectionTag, EditableValue, CartelMonthValue, ComputedNumber, Reveal, LineIcon as CartelIcon,
   LifeChart, MonteCarloChart, Stats3, TramoRow as CartelTramoRow, fmtMoneyBig, fmtNum,
-  CartelBtn,
+  CartelBtn, CartelCard, CartelLabel,
 } from '../ui/cartel.jsx'
 import {
   LineChart, MultiLineChart, FlowTimelineCard,
@@ -1518,69 +1518,59 @@ export function ScreenHoy({ goTo }) {
   );
 }
 
-export function WhatIfCard({ d, plan, updatePlan }) {
+// Sandbox «¿y si subo el aporte?» (cascada S7) · PREVISUALIZACIÓN: proyecta con +bump €/mes y halla la
+// nueva edad de libertad (mismo cruce real con fiTarget que useDerived). NO persiste hasta «Aplicar»
+// (doctrina guided-confirmation). Estilo Cartel.
+export function WhatIfCard({ d, plan }) {
   const [bump, setBump] = useState(50);
   const { state, mutatePlan } = useStore();
   const { profile } = state;
-  const baseline = d.currentAporte || plan.monthlyPlanned || 0;
-  // Use extraMonthly so we ADD `bump` on top of whatever the plan already does
-  // (instead of overriding all saving segments with a flat amount)
+  const fiTarget = d.fiTarget;
   const sim = useMemo(() => projectV2(plan, profile, {
-    capital: d.currentPortfolio,
-    extraMonthly: bump,
-    includeHypothetical: false,
+    capital: d.currentPortfolio, extraMonthly: bump, includeHypothetical: false, endAge: 90,
   }), [profile, d.currentPortfolio, plan, bump]);
-  const diff = sim[sim.length - 1].portfolio - d.finalPlan.portfolio;
+  const newAge = useMemo(() => {
+    if (!(fiTarget > 0)) return null;
+    for (const row of sim) {
+      const real = toRealEur(row.portfolio || 0, (row.age - profile.age) * 12, plan.inflationRate);
+      if (real >= fiTarget) return row.age;
+    }
+    return null;
+  }, [sim, fiTarget, profile.age, plan.inflationRate]);
+  const baseAge = d.cruceEdad != null ? Math.ceil(d.cruceEdad) : null;
+  const newAgeCeil = newAge != null ? Math.ceil(newAge) : null;
+  const adelanta = (baseAge != null && newAgeCeil != null) ? baseAge - newAgeCeil : null;
   return (
-    <Card>
-      <Label>¿Y si subo el aporte?</Label>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 8 }}>
+    <CartelCard tone={T.accent} style={{ maxWidth: 460, margin: '0 auto', textAlign: 'center' }}>
+      <CartelLabel style={{ color: T.accent }}>¿Y si subes el aporte?</CartelLabel>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, justifyContent: 'center', marginTop: 10 }}>
         <span style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.lead }}>+</span>
-        <EditableNumber value={bump} onChange={setBump} min={0} max={2000} width={90} color={T.accent} />
-        <span style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.lead }}>€/mes →</span>
+        <EditableValue value={bump} onChange={setBump} min={0} max={2000} suffix="€/mes" ariaLabel="Aporte extra mensual" />
       </div>
-      <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.green, marginTop: 6, letterSpacing: T.tracking.display, lineHeight: 1 }}>
-        +{fmtEur(diff)}
-      </div>
-      <div style={{ fontFamily: T.serif, color: T.muted, fontSize: T.size.caption, marginTop: 4 }}>
-        a los {profile.retireAge}. Por solo {fmtEur(bump)} más cada mes.
-      </div>
-      <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 12, flexWrap: 'wrap' }}>
         {[25, 50, 100, 200].map((v) => (
-          <button key={v} onClick={() => setBump(v)}
-            style={{
-              fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '6px 12px',
-              background: bump === v ? T.ink : 'transparent',
-              color: bump === v ? T.bg : T.muted,
-              border: '1px solid ' + (bump === v ? T.ink : T.line),
-              borderRadius: 999, cursor: 'pointer',
-            }}>+{v}€</button>
+          <button key={v} onClick={() => setBump(v)} style={{
+            fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, padding: '4px 12px',
+            background: bump === v ? T.accent : 'transparent', color: bump === v ? T.bg : T.accent,
+            border: '1px solid ' + T.accent, borderRadius: 999, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none',
+          }}>+{v}€</button>
         ))}
       </div>
-      <button onClick={() => mutatePlan(p => {
-          const tk = todayKey();
-          const segs = p.savingSegments && p.savingSegments.length ? p.savingSegments : [{ id: uid(), from: tk, to: null, type: 'fixed', value: 0, label: 'Aporte' }];
-          const idx = segs.findIndex(s => isKeyInSegment(tk, s));
-          if (idx < 0) {
-            // No active segment → add a new fixed extra one
-            return { ...p, savingSegments: [...segs, { id: uid(), from: tk, to: null, type: 'fixed', value: bump, label: 'Extra' }] };
-          }
-          // For fixed segments, just bump the value (preserves intent)
-          // For percent segments, add a NEW fixed segment on top instead of destroying %
-          const s = segs[idx];
-          if (s.type === 'fixed') {
-            const updated = segs.map((seg, i) => i === idx ? { ...seg, value: (Number(seg.value) || 0) + bump } : seg);
-            return { ...p, savingSegments: updated };
-          } else {
-            return { ...p, savingSegments: [...segs, { id: uid(), from: tk, to: null, type: 'fixed', value: bump, label: 'Extra sobre ' + (s.label || 'aporte') }] };
-          }
-        })}
-        style={{
-          marginTop: 14, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent,
-          background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
-          letterSpacing: T.tracking.wider, textTransform: 'uppercase',
-        }}>Aplicar al plan →</button>
-    </Card>
+      <div style={{ fontFamily: T.serif, fontSize: T.size.lead, color: T.ink, marginTop: 16, lineHeight: T.lh.normal }}>
+        {newAgeCeil != null
+          ? <>Serías libre a los <b style={{ color: T.green, fontWeight: 600 }}>{newAgeCeil}</b>{adelanta != null && adelanta > 0 ? <> — adelantas <b style={{ color: T.green, fontWeight: 600 }}>{adelanta}</b> {adelanta === 1 ? 'año' : 'años'}.</> : '.'}</>
+          : <>Con este aporte tu número aún no llega.</>}
+      </div>
+      <CartelBtn variant="text" style={{ marginTop: 14 }} onClick={() => mutatePlan(p => {
+        const tk = todayKey();
+        const segs = p.savingSegments && p.savingSegments.length ? p.savingSegments : [{ id: uid(), from: tk, to: null, type: 'fixed', value: 0, label: 'Aporte' }];
+        const idx = segs.findIndex(s => isKeyInSegment(tk, s));
+        if (idx < 0) return { ...p, savingSegments: [...segs, { id: uid(), from: tk, to: null, type: 'fixed', value: bump, label: 'Extra' }] };
+        const s = segs[idx];
+        if (s.type === 'fixed') return { ...p, savingSegments: segs.map((seg, i) => i === idx ? { ...seg, value: (Number(seg.value) || 0) + bump } : seg) };
+        return { ...p, savingSegments: [...segs, { id: uid(), from: tk, to: null, type: 'fixed', value: bump, label: 'Extra sobre ' + (s.label || 'aporte') }] };
+      })}>Aplicar al plan →</CartelBtn>
+    </CartelCard>
   );
 }
 
@@ -2162,6 +2152,7 @@ export function ScreenProyeccion() {
           <Reveal delay={80}><p style={mega(T.ink)}><EditableValue value={savingsPct} onChange={setSavingsPct} min={0} max={60} suffix="%" ariaLabel="Tasa de ahorro" /> · {fmtNum(aporte)} €/mes</p></Reveal>
           <Reveal delay={130}><p style={cap}>No es cuánto ganas — es qué % guardas. Es lo que más adelanta tu fecha.</p></Reveal>
           <Reveal delay={170}><p style={note}>Tu número no cambia: mover esto solo cambia cuándo llegas (rango 0 % a 60 %).</p></Reveal>
+          <Reveal delay={210} style={{ width: '100%', marginTop: '3vh' }}><WhatIfCard d={d} plan={plan} /></Reveal>
         </Spread>
 
         {/* 4 · INGRESOS */}
