@@ -2938,6 +2938,10 @@ export function ScreenProyeccion() {
   // patrón de gasto y recalcula el número FIRE. Mantiene el desglose plano en "otros".
   const setGasto = (euros) => updatePlan({ actualLife: { ...(plan.actualLife || {}), completed: true, expenses: { housing: 0, food: 0, transport: 0, subscriptions: 0, other: Math.round(euros) } } });
   const setSavingsPct = (pct) => { if (savingSeg) m.updateSaving(savingSeg.id, { type: 'percent', value: Math.max(0, Math.min(60, pct)) }); };
+  // IPC del salario (salaryInflationFactor): 100 % = el salario sube como la inflación; 0 % = fijo.
+  // Default 1.0 (ya en migrateToV2). Lo lee projectV2 → recálculo en vivo. Distinto de inflationRate.
+  const ipcPct = Math.round((plan.salaryInflationFactor != null ? plan.salaryInflationFactor : 1.0) * 100);
+  const setIpcPct = (v) => updatePlan({ salaryInflationFactor: Math.max(0, Math.min(100, v)) / 100 });
   const tramoDates = (s) => `${readableMonth(s.from)} → ${s.to ? readableMonth(s.to) : 'sin fin'}`;
   const dec = (x) => (Number.isInteger(x) ? 0 : 1);
 
@@ -3002,6 +3006,7 @@ export function ScreenProyeccion() {
           <Reveal><CartelIcon id="patrimonio" size={72} color={T.ink} style={{ margin: '0 auto 6px' }} /></Reveal>
           <Reveal delay={40}><SectionTag>Ingresos</SectionTag></Reveal>
           <Reveal delay={70}><p style={cap}>Lo que entra cada mes. El salario base sube con el IPC; los complementos van aparte.</p></Reveal>
+          <Reveal delay={90}><p style={note}>El salario sigue al IPC al <EditableValue value={ipcPct} onChange={setIpcPct} min={0} max={100} suffix="%" ariaLabel="Seguimiento del salario al IPC" /> (100 % = sube como la inflación; 0 % = se queda fijo). Distinto de la inflación general, que ajustas en Asunciones.</p></Reveal>
           <Reveal delay={100} style={{ width: '100%', maxWidth: 600 }}>
             <div style={subhead}>Salario base</div>
             {(plan.incomeSegments || []).map((s) => (

@@ -881,6 +881,15 @@ clara entre dato editable y calculado. **Sustituye** el diseño anterior de Proy
 `ScreenProyeccionLegacy`, referencia para Fase 2). Anula puntualmente —SOLO en esta sección— el
 "sin movimiento" de la doctrina previa, por decisión explícita del propietario.
 
+### 2026-06-16 · Proyección · control de IPC del salario (salaryInflationFactor)
+
+- **Causa raíz**: el Cartel no exponía el acoplamiento del salario al IPC que la pantalla original sí permitía.
+- **Cambio**: en INGRESOS, línea editable «El salario sigue al IPC al [N] %» (`EditableValue` 0–100 →
+  `updatePlan({ salaryInflationFactor: clamp(v,0,100)/100 })`; lee `Math.round((plan.salaryInflationFactor ?? 1)*100)`).
+  Lo lee `projectV2` → recálculo en vivo. Aclara que es distinto de la inflación general (que se ajusta en Asunciones).
+- **No tocado**: el motor (`salaryInflationFactor` ya estaba en `migrateToV2` y en `projectV2`); `inflationRate`.
+- **Verificación**: lee 100 % por defecto; round-trip 50 % → factor 0,5 persistido; restaurado a 1,0; consola limpia; build OK.
+
 ### 2026-06-16 · Proyección · tramos de ingreso/complemento editables en línea
 
 - **Causa raíz**: el Cartel solo dejaba editar el importe de cada tramo; faltaban fechas, añadir y
