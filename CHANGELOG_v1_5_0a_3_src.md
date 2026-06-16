@@ -1217,3 +1217,23 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **No tocado**: inputs/botones funcionales, lógica, motor, `migrateToV2`, baseline.
 - **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
   eyebrows de Seguimiento y Datos en serif; 0 errores de consola; hash del baseline intacto.
+
+### 2026-06-16 · Robustez + Aprende · lote P2/P3 (cascada S10)
+
+- **Causa raíz**: lote de robustez/pulido (FN7, ED5, FN10, ED7) + claridad de Aprende (CO6).
+- **Cambio**:
+  - (FN7) `ScreenAjustes` · «Importar JSON» ahora confirma con preview (nombre/edad/capital) antes de
+    sobrescribir; aplica solo si confirmas.
+  - (ED5) `<select>` de categoría (HitosEditor `newGoal` y `GoalRow`) con `appearance:none`+`WebkitAppearance:none`;
+    los `input[type=range]` (Onboarding + asignación) ya usaban `accentColor` (enfoque correcto; `appearance:none`
+    rompería el slider) → dark-mode sin chrome negro.
+  - (FN10) `ScreenSinMiPlan`: si no hay tramo de salario vigente hasta la jubilación, en vez de «0 €/mes»
+    muestra un aviso para añadir/extender un tramo en Proyección.
+  - (ED7) comentario en `Stats3` (`cartel.jsx`) fijando «cifra hero nunca `T.accent` salvo el ★ verde».
+  - (CO6) comentario en `content/index.js` documentando qué pestaña de Aprende renderiza qué.
+- **Hallazgos del audit que NO requerían cambio (verificado en código)**: (FN9) `HouseholdSummaryCard` YA
+  retorna `null` con <2 personas; (CO3) TODOS los IDs de `LEARN_LEVELS` existen en `LEARN_CORPUS` (era falso
+  positivo del agente Explore) → no hay conceptos citados sin destino.
+- **No tocado**: `LEARN_CORPUS`; lógica/motor; `migrateToV2`; el objeto `T`; baseline.
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); 0 errores de
+  consola en Datos/Seguimiento/Aprende; hash del baseline intacto.

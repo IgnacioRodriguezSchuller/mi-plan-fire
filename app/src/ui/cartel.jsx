@@ -388,6 +388,9 @@ export function MonteCarloChart({ bands, retireAge, style = {} }) {
 
 // ── Stats3 · fila de 3 estadísticos (cifra grande + glosa cursiva) ──────────────
 // item: { computed?, value?, format?, color?, em }. `computed` → count-up; `value` → estático.
+// Invariante (ED7): las cifras hero NUNCA usan T.accent salvo el ★ de edad de libertad (en T.green,
+// dibujado por LifeChart). Aquí `color` por item: usar T.ink (default), T.green (ok) o T.amber (aviso);
+// T.accent solo para un dato "destacado" puntual, no como color base de una cifra hero.
 export function Stats3({ items, style = {} }) {
   const numStyle = (color) => ({ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(28px, 3.8vw, 50px)', letterSpacing: '-.02em', lineHeight: 1, color: color || T.ink });
   return (

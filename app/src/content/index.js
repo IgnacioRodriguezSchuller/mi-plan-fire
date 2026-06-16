@@ -497,6 +497,10 @@ export const GLOSSARY_ALIASES = {
   'mi numero': 'regla-4',
 };
 
+// Modelo de Aprende (CO6): la pestaña «Conceptos» renderiza LEARN_CORPUS agrupado por nivel
+// (LEARN_LEVELS, vía LEARN_LEVEL_BY_ID); «El Tablón» renderiza TABLON (citas); «Glosario» renderiza
+// LEARN_CORPUS agrupado por categoría + búsqueda (con GLOSSARY_ALIASES). Verificado: todos los IDs de
+// LEARN_LEVELS existen en LEARN_CORPUS (CO3 era falso positivo — no hay conceptos citados sin destino).
 export const LEARN_LEVELS = {
   esencial: [
     'interes-compuesto', 'retorno-anual', 'inflacion', 'volatilidad',

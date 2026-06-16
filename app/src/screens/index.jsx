@@ -2308,7 +2308,7 @@ export function HitosEditor() {
             <div>
               <Label style={{ marginBottom: 6 }}>Categoría</Label>
               <select value={newGoal.category} onChange={(e) => setNewGoal({ ...newGoal, category: e.target.value })}
-                style={{ width: '100%', fontFamily: T.serif, fontSize: T.size.body, padding: '8px 10px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 8, outline: 'none', color: T.ink }}>
+                style={{ width: '100%', fontFamily: T.serif, fontSize: T.size.body, padding: '8px 10px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 8, outline: 'none', color: T.ink, appearance: 'none', WebkitAppearance: 'none' }}>
                 {GOAL_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
@@ -2438,7 +2438,7 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
             <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Categoría</span>
             <select value={category} onChange={(e) => onChange({ category: e.target.value })}
-              style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '4px 8px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 999, color: T.ink, letterSpacing: T.tracking.wide }}>
+              style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '4px 8px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 999, color: T.ink, letterSpacing: T.tracking.wide, appearance: 'none', WebkitAppearance: 'none' }}>
               {GOAL_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </div>
@@ -2841,7 +2841,15 @@ export function ScreenAjustes() {
               const file = e.target.files[0]; if (!file) return;
               const reader = new FileReader();
               reader.onload = (ev) => {
-                try { update(migrateToV2(JSON.parse(ev.target.result))); }
+                try {
+                  // FN7 · confirmación + preview antes de sobrescribir (importar no tenía red de seguridad).
+                  const parsed = migrateToV2(JSON.parse(ev.target.result));
+                  const st = parsed.profile ? parsed : (parsed.accounts && parsed.accounts[parsed.activeId || 'default'] && parsed.accounts[parsed.activeId || 'default'].state) || parsed;
+                  const prof = (st && st.profile) || {};
+                  const cap = st && st.plan && st.plan.capital != null ? st.plan.capital : null;
+                  const ok = window.confirm('Vas a SUSTITUIR tus datos por el archivo importado:\n\n· Nombre: ' + (prof.name || '—') + '\n· Edad: ' + (prof.age != null ? prof.age : '—') + (cap != null ? '\n· Capital inicial: ' + cap + ' €' : '') + '\n\nEsto sobrescribe el plan actual. ¿Continuar?');
+                  if (ok) update(parsed);
+                }
                 catch(err) { alert('JSON inválido'); }
               };
               reader.readAsText(file);
@@ -3572,7 +3580,9 @@ export function ScreenSinMiPlan({ embedded = false }) {
             </div>
             <div style={{ marginTop: 16, padding: '14px 16px', background: T.panel, border: '1px solid ' + T.line, borderRadius: 10 }}>
               <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
-                En <strong>{yearsToRetire} años</strong>, tu salario habrá crecido hasta <strong style={{ color: T.accent }}>{fmtEur(erosion.finalNominal)}/mes</strong> sobre el papel, pero comprará lo que <strong style={{ color: T.accent }}>{fmtEur(erosion.finalReal)}</strong> compran hoy.
+                {erosion.finalNominal > 0
+                  ? <>En <strong>{yearsToRetire} años</strong>, tu salario habrá crecido hasta <strong style={{ color: T.accent }}>{fmtEur(erosion.finalNominal)}/mes</strong> sobre el papel, pero comprará lo que <strong style={{ color: T.accent }}>{fmtEur(erosion.finalReal)}</strong> compran hoy.</>
+                  : <>Tu plan no tiene un tramo de salario vigente hasta la jubilación. Añade o extiende un tramo de ingreso en <strong style={{ color: T.ink }}>Proyección</strong> para ver la erosión por inflación.</>}
               </div>
             </div>
             <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line }}>
