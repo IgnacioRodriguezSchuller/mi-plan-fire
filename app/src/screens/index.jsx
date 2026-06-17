@@ -2563,7 +2563,7 @@ export function PublicPensionCard({ plan, updatePlan, profile }) {
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <Label>Pensión pública española</Label>
+          <SectionTag>Pensión pública española</SectionTag>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 4, lineHeight: T.lh.normal }}>
             La Seguridad Social complementa lo que retiras de tu cartera desde la edad de jubilación. No baja tu número —ese es el capital que necesitas por tu cuenta—, pero hace que tu dinero dure más. Lo verás en ¿Y te dura?
           </div>
@@ -2676,7 +2676,7 @@ export function AccountsCard() {
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <Label>Personas en este dispositivo</Label>
+          <SectionTag>Personas en este dispositivo</SectionTag>
           <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, fontStyle: 'italic', marginTop: 4, lineHeight: T.lh.normal }}>
             Cada persona tiene su propio plan aislado. Para tu pareja, hijo, o un escenario alternativo.
           </div>
@@ -2754,7 +2754,7 @@ export function ScreenAjustes() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
       <div>
-        <CartelLabel>Datos</CartelLabel>
+        <SectionTag>Datos</SectionTag>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4 }}>
           Quién eres y dónde están tus cuentas.
         </div>
@@ -2764,8 +2764,8 @@ export function ScreenAjustes() {
       </div>
 
       {/* PERFIL — v1.4.0c · BIG-A · podado: solo campos personales. Las 4 asunciones del modelo (retorno, inflación, tasa retiro, esperanza vida) se mueven a ScreenProyeccion → "Asunciones del modelo". */}
-      <Card pad={mobile ? 16 : 24}>
-        <CartelLabel style={{ marginBottom: 14 }}>Tu perfil</CartelLabel>
+      <Reveal><Card pad={mobile ? 16 : 24}>
+        <SectionTag style={{ marginBottom: 14 }}>Tu perfil</SectionTag>
         <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(2, 1fr)', gap: 14 }}>
           <Row label="Nombre">
             <input value={state.profile.name || ''} onChange={(e) => updateProfile({ name: e.target.value })}
@@ -2792,28 +2792,28 @@ export function ScreenAjustes() {
             </span>
           </Row>
         </div>
-      </Card>
+      </Card></Reveal>
 
       {/* PENSIÓN PÚBLICA */}
-      <PublicPensionCard plan={activePlan} updatePlan={updatePlan} profile={state.profile} />
+      <Reveal><PublicPensionCard plan={activePlan} updatePlan={updatePlan} profile={state.profile} /></Reveal>
 
       {/* CUENTAS */}
-      <AccountsCard />
+      <Reveal><AccountsCard /></Reveal>
 
       {/* SITUACIÓN ECONÓMICA · re-editar gastos/hipoteca/asignación (antes solo en onboarding · FN1/CN1) */}
-      <Card>
-        <CartelLabel style={{ marginBottom: 14 }}>Tu situación económica</CartelLabel>
+      <Reveal><Card>
+        <SectionTag style={{ marginBottom: 14 }}>Tu situación económica</SectionTag>
         <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal, maxWidth: 640 }}>
           Tu gasto mensual, la hipoteca y cómo repartes tu capital entre cuentas. Alimenta «tu número» y el rendimiento de tu cartera.
         </div>
         <div style={{ display: 'flex', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
           <Btn variant="ghost" size="sm" onClick={() => setShowEditLife(true)}>Editar gastos y asignación →</Btn>
         </div>
-      </Card>
+      </Card></Reveal>
 
       {/* DATOS */}
-      <Card>
-        <CartelLabel style={{ marginBottom: 14 }}>Tus datos</CartelLabel>
+      <Reveal><Card>
+        <SectionTag style={{ marginBottom: 14 }}>Tus datos</SectionTag>
         <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal }}>
           Todo se guarda en tu dispositivo. Nada sale de aquí.
         </div>
@@ -2860,7 +2860,7 @@ export function ScreenAjustes() {
             border: 'none', cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase', padding: 0,
           }}>Ver presentación de Mi Plan FIRE →</button>
         </div>
-      </Card>
+      </Card></Reveal>
 
       {/* Editar situación económica · reusa ActualLifeOnboarding (prefilla de plan.actualLife);
           mismo patrón que ScreenSinMiPlan. No cambia el shape persistido. */}

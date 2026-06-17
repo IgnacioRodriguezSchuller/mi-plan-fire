@@ -1285,3 +1285,21 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
   Seguimiento y Datos con `SectionTag` + tarjetas outline coherentes con Hoy, reveal al scroll; 0 errores de
   consola nuevos; hash baseline intacto.
+
+### 2026-06-17 · Unificación · Datos adopta el sistema de sección Cartel (voz, no póster)
+
+- **Causa raíz**: Datos (`ScreenAjustes`) mezclaba cabeceras `CartelLabel` y `Label` (muted, caption) sin el
+  eyebrow accent de las demás pantallas → sus secciones no se leían como las de Hoy/Seguimiento/Proyección.
+- **Cambio** (`screens/index.jsx`): (1) las 6 cabeceras de sección (eyebrow «Datos», «Tu perfil», «Pensión
+  pública española», «Personas en este dispositivo», «Tu situación económica», «Tus datos») pasan de
+  `CartelLabel`/`Label` a `SectionTag` (serif itálica accent, idéntico al resto). (2) Los 5 bloques (perfil,
+  pensión, cuentas, situación, datos) se envuelven en `Reveal` (fade sutil al scroll). Las tarjetas ya
+  heredaron el look outline del cambio de la primitiva `Card`.
+- **Decisión (técnica)**: **sin cifra hero** en Datos. El plan contemplaba un hero para «capital inicial», pero
+  es un campo editable dentro de una rejilla de formulario de 4 campos; un hero rompería la rejilla y la
+  usabilidad. Datos es administrativo → se mantiene sobrio (el plan ya lo preveía: «resto sobrio, es admin»).
+- **No tocado**: lógica, motor, `migrateToV2`, objeto `T`, baseline; los labels mono de campo (NOMBRE, EDAD
+  ACTUAL…) y de botón (ACTIVAR, + PERSONA, RENOMBRAR) quedan para la cola mono (siguiente commit).
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
+  Datos con 6 `SectionTag` accent + tarjetas outline + reveal, coherente con Hoy/Seguimiento/Proyección; sin
+  overlay de error de Vite, app renderiza el bundle nuevo; hash baseline intacto.
