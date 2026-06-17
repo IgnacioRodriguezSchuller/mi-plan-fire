@@ -1313,11 +1313,8 @@ export function ScreenHoy({ goTo }) {
       )}
 
       {/* ─────────────── Movimiento 1 · Dónde estás ─────────────── */}
-      <section>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
-          <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.accent, letterSpacing: 0 }}>01</span>
-          <h2 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: DISPLAY_MD, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Dónde estás</h2>
-        </div>
+      <Reveal><section>
+        <SectionTag style={{ marginBottom: BLOCK_GAP }}>Dónde estás</SectionTag>
 
         {/* Rediseño Plan v2 · M1 en dos cards NEUTRAS (presente sobrio, sin tinte;
             el futuro de M2/M3 sí lleva color). Card A = patrimonio (tinta, KPI hero
@@ -1325,7 +1322,7 @@ export function ScreenHoy({ goTo }) {
             parado/invertido. Cifras 100% derivadas y en NOMINAL (currentPortfolio,
             planAporte, savingRate, monthlyLife, parkedFinalNominal, finalNominal). */}
         {(() => {
-          const cardStyle = { background: T.paper, border: '1px solid ' + T.line, borderRadius: 14, boxShadow: '0 1px 3px rgba(26,22,18,.06)', padding: mobile ? 20 : 28 };
+          const cardStyle = { background: T.bg, border: '1px solid ' + T.line, borderRadius: 16, padding: mobile ? 20 : 28 };  // voz Cartel (= CartelCard)
           const ahorroPct = Math.round(savingRate * 100);
           const aporta = planAporte > 0 ? planAporte : Math.round(income * 0.15);
           const aportaLabel = planAporte > 0 ? 'Cada mes apartas' : 'Si apartaras el 15%';
@@ -1335,7 +1332,7 @@ export function ScreenHoy({ goTo }) {
             {/* Card A · patrimonio (TINTA, no verde: cifra descriptiva) */}
             <div style={cardStyle}>
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>Tu patrimonio</div>
-              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 34 : 44, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1.05, marginTop: 6 }}>{fmtEur(d.currentPortfolio || 0)}</div>
+              <ComputedNumber value={d.currentPortfolio || 0} format={fmtEur} ariaLabel="Tu patrimonio" style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 40 : 56, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }} />
             </div>
             {/* Card B · el eje (protagonista del bloque) */}
             {income > 0 && sinPlanKPIs.hasData ? (() => {
@@ -1348,7 +1345,7 @@ export function ScreenHoy({ goTo }) {
               <div style={cardStyle}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>{aportaLabel}</div>
-                  <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 44 : 60, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 4 }}>{fmtEur(aporta)}</div>
+                  <ComputedNumber value={aporta} format={fmtEur} ariaLabel={aportaLabel} style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 48 : 68, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 4 }} />
                   <div style={{ fontFamily: T.serif, fontSize: 16, color: T.muted, lineHeight: T.lh.normal, marginTop: 10 }}>el {subPct}% de tu sueldo · {fmtEur(monthlyLife)} se van en vivir</div>
                 </div>
                 {/* Fork: dos trazos 2.5px desde el centro superior a las dos cajas */}
@@ -1391,14 +1388,11 @@ export function ScreenHoy({ goTo }) {
           );
         })()}
 
-      </section>
+      </section></Reveal>
 
       {/* ─────────────── Movimiento 2 · Lo que podría ser ─────────────── */}
-      <section>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
-          <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.accent, letterSpacing: 0 }}>02</span>
-          <h2 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: DISPLAY_MD, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Hacia dónde puedes ir</h2>
-        </div>
+      <Reveal><section>
+        <SectionTag style={{ marginBottom: BLOCK_GAP }}>Hacia dónde puedes ir</SectionTag>
 
         {/* Rediseño Plan v2 · M2 "Hacia dónde puedes ir": gancho (todos los perfiles)
             + cuerpo con monedas (perfiles B/C que aportan). La ramificación por
@@ -1519,19 +1513,16 @@ export function ScreenHoy({ goTo }) {
         <div style={{ marginTop: 20, paddingTop: 18, borderTop: '1px dashed ' + T.lineSoft, display: 'flex', justifyContent: 'flex-end' }}>
           <CartelBtn variant="text" onClick={() => goTo('proy')}>Profundizar en Proyección →</CartelBtn>
         </div>
-      </section>
+      </section></Reveal>
 
       {/* ─────────────── Movimiento 3 · Tu ruta ─────────────── */}
-      <section>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: BLOCK_GAP, paddingBottom: 12, borderBottom: '1px solid ' + T.line }}>
-          <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.accent, letterSpacing: 0 }}>03</span>
-          <h2 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: DISPLAY_MD, color: T.ink, margin: 0, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight }}>Tu ruta</h2>
-        </div>
+      <Reveal><section>
+        <SectionTag style={{ marginBottom: BLOCK_GAP }}>Tu ruta</SectionTag>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, maxWidth: 720, marginBottom: 18 }}>
           Cinco fases que estructuran el camino FIRE.
         </div>
         <RutaCincoFases state={state} d={d} mobile={mobile} />
-      </section>
+      </section></Reveal>
 
       {showSinPlanModal && <SinMiPlanModal onClose={() => setShowSinPlanModal(false)} />}
     </div>

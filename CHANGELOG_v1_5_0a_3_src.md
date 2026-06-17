@@ -1254,3 +1254,18 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **No tocado**: footer legal (mono, chrome), nav, lógica, motor, `migrateToV2`, objeto `T`, baseline.
 - **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); navegador: Hoy
   y Seguimiento con eyebrows serif coherentes (verificado en pantalla), consola limpia; hash baseline intacto.
+
+### 2026-06-17 · Unificación · Hoy adopta el sistema de sección Cartel (modelo B + reveal)
+
+- **Causa raíz**: Hoy se sentía de otra app que Proyección (cabeceras numeradas + tarjetas con borde +
+  cifras medianas estáticas vs póster serif animado).
+- **Cambio** (`ScreenHoy`): cabeceras 01/02/03+h2 → `SectionTag` (serif itálica accent, como Proyección);
+  `cardStyle` → look `CartelCard` (bg `T.bg`, borde, radio 16, sin sombra); cifras protagonistas (patrimonio,
+  «cada mes apartas») → `ComputedNumber` HERO con count-up; las 3 secciones (M1/M2/M3) envueltas en `Reveal`
+  (fade sutil al scroll, `prefers-reduced-motion` nativo). Modelo B elegido sobre maqueta.
+- **No tocado**: lógica/cifras (solo presentación); fork parado/invertido y tarjeta verde de M2 en su sitio;
+  Proyección; motor; `migrateToV2`; baseline. (El error intermedio de un `<Reveal>` sin cerrar se corrigió
+  en el propio paso antes de commitear.)
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11); demo canónico: «Dónde estás»/«Tu
+  ruta» como `SectionTag`, patrimonio/aporte como hero, reveal al scroll, M2/M3 coherentes; 0 errores de
+  consola; hash baseline intacto.
