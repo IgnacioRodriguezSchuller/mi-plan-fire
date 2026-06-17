@@ -1303,3 +1303,31 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
   Datos con 6 `SectionTag` accent + tarjetas outline + reveal, coherente con Hoy/Seguimiento/Proyección; sin
   overlay de error de Vite, app renderiza el bundle nuevo; hash baseline intacto.
+
+### 2026-06-17 · Unificación · cola mono → serif app-wide (P4 «una voz», cierre)
+
+- **Causa raíz**: tras migrar eyebrows y cabeceras, quedaba la cola larga de micro-labels en `T.mono`
+  MAYÚSCULAS (labels de campo, chips de estado, leyendas de gráfico, labels sobre tarjeta oscura, secciones
+  de modal…) repartida por screens, primitivas, charts, modales y flows → seguía habiendo dos voces.
+- **Regla aplicada (decisión técnica)**: **CONTENIDO → serif itálica** (preservando color semántico y tamaño,
+  `textTransform` y `letterSpacing` neutralizados, sin reflow); **CONTROLES y CIFRAS → se quedan en `T.mono`
+  (chrome)**. Mono conservado a propósito: nav, footer legal (incl. «AGPL-3.0» del About), botones de acción
+  (`Btn`, toggle «Activar», «✕ Cerrar»), y **cifras numéricas** (importes de la barra de ahorro, min/max de
+  `Slider`, € por mes del calendario). Esto da un sistema de dos registros coherente: se lee, serif; se pulsa
+  o se cuenta, mono.
+- **Cambio**: ~35 labels en `screens/index.jsx` (Row/Expense/Alloc labels, «Total», «Diferencia», chips «Mes
+  actual/Atrasado/Futuro», «activa», tier labels con `tier.color`, «✓ leído», «ahora», toggles «ver más»,
+  labels sobre tarjeta oscura del HouseholdSummary, leyendas plan/real). Primitivas compartidas en
+  `ui/index.jsx`: `Row`, `RowWithWarning`, `Slider`, `LegendChip`, `Pill` → serif (propaga a todos sus usos).
+  `charts/index.jsx` (leyenda), `flows/index.jsx` (etiqueta de fase del landing), `modals/index.jsx`
+  (calendario: leyenda + meses + Plan/Real; ConceptModal: categoría, «Lección clave», «Regla», «Aviso», «Ver
+  también»; About: versión). Mayormente vía `replace_all` de fragmentos exactos.
+- **No incluido**: **GX6** (leyenda «los números subrayados los pones tú» fuera de Proyección) — en Hoy/Seguimiento
+  las cifras hero son `ComputedNumber` (calculadas, sin subrayado dashed), así que la leyenda no aplica y
+  confundiría. La galería (`?gallery`, herramienta de dev no enviada) se deja en mono.
+- **No tocado**: lógica, motor, `migrateToV2`, objeto `T`, `LEARN_CORPUS`, baseline; copy (solo se quita el
+  `textTransform`, el texto fuente no cambia).
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); navegador (demo
+  canónico): Datos (campos «Nombre/Edad…»), Aprende (Pill «Empieza aquí», tiers «Esencial»), ConceptModal
+  («Matemática», «Lección clave») y Hoy/Seguimiento/Proyección con una sola voz serif; «✕ Cerrar» y cifras
+  siguen mono; sin overlay de error de Vite; hash baseline intacto.

@@ -81,7 +81,7 @@ export function Slider({ label, value, onChange, min, max, step = 1, suffix = ''
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>{label}</span>
+        <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.muted }}>{label}</span>
         <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: accent, letterSpacing: T.tracking.tight, lineHeight: 1 }}>{display}</span>
       </div>
       <input type="range" min={min} max={max} value={value} step={step} onChange={(e) => onChange(+e.target.value)}
@@ -100,7 +100,7 @@ export function Pill({ children, color = T.muted, bg = 'transparent', border = T
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '4px 10px', borderRadius: 999, background: bg,
       border: '1px solid ' + border, color,
-      fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase',
+      fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0,
       ...style,
     }}>{children}</span>
   );
@@ -210,7 +210,7 @@ export function Stat({ label, value, muted, good, bad }) {
 export function Row({ label, children }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px dashed ' + T.lineSoft, paddingBottom: 8 }}>
-      <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>{label}</span>
+      <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.muted }}>{label}</span>
       <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink }}>{children}</span>
     </div>
   );
@@ -221,7 +221,7 @@ export function RowWithWarning({ label, warning, children }) {
   return (
     <div style={{ borderBottom: '1px dashed ' + T.lineSoft, paddingBottom: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>{label}</span>
+        <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.muted }}>{label}</span>
         <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink }}>{children}</span>
       </div>
       {warning && (
@@ -245,7 +245,7 @@ export function SmallStat({ label, value, sub, accent, good, bad }) {
 
 export function LegendChip({ color, label, dashed }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>
       <svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke={color} strokeWidth="2" strokeDasharray={dashed ? '4 4' : ''} /></svg>
       {label}
     </span>

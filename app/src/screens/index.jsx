@@ -130,7 +130,7 @@ export function HouseholdSummaryCard() {
     <Card style={{ background: T.ink, color: T.bg, border: '1px solid ' + T.ink }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: 'rgba(255,255,255,0.5)' }}>
             Hogar · {list.length} personas
           </div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.tight, marginTop: 4, lineHeight: T.lh.tight }}>
@@ -145,19 +145,19 @@ export function HouseholdSummaryCard() {
       {/* Combined flow */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, padding: '14px 0', borderTop: '1px dashed rgba(255,255,255,0.18)', borderBottom: '1px dashed rgba(255,255,255,0.18)' }}>
         <div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Ingreso conjunto</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Ingreso conjunto</div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight }}>
             {fmtEur(totalIncome)}
           </div>
         </div>
         <div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Inversión conjunta</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Inversión conjunta</div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, color: '#86efac' }}>
             {fmtEur(totalInvestment)}
           </div>
         </div>
         <div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Tasa hogar</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Tasa hogar</div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, color: householdRate >= 0.20 ? '#86efac' : householdRate >= 0.10 ? '#fcd34d' : '#fca5a5' }}>
             {Math.round(householdRate * 100)}%
           </div>
@@ -183,7 +183,7 @@ export function HouseholdSummaryCard() {
               }} />
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: T.size.body }}>
                 {a.label}
-                {isActive && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, marginLeft: 8, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>activa</span>}
+                {isActive && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.accent, marginLeft: 8, letterSpacing: 0 }}>activa</span>}
               </span>
               <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: 'rgba(255,255,255,0.65)', letterSpacing: T.tracking.wide, textAlign: 'right' }}>
                 {fmtEur(a.portfolio)} · {fmtEur(a.investment)}/mes
@@ -232,7 +232,7 @@ export function MonthlyFlowCard({ plan, profile }) {
   const FlowBar = ({ aporte, life, rate, label, accent }) => (
     <div style={{ marginBottom: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6, gap: 8 }}>
-        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>{label}</div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>{label}</div>
         <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: rateColor(rate), letterSpacing: T.tracking.wide, fontWeight: 600 }}>
           {(rate * 100).toFixed(0)}% inversión
         </div>
@@ -475,7 +475,7 @@ export function Onboarding() {
               if (cur > 0 && cur < 1) {
                 return (
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>% del IPC</span>
+                    <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>% del IPC</span>
                     <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink }}>
                       <EditableNumber value={Math.round(cur * 100)} onChange={(v) => set('salaryInflationFactor', Math.max(0, Math.min(100, v)) / 100)} min={0} max={100} step={1} color={T.ink} /> %
                     </span>
@@ -529,7 +529,7 @@ export function Onboarding() {
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6, flexWrap: 'wrap' }}>
                 <EditableNumber value={data.savingPercent} onChange={(v) => set('savingPercent', Math.max(0, Math.min(100, v)))} min={0} max={100} color={T.accent} />
                 <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.muted }}>%</span>
-                <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: tier.color, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>{tier.label}</span>
+                <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: tier.color, letterSpacing: 0 }}>{tier.label}</span>
               </div>
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginBottom: 8 }}>
                 {data.income > 0 ? (
@@ -566,7 +566,7 @@ export function Onboarding() {
                 <EditableNumber value={data.monthly} onChange={(v) => set('monthly', Math.max(0, Math.min(v, 20000)))} min={0} max={20000} color={T.accent} />
                 <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.muted }}>€ / mes</span>
                 {tier && (
-                  <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: tier.color, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>{tier.label}</span>
+                  <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: tier.color, letterSpacing: 0 }}>{tier.label}</span>
                 )}
               </div>
               {data.income > 0 && (
@@ -1083,7 +1083,7 @@ export function RutaCincoFases({ state, d, mobile }) {
                 <div style={{ width: 34, height: 34, borderRadius: '50%', background: circleBg, border: circleBorder, color: circleColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, flexShrink: 0 }}>{glyph}</div>
                 <div style={{ fontFamily: T.serif, fontSize: mobile ? 13 : 16, color: nameColor, textAlign: 'center', lineHeight: 1.15, maxWidth: '100%', overflowWrap: 'break-word', hyphens: 'auto' }}>{p.title.split(' ')[0]}</div>
                 {/* FIX 2 · marca discreta de la fase ACTIVA (la noción que el título ya no carga) */}
-                {isActive && <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.accent, lineHeight: 1 }}>ahora</div>}
+                {isActive && <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 9, letterSpacing: 0, color: T.accent, lineHeight: 1 }}>ahora</div>}
               </button>
             );
           })}
@@ -1138,7 +1138,7 @@ export function RutaCincoFases({ state, d, mobile }) {
           {selPhase.editorialInline && (
             <div style={{ marginTop: 10, padding: '10px 12px', background: 'transparent', border: '1px solid ' + T.lineSoft, borderRadius: 8, fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: T.muted, lineHeight: T.lh.normal }}>{selPhase.editorialInline}</div>
           )}
-          <div style={{ fontFamily: T.mono, fontSize: 14, color: T.accent, marginTop: 14, letterSpacing: T.tracking.wide, textTransform: 'uppercase' }}>{phaseEstimate(selPhase.num)}</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: T.accent, marginTop: 14, letterSpacing: 0 }}>{phaseEstimate(selPhase.num)}</div>
         </div>
 
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: T.faint, marginTop: 14 }}>Toca cualquier fase para ver sus pasos.</div>
@@ -1722,7 +1722,7 @@ export function ScreenMesAMes() {
                 )}
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0, flexWrap: 'wrap' }}>
               <LegendChip color={realColor} label="Real" />
               <LegendChip color={T.faint} label="Plan" dashed />
             </div>
@@ -1805,9 +1805,9 @@ export function MonthRow({ month, isCurrent, onChange }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
             <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, color: isCurrent ? T.accent : empty ? T.faint : T.ink, textTransform: 'capitalize' }}>{month.label.replace('.', '')}</span>
-            {isCurrent && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Mes actual</span>}
-            {past && empty && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.amber, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Atrasado</span>}
-            {empty && !past && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Futuro</span>}
+            {isCurrent && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.accent, letterSpacing: 0 }}>Mes actual</span>}
+            {past && empty && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.amber, letterSpacing: 0 }}>Atrasado</span>}
+            {empty && !past && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0 }}>Futuro</span>}
           </div>
           {!empty && (
             <button onClick={() => onChange({ actual: null })}
@@ -1888,8 +1888,8 @@ export function MonthRow({ month, isCurrent, onChange }) {
     }}>
       <div>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, color: isCurrent ? T.accent : empty ? T.faint : T.ink, textTransform: 'capitalize' }}>{month.label.replace('.', '')}</div>
-        {isCurrent && <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, letterSpacing: T.tracking.wider, textTransform: 'uppercase', marginTop: 2 }}>Mes actual</div>}
-        {past && empty && <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.amber, letterSpacing: T.tracking.wider, textTransform: 'uppercase', marginTop: 2 }}>Atrasado</div>}
+        {isCurrent && <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.accent, letterSpacing: 0, marginTop: 2 }}>Mes actual</div>}
+        {past && empty && <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.amber, letterSpacing: 0, marginTop: 2 }}>Atrasado</div>}
       </div>
 
       <div style={{ minWidth: 0 }}>
@@ -1941,7 +1941,7 @@ export function MonthRow({ month, isCurrent, onChange }) {
       </div>
 
       <div style={{ textAlign: 'right' }}>
-        {empty && !past && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Futuro</span>}
+        {empty && !past && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0 }}>Futuro</span>}
         {!empty && (
           <button onClick={() => onChange({ actual: null })}
             title="Borrar registro"
@@ -2427,7 +2427,7 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
             </Pill>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
-            <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Categoría</span>
+            <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0 }}>Categoría</span>
             <select value={category} onChange={(e) => onChange({ category: e.target.value })}
               style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '4px 8px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 999, color: T.ink, letterSpacing: T.tracking.wide, appearance: 'none', WebkitAppearance: 'none' }}>
               {GOAL_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -2496,7 +2496,7 @@ export function GoalContextualBlock({ goal, category, portfolio }) {
     <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px dashed ' + T.lineSoft }}>
       <button onClick={() => setOpen(o => !o)} style={{
         background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-        fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase',
+        fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0,
         color: T.accent, display: 'inline-flex', alignItems: 'center', gap: 6,
       }}>
         {open ? '↑ Recoger' : '▾ Ver nota contextual'}
@@ -2720,7 +2720,7 @@ export function AccountsCard() {
                   letterSpacing: T.tracking.tight,
                 }}>
                   {a.label}
-                  {isActive && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, marginLeft: 8, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>activa</span>}
+                  {isActive && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.accent, marginLeft: 8, letterSpacing: 0 }}>activa</span>}
                 </button>
               )}
               <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
@@ -2878,7 +2878,7 @@ export function ExpenseRow({ k, label, chips, expenses, onSetExpense }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed ' + T.lineSoft, paddingBottom: 10, marginBottom: 10, gap: 12, flexWrap: 'wrap' }}>
       <div style={{ minWidth: 110 }}>
-        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>{label}</div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>{label}</div>
         <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
           {chips.map((v) => (
             <button key={v} onClick={() => onSetExpense(k, v)} style={{
@@ -2909,7 +2909,7 @@ export function AllocRow({ k, label, fixedReturn, customKey, returnLabel, alloca
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, borderBottom: '1px dashed ' + T.lineSoft, paddingBottom: 12, marginBottom: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>{label}</div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>{label}</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle }}>
           <EditableNumber value={allocation[k]} onChange={(v) => onSetAlloc(k, v)} min={0} max={100} step={1} color={T.ink} />
           <span style={{ fontSize: T.size.body, color: T.muted }}>%</span>
@@ -3089,7 +3089,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
             <ExpenseRow k="other" label="Otros" chips={[100, 200, 400]} expenses={data.expenses} onSetExpense={setExpense} />
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 14, borderTop: '1px solid ' + T.line, marginTop: 4 }}>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Total</div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Total</div>
               <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: T.ink, letterSpacing: T.tracking.tight }}>
                 {fmtEur(totalExpenses)}<span style={{ fontSize: T.size.body, color: T.muted, marginLeft: 4 }}>/mes</span>
                 {income > 0 && (
@@ -3217,7 +3217,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
             <AllocRow k="other" label="Otros" customKey="other" allocation={data.allocation} onSetAlloc={setAlloc} onSetReturn={setCustomReturn} planReturn={planReturn} />
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 14, borderTop: '1px solid ' + T.line, marginTop: 4 }}>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Total</div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Total</div>
               <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: allocOk ? T.green : (totalAllocation > 100 ? T.red : T.amber), letterSpacing: T.tracking.tight }}>
                 {Math.round(totalAllocation)}%
               </div>
@@ -3561,7 +3561,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
         </div>
         {erosion && (
           <>
-            <div style={{ display: 'flex', gap: 14, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', marginTop: 6 }}>
+            <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 18, height: 0, borderTop: '2px dashed ' + T.faint }} /> {hasMultipleIncomeSegments ? 'Salario sobre el papel (según tu plan)' : `Salario sobre el papel (sube ${salaryGrowthAnnual.toFixed(1)}%/año)`}
               </span>
@@ -3577,7 +3577,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
               </div>
             </div>
             <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line }}>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Poder adquisitivo perdido (acumulado)</div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Poder adquisitivo perdido (acumulado)</div>
               <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXl, color: T.red, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
                 −{fmtEur(erosion.lost)}
               </div>
@@ -3598,7 +3598,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
         <div style={{ marginTop: 14 }}>
           <OppCostChart />
         </div>
-        <div style={{ display: 'flex', gap: 14, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', marginTop: 6 }}>
+        <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 18, height: 0, borderTop: '2px dashed ' + T.faint }} /> En cuenta corriente (real)
           </span>
@@ -3613,13 +3613,13 @@ export function ScreenSinMiPlan({ embedded = false }) {
             <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 4, letterSpacing: T.tracking.wide }}>ajustado por inflación</div>
           </div>
           <div style={{ padding: '12px 14px', background: T.ink, color: T.bg, borderRadius: 10 }}>
-            <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>Con Plan</div>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>Con Plan</div>
             <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight }}>{fmtEur(oppCost.investedFinalReal)}</div>
             <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: 'rgba(255,255,255,0.45)', marginTop: 4, letterSpacing: T.tracking.wide }}>ajustado por inflación</div>
           </div>
         </div>
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line }}>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Diferencia</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Diferencia</div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXl, color: T.red, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
             {fmtEur(oppCost.difference)}
           </div>
@@ -3667,7 +3667,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
                 return (
                   <div key={row.label} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 10, alignItems: 'center' }}>
                     <div>
-                      <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>{row.label}</div>
+                      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>{row.label}</div>
                       <div style={{ height: 10, marginTop: 4, background: T.panel, borderRadius: 999, border: '1px solid ' + T.lineSoft, overflow: 'hidden', position: 'relative' }}>
                         <div style={{
                           height: '100%',
@@ -3717,7 +3717,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
               <div style={{ marginTop: 14 }}>
                 <MortgageChart />
               </div>
-              <div style={{ display: 'flex', gap: 14, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', marginTop: 6 }}>
+              <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 14, height: 10, background: T.accent }} /> Capital amortizado
                 </span>
@@ -3726,7 +3726,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
                 </span>
               </div>
               <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed ' + T.line }}>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Intereses totales a lo largo del plazo</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Intereses totales a lo largo del plazo</div>
                 <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.amber, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
                   {fmtEur(mortgageTotalInterest)}
                 </div>
@@ -3747,7 +3747,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
               {allocCategories.filter(c => c.pct > 0).map((c) => (
                 <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>{c.label}</div>
+                    <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>{c.label}</div>
                     <div style={{ height: 12, marginTop: 4, background: T.panel, borderRadius: 999, border: '1px solid ' + T.lineSoft, overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: c.pct + '%', background: c.color, borderRadius: 999 }} />
                     </div>
@@ -3798,7 +3798,7 @@ export function OnboardingHelp({ title, children }) {
         onClick={() => setOpen(!open)}
         style={{
           background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-          fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase',
+          fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0,
           color: T.accent, display: 'flex', alignItems: 'center', gap: 6,
         }}>
         <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.body, lineHeight: 1 }}>{open ? '–' : '+'}</span>
@@ -3987,7 +3987,7 @@ export function ScreenAprende() {
                       <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>
                         {LEARN_LEVEL_LABELS[lvlId] || 'Avanzado'}
                       </span>
-                      {readLessons[c.id] && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint }}>✓ leído</span>}
+                      {readLessons[c.id] && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.faint }}>✓ leído</span>}
                     </div>
                   </div>
                   <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, lineHeight: T.lh.snug, color: T.ink, letterSpacing: T.tracking.tight }}>

@@ -279,7 +279,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
           Tu año en aportaciones.
         </div>
         {/* Legend */}
-        <div style={{ display: 'flex', gap: 14, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textTransform: 'uppercase', flexWrap: 'wrap', marginBottom: 18 }}>
+        <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0, flexWrap: 'wrap', marginBottom: 18 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 14, height: 14, background: T.green, borderRadius: 4 }} />En el plan o por encima
           </span>
@@ -329,7 +329,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
                         display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center',
                         fontFamily: T.serif,
                       }}>
-                      <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color }}>{monthNames[idx]}</span>
+                      <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color }}>{monthNames[idx]}</span>
                       <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.ink, letterSpacing: T.tracking.tight }}>
                         {actual != null ? fmtEur(actual) : '—'}
                       </span>
@@ -346,11 +346,11 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
             <Label>Detalle · {activeMonth.label.replace('.', '')}</Label>
             <div style={{ display: 'flex', gap: 22, marginTop: 10, flexWrap: 'wrap', alignItems: 'baseline' }}>
               <div>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Plan</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Plan</div>
                 <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(computePlannedFor(plan, activeMonth.key))}</div>
               </div>
               <div>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wider, textTransform: 'uppercase' }}>Real</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Real</div>
                 <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: activeMonth.actual != null ? T.accent : T.faint, letterSpacing: T.tracking.tight }}>
                   <EditableNumber
                     value={activeMonth.actual != null ? activeMonth.actual : 0}
@@ -376,7 +376,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
 
         {/* Botones añadir meses dentro del modal */}
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>Añadir periodos</span>
+          <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.faint }}>Añadir periodos</span>
           <Btn variant="ghost" size="sm" onClick={() => addMonths(6)}>+ 6 meses</Btn>
           <Btn variant="ghost" size="sm" onClick={() => addMonths(12)}>+ 1 año</Btn>
         </div>
@@ -504,7 +504,7 @@ export function Concept({ id, children, inline = true }) {
             textAlign: 'left',
             cursor: 'auto',
           }}>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.faint, marginBottom: 6 }}>
             {concept.title}
           </div>
           <div style={{ marginBottom: 12 }}>{concept.tooltip}</div>
@@ -513,7 +513,7 @@ export function Concept({ id, children, inline = true }) {
               onClick={() => { setOpen(false); setShowArticle(true); }}
               style={{
                 background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-                fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase',
+                fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0,
                 color: T.accent,
               }}>
               Saber más →
@@ -522,7 +522,7 @@ export function Concept({ id, children, inline = true }) {
               onClick={() => setOpen(false)}
               style={{
                 background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-                fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase',
+                fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0,
                 color: T.faint,
               }}>
               Cerrar
@@ -581,7 +581,7 @@ export function ConceptModal({ id, onClose }) {
           ✕ CERRAR
         </button>
 
-        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint, marginBottom: 12 }}>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.faint, marginBottom: 12 }}>
           {CATEGORY_LABELS[concept.category] || concept.category}
         </div>
 
@@ -596,7 +596,7 @@ export function ConceptModal({ id, onClose }) {
 
             {article.lesson && (
               <div style={{ marginTop: 28, padding: '14px 20px', borderLeft: '3px solid ' + T.accent, background: T.accentSoft, borderRadius: '0 6px 6px 0' }}>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.accent, marginBottom: 8 }}>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.accent, marginBottom: 8 }}>
                   Lección clave
                 </div>
                 <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, lineHeight: T.lh.snug, color: T.ink, fontStyle: 'italic' }}>
@@ -616,7 +616,7 @@ export function ConceptModal({ id, onClose }) {
 
             {article.rule && (
               <div style={{ marginTop: 24, padding: '14px 20px', borderLeft: '3px solid ' + T.muted, background: 'rgba(110,98,83,0.06)', borderRadius: '0 6px 6px 0' }}>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted, marginBottom: 6 }}>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.muted, marginBottom: 6 }}>
                   Regla
                 </div>
                 <div style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.normal, color: T.ink, fontStyle: 'italic' }}>
@@ -627,7 +627,7 @@ export function ConceptModal({ id, onClose }) {
 
             {article.warning && (
               <div style={{ marginTop: 16, padding: '14px 20px', borderLeft: '3px solid ' + T.amber, background: 'rgba(180,83,9,0.06)', borderRadius: '0 6px 6px 0' }}>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.amber, marginBottom: 6 }}>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.amber, marginBottom: 6 }}>
                   Aviso
                 </div>
                 <div style={{ fontFamily: T.serif, fontSize: T.size.body, lineHeight: T.lh.normal, color: T.ink }}>
@@ -649,7 +649,7 @@ export function ConceptModal({ id, onClose }) {
 
         {concept.seeAlso && concept.seeAlso.length > 0 && (
           <div style={{ marginTop: 36, paddingTop: 24, borderTop: '1px solid ' + T.lineSoft }}>
-            <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint, marginBottom: 12 }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.faint, marginBottom: 12 }}>
               Ver también
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -716,7 +716,7 @@ export function AboutModal({ onClose }) {
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 34, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, color: T.ink, marginBottom: 6 }}>
           <em style={{ color: T.accent }}>Mi Plan FIRE</em>
         </div>
-        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint, marginBottom: 22 }}>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.faint, marginBottom: 22 }}>
           Versión v1.5.0a · planificador FIRE local
         </div>
         <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.relaxed, marginBottom: 14 }}>

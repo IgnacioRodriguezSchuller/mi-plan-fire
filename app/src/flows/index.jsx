@@ -79,7 +79,7 @@ export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro',
           ].map((p) => (
             <div key={p.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center' }}>
               {p.icon}
-              <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted }}>{p.label}</span>
+              <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.muted }}>{p.label}</span>
             </div>
           ))}
         </div>
