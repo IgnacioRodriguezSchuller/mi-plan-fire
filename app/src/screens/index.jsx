@@ -72,7 +72,7 @@ export function DisplayModeToggle() {
         background: T.panel, borderRadius: 999, border: '1px solid ' + T.line,
         whiteSpace: 'nowrap', flexShrink: 0,
       }}>
-      <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>
+      <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted }}>
         Ajustar por inflación
       </span>
       <button onClick={toggle}
@@ -437,7 +437,7 @@ export function Onboarding() {
           </div>
           {/* B3 · IPC update question */}
           <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px dashed ' + T.lineSoft }}>
-            <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted, marginBottom: 10 }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted, marginBottom: 10 }}>
               ¿Tu salario se actualiza con la inflación (IPC)?
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
@@ -1211,7 +1211,7 @@ export function SinMiPlanModal({ onClose }) {
           style={{ position: 'absolute', top: 14, right: 14, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, padding: 8, letterSpacing: T.tracking.wider }}>
           ✕ CERRAR
         </button>
-        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint, marginBottom: 6 }}>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint, marginBottom: 6 }}>
           Antes de Mi Plan · cálculo completo
         </div>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 34, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, color: T.ink, marginBottom: 20 }}>
@@ -1334,7 +1334,7 @@ export function ScreenHoy({ goTo }) {
           <div style={{ maxWidth: 720, display: 'flex', flexDirection: 'column', gap: mobile ? 16 : 20 }}>
             {/* Card A · patrimonio (TINTA, no verde: cifra descriptiva) */}
             <div style={cardStyle}>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.caption, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>Tu patrimonio</div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>Tu patrimonio</div>
               <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 34 : 44, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1.05, marginTop: 6 }}>{fmtEur(d.currentPortfolio || 0)}</div>
             </div>
             {/* Card B · el eje (protagonista del bloque) */}
@@ -1347,7 +1347,7 @@ export function ScreenHoy({ goTo }) {
               return (
               <div style={cardStyle}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: T.mono, fontSize: T.size.caption, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>{aportaLabel}</div>
+                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>{aportaLabel}</div>
                   <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 44 : 60, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 4 }}>{fmtEur(aporta)}</div>
                   <div style={{ fontFamily: T.serif, fontSize: 16, color: T.muted, lineHeight: T.lh.normal, marginTop: 10 }}>el {subPct}% de tu sueldo · {fmtEur(monthlyLife)} se van en vivir</div>
                 </div>
@@ -1359,11 +1359,11 @@ export function ScreenHoy({ goTo }) {
                 </svg>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: mobile ? 12 : 18 }}>
                   <div style={{ border: '1px solid ' + T.line, borderRadius: 12, padding: mobile ? '14px' : '16px 18px', textAlign: 'center' }}>
-                    <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>Parado · {yearsToRetire} años</div>
+                    <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>Parado · {yearsToRetire} años</div>
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 36, color: T.red, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }}>{fmtEur(parked)}</div>
                   </div>
                   <div style={{ border: '1px solid ' + T.line, borderRadius: 12, padding: mobile ? '14px' : '16px 18px', textAlign: 'center' }}>
-                    <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>Invertido · {yearsToRetire} años</div>
+                    <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>Invertido · {yearsToRetire} años</div>
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 36, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }}>{fmtEur(invested)}</div>
                   </div>
                 </div>
@@ -2628,7 +2628,7 @@ export function PublicPensionCard({ plan, updatePlan, profile }) {
 
           {autoEstimate ? (
             <div style={{ padding: 14, background: T.panel, border: '1px solid ' + T.line, borderRadius: 10 }}>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted, marginBottom: 6 }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted, marginBottom: 6 }}>
                 Estimación según reglas 2026
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
@@ -3078,7 +3078,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
           ✕ CERRAR
         </button>
 
-        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint, marginBottom: 8 }}>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint, marginBottom: 8 }}>
           Paso {step + 1} de {totalSteps} · Descubre más sobre tu situación
         </div>
 
@@ -3262,11 +3262,11 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ padding: 14, background: T.panel, borderRadius: 10, border: '1px solid ' + T.line }}>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted, marginBottom: 6 }}>Gastos declarados</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted, marginBottom: 6 }}>Gastos declarados</div>
                 <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(totalExpenses)}<span style={{ fontSize: T.size.caption, color: T.muted, marginLeft: 4 }}>/mes</span></div>
               </div>
               <div style={{ padding: 14, background: T.panel, borderRadius: 10, border: '1px solid ' + T.line }}>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted, marginBottom: 6 }}>Hipoteca</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted, marginBottom: 6 }}>Hipoteca</div>
                 <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>
                   {data.mortgage.enabled
                     ? `Sí · ${fmtEur(data.mortgage.originalAmount)} · ${data.mortgage.type === 'fixed' ? data.mortgage.fixedRate + '% fijo' : `${data.mortgage.type} ${(data.mortgage.euriborRef + data.mortgage.spread).toFixed(1)}%`} · ${data.mortgage.termYears}a`
@@ -3274,7 +3274,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
                 </div>
               </div>
               <div style={{ padding: 14, background: T.panel, borderRadius: 10, border: '1px solid ' + T.line }}>
-                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted, marginBottom: 6 }}>Distribución del capital</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted, marginBottom: 6 }}>Distribución del capital</div>
                 <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.ink, lineHeight: T.lh.normal }}>
                   liquidez {data.allocation.cash}% · depósitos {data.allocation.deposits}% · fondos {data.allocation.fundsEtfs}% · pensiones {data.allocation.pensionPlan}% · otros {data.allocation.other}%
                 </div>
@@ -3550,7 +3550,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
           ) : (
             <>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.muted }}>Crecimiento salarial asumido</span>
+                <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted }}>Crecimiento salarial asumido</span>
                 <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink }}>
                   <EditableNumber value={salaryGrowthAnnual} onChange={setSalaryGrowthAnnual} min={0} max={10} step={0.1} color={T.ink} /> % / año
                 </span>
@@ -3617,7 +3617,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginTop: 16 }}>
           <div style={{ padding: '12px 14px', background: T.panel, border: '1px solid ' + T.line, borderRadius: 10 }}>
-            <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.muted, marginBottom: 6 }}>Sin Plan</div>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted, marginBottom: 6 }}>Sin Plan</div>
             <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.faint, letterSpacing: T.tracking.tight }}>{fmtEur(oppCost.parkedFinalReal)}</div>
             <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 4, letterSpacing: T.tracking.wide }}>ajustado por inflación</div>
           </div>
@@ -3870,7 +3870,7 @@ export function ScreenAprende() {
   return (
     <div>
       <header style={{ marginBottom: 32 }}>
-        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>
           Aprende
         </div>
         <h1 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXxl, lineHeight: 1, letterSpacing: T.tracking.display, margin: '8px 0 0', color: T.ink }}>
@@ -3909,7 +3909,7 @@ export function ScreenAprende() {
           </p>
           {TABLON.map((group, i) => (
             <section key={i} style={{ marginBottom: 36 }}>
-              <h2 style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint, marginBottom: 16 }}>
+              <h2 style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint, marginBottom: 16 }}>
                 {group.theme}
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -3927,7 +3927,7 @@ export function ScreenAprende() {
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, lineHeight: T.lh.snug, color: T.ink, fontStyle: 'italic' }}>
                       "{lesson.text}"
                     </div>
-                    <div style={{ marginTop: 12, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>
+                    <div style={{ marginTop: 12, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>
                       — {LEARN_CORPUS[lesson.source]?.title || lesson.source}
                     </div>
                   </blockquote>
@@ -3993,7 +3993,7 @@ export function ScreenAprende() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                     <LearnIcon id={c.id} size={32} color={T.ink} />
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                      <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint }}>
+                      <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>
                         {LEARN_LEVEL_LABELS[lvlId] || 'Avanzado'}
                       </span>
                       {readLessons[c.id] && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint }}>✓ leído</span>}
@@ -4028,7 +4028,7 @@ export function ScreenAprende() {
           />
           {Object.entries(byCategory).map(([cat, list]) => (
             <section key={cat} style={{ marginBottom: 32 }}>
-              <h2 style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest, textTransform: 'uppercase', color: T.faint, marginBottom: 14 }}>
+              <h2 style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint, marginBottom: 14 }}>
                 {CATEGORY_LABELS[cat] || cat}
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

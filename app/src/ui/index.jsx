@@ -118,11 +118,14 @@ export function Card({ children, style = {}, pad }) {
   );
 }
 
+// Cartel Fase 2 · cierre fino: el eyebrow ÚNICO del producto es serif (una sola voz, P4 de la
+// doctrina). Antes era mono MAYÚSCULAS; ahora serif itálica (idéntico a CartelLabel). El cambio
+// propaga la voz a todas las pantallas/modales que usan <Label> en una sola edición.
 export function Label({ children, style = {} }) {
   return (
     <div style={{
-      fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.widest,
-      textTransform: 'uppercase', color: T.muted, ...style,
+      fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0,
+      color: T.muted, ...style,
     }}>{children}</div>
   );
 }

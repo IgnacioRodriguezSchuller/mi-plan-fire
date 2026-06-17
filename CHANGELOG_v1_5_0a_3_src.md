@@ -1237,3 +1237,20 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **No tocado**: `LEARN_CORPUS`; lógica/motor; `migrateToV2`; el objeto `T`; baseline.
 - **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); 0 errores de
   consola en Datos/Seguimiento/Aprende; hash del baseline intacto.
+
+### 2026-06-17 · Cartel Fase 2 · cierre fino: eyebrows del producto → serif (una voz)
+
+- **Causa raíz**: tras S8/S9 quedaban eyebrows mono MAYÚSCULAS (el primitivo `Label` + ~20 divs inline) →
+  híbrido mono/serif. Doctrina P4: una sola voz serif.
+- **Cambio**: (1) el primitivo `Label` (`ui/index.jsx`) pasa de mono uppercase a **serif itálica** (idéntico
+  a `CartelLabel`) → propaga la voz a ~46 usos en screens/modales/charts en una edición. (2) En
+  `screens/index.jsx`, las eyebrows inline de tarjeta (TU PATRIMONIO, CADA MES APARTAS, PARADO/INVERTIDO,
+  «Tu mes», stats de Seguimiento, etc.) convertidas de `T.mono`+uppercase a serif itálica (6 fragmentos
+  exactos por replace_all, preservando color; footer/nav intactos por distinto orden de props).
+- **Cola pendiente (long tail, ~40 menores)**: «PLAN»/«% inversión» de la barra de ingreso, chips «EN CAMINO»,
+  labels sobre tarjeta oscura («Sin mi plan», rgba blanco) y labels de fase con color dinámico (`tier.color`)
+  — props variados, conversión individual; bajo impacto visual. GX6 (leyenda de editables) sigue dependiendo
+  de migrar los editables al estilo dashed del Cartel.
+- **No tocado**: footer legal (mono, chrome), nav, lógica, motor, `migrateToV2`, objeto `T`, baseline.
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); navegador: Hoy
+  y Seguimiento con eyebrows serif coherentes (verificado en pantalla), consola limpia; hash baseline intacto.
