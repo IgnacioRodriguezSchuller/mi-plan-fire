@@ -111,7 +111,7 @@ export function Card({ children, style = {}, pad }) {
   const finalPad = pad != null ? pad : (mobile ? 14 : 24);
   return (
     <div style={{
-      background: T.paper, border: '1px solid ' + T.line, borderRadius: 14,
+      background: T.bg, border: '1px solid ' + T.line, borderRadius: 16,
       padding: finalPad, position: 'relative',
       ...style, minWidth: 0, overflow: 'hidden',
     }}>{children}</div>

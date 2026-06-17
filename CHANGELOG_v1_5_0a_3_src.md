@@ -1269,3 +1269,19 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11); demo canónico: «Dónde estás»/«Tu
   ruta» como `SectionTag`, patrimonio/aporte como hero, reveal al scroll, M2/M3 coherentes; 0 errores de
   consola; hash baseline intacto.
+
+### 2026-06-17 · Unificación · Seguimiento adopta el sistema de sección Cartel + primitiva Card outline
+
+- **Causa raíz**: Seguimiento seguía sintiéndose de otra app que Hoy/Proyección (eyebrows `CartelLabel` sueltas,
+  tarjetas con fondo `T.paper` y borde tenue radio 14, sin movimiento).
+- **Cambio**: (1) la primitiva `Card` (`ui/index.jsx`) pasa de `T.paper`/radio 14 a **look outline**
+  (`background: T.bg`, borde `T.line`, radio 16) → propaga el contenedor del Cartel a TODOS sus consumidores
+  (Seguimiento, Datos, modales) en una edición: una sola voz de tarjeta. (2) En `screens/index.jsx`, las
+  cabeceras de `ScreenSeguimiento`, `ScreenMesAMes` y `HitosEditor` pasan de `CartelLabel` a `SectionTag`
+  (idéntico a Hoy/Proyección). (3) Las 4 secciones de `ScreenSeguimiento` (mensual, Hitos, reparto del ingreso,
+  Siguiente paso) se envuelven en `Reveal` (fade sutil al scroll, `prefers-reduced-motion` nativo).
+- **No tocado**: lógica/cifras (solo presentación); el veredicto único (`d.verdict`) de la sección Siguiente paso;
+  Proyección; motor; `migrateToV2`; objeto `T`; baseline.
+- **Verificación**: build OK; verify-content/state PASS (tokens=2, lib=11 — solo conocidas); demo canónico:
+  Seguimiento y Datos con `SectionTag` + tarjetas outline coherentes con Hoy, reveal al scroll; 0 errores de
+  consola nuevos; hash baseline intacto.

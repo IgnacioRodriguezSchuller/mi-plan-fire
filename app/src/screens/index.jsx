@@ -1669,7 +1669,7 @@ export function ScreenMesAMes() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
       <div>
-        <CartelLabel>Mes a mes</CartelLabel>
+        <SectionTag>Mes a mes</SectionTag>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4, textWrap: 'pretty' }}>
           Llevas <em style={{ color: T.accent }}>{filled.length} {filled.length === 1 ? 'mes registrado' : 'meses registrados'}</em>.
           <span style={{ color: T.muted }}> Lo que apuntes aquí mueve la curva del futuro.</span>
@@ -2262,7 +2262,7 @@ export function HitosEditor() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div>
-        <CartelLabel>Hitos</CartelLabel>
+        <SectionTag>Hitos</SectionTag>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 4, lineHeight: T.lh.normal }}>
           Metas intermedias en tu camino. Define el importe en euros de 2026 (poder adquisitivo actual); Mi Plan FIRE ajusta por <Concept id="inflacion">inflación</Concept> hasta la fecha objetivo.
         </div>
@@ -2321,7 +2321,7 @@ export function ScreenSeguimiento() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 40 }}>
       <div>
-        <CartelLabel>Seguimiento</CartelLabel>
+        <SectionTag>Seguimiento</SectionTag>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4 }}>
           Cómo va tu plan, mes a mes.
         </div>
@@ -2331,27 +2331,27 @@ export function ScreenSeguimiento() {
       </div>
 
       {/* Bloque 1 · Mensual (flujo + registro mes a mes) */}
-      <section id="seg-mensual" style={{ display: 'flex', flexDirection: 'column', gap: 14, scrollMarginTop: 16 }}>
+      <Reveal><section id="seg-mensual" style={{ display: 'flex', flexDirection: 'column', gap: 14, scrollMarginTop: 16 }}>
         <MonthlyFlowBlock />
         <ScreenMesAMes />
-      </section>
+      </section></Reveal>
 
       {/* Bloque 2 · Hitos (v1.4.0c BIG-A · editable in-place via HitosEditor) */}
-      <section>
+      <Reveal><section>
         <Card>
           <HitosEditor />
         </Card>
-      </section>
+      </section></Reveal>
 
       {/* Bloque 3 · Reparto del ingreso en el tiempo */}
-      <section>
+      <Reveal><section>
         <RepartoIngresoBlock />
-      </section>
+      </section></Reveal>
 
       {/* Siguiente paso · fuente ÚNICA: d.verdict (ageAtFiReal vs ageAtFiPlan). Antes usaba
           avgActual≥currentAporte (media de aportes vs lo prescrito hoy), que se contradecía con
           el destino de Hoy y con el bloque "plan vs realidad" de arriba. Ahora los tres coinciden. */}
-      <section>
+      <Reveal><section>
         {(() => {
           const v = d.verdict;
           const noMeses = !(d.filledMonths && d.filledMonths.length);
@@ -2373,7 +2373,7 @@ export function ScreenSeguimiento() {
             <NextStep tone={VERDICT_NEXTSTEP_TONE[v]} body={frase} action={{ label, onClick }} />
           );
         })()}
-      </section>
+      </section></Reveal>
     </div>
   );
 }
