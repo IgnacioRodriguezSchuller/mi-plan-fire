@@ -2315,7 +2315,53 @@ export function ScreenProyeccion() {
           </Reveal>
         </Spread>
 
-        {/* 7 · CIERRE · ir a Mes a mes */}
+        {/* 7 · DIAGNÓSTICO · síntesis de salud del plan en cinco señales (Pro · Diagnóstico FIRE).
+            Sin score ni nota (sin gamificación): plain rows + color semántico (verde sólido / ámbar
+            atención). Lee derivaciones ya existentes (d.verdict, successPct, savingsPct, allocation). */}
+        <Spread>
+          <Reveal><SectionTag>Diagnóstico</SectionTag></Reveal>
+          <Reveal delay={40}><p style={cap}>Tu plan, leído en cinco señales. Verde, sólido; ámbar, para mirar con calma.</p></Reveal>
+          <Reveal delay={70} style={{ width: '100%' }}>
+            <div style={{ maxWidth: 560, margin: '28px auto 0', display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+              {[
+                (() => {
+                  const col = VERDICT_COLOR[d.verdict] || T.muted;
+                  const val = d.verdict === 'adelantado' ? 'Vas por delante de tu plan'
+                    : d.verdict === 'en-linea' ? 'Vas en línea con tu plan'
+                    : d.verdict === 'atrasado' ? 'Vas algo por detrás del plan'
+                    : d.verdict === 'no-llega' ? 'Con este ritmo, tu número no llega'
+                    : 'Faltan datos para juzgarlo';
+                  return { k: 'Suficiencia', col, val };
+                })(),
+                (() => {
+                  const ok = savingsPct >= 20, mid = savingsPct >= 10;
+                  return { k: 'Ritmo de ahorro', col: ok ? T.green : T.amber, val: `${fmtPctView(savingsPct)} % de tu ingreso${ok ? ' · sólido' : mid ? ' · mejorable' : ' · bajo'}` };
+                })(),
+                { k: 'Robustez', col: successPct >= 90 ? T.green : T.amber, val: `${successPct} % de los futuros aguantan · ${zona}` },
+                (() => {
+                  const age = d.verdictAge != null ? Math.ceil(d.verdictAge) : null;
+                  const yrs = age != null ? age - currentAge : null;
+                  return { k: 'Horizonte', col: T.muted, val: age != null ? `Libre a los ${age} · en ${yrs} ${yrs === 1 ? 'año' : 'años'}` : 'Aún no se alcanza en el horizonte' };
+                })(),
+                (() => {
+                  const a = plan.actualLife && plan.actualLife.allocation;
+                  if (!a) return { k: 'Diversificación', col: T.muted, val: 'Sin declarar — hazlo en Datos' };
+                  const rv = Math.round((a.fundsEtfs || 0) + (a.pensionPlan || 0));
+                  return { k: 'Diversificación', col: rv >= 50 ? T.green : T.amber, val: `${rv} % en fondos/planes` };
+                })(),
+              ].map((row, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '14px 0', borderBottom: i < 4 ? '1px solid ' + T.lineSoft : 'none' }}>
+                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: row.col, flexShrink: 0, transform: 'translateY(-1px)' }} aria-hidden="true" />
+                  <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint, width: 124, flexShrink: 0 }}>{row.k}</span>
+                  <span style={{ fontFamily: T.serif, fontSize: 17, color: T.ink, lineHeight: 1.4 }}>{row.val}</span>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+          <Reveal delay={120}><p style={note}>{d.verdictCopy}</p></Reveal>
+        </Spread>
+
+        {/* 8 · CIERRE · ir a Mes a mes */}
         <Spread short style={{ minHeight: '60vh' }}>
           <Reveal><SectionTag>Hasta aquí, el plan</SectionTag></Reveal>
           <Reveal delay={50}><h2 style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(34px, 6.5vw, 80px)', lineHeight: 0.98, letterSpacing: '-.03em', margin: '8px 0 0', color: T.ink }}>Ahora, mes a mes.</h2></Reveal>

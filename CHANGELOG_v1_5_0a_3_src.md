@@ -1446,3 +1446,17 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: `npm run build` OK (`dist` 1.029 kB); `verify-content`/`verify-state` PASS; navegador: los 3
   botones renderizan, la píldora activa se mueve al pulsar (`[true,·,·]`→`[·,true,·]`) y el MC se recomputa con la
   secuencia; consola sin errores; hash baseline `b3ea52b1…` intacto.
+
+## Sprint 4 (Pro fase B) · Diagnóstico FIRE — síntesis de salud del plan (cascada, 2026-06-18)
+- **Causa raíz**: faltaba una lectura de conjunto del plan; las señales (suficiencia, ahorro, robustez MC,
+  horizonte, diversificación) vivían dispersas por las pantallas.
+- **Cambio** (`screens/index.jsx` `ScreenProyeccion`, nueva Spread «Diagnóstico» antes del cierre): cinco filas, una
+  por señal, cada una con un **punto de color semántico** (verde sólido / ámbar atención / muted informativo) + valor
+  en una frase. **Sin score ni nota** (sin gamificación, doctrina): es un diagnóstico sobrio, no un marcador. Lee
+  derivaciones ya existentes: `d.verdict`/`verdictCopy` (suficiencia), `savingsPct` (ahorro, vía `fmtPctView`),
+  `successPct`+`zona` (robustez MC), `d.verdictAge` (horizonte), `plan.actualLife.allocation` (diversificación).
+- **No tocado**: motor, `migrateToV2`, `T`, `LEARN_CORPUS`, claves localStorage, `isPro`, baseline. Solo lectura de
+  estado derivado; color por tokens `T.*` (semántica amber=atención, green=sólido).
+- **Verificación**: `npm run build` OK (`dist` 1.032 kB); navegador (Proyección): las 5 señales renderizan con
+  valores reales («20,1 % de tu ingreso · sólido», «… % de los futuros aguantan · Aceptable»); sin crash; consola
+  limpia; hash baseline `b3ea52b1…` intacto.
