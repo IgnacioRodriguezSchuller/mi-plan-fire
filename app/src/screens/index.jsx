@@ -34,7 +34,7 @@ import {
 } from '../content/index.js'
 import {
   ConfirmModal, WhyDifferentModal, MonthlyCalendarModal, PublicPensionDisclaimerModal,
-  Concept, ConceptModal, AboutModal, BookView,
+  Concept, ConceptModal, AboutModal,
 } from '../modals/index.jsx'
 import { StateProvider, useStore, useDerived, usePlanMutators } from '../state/index.jsx'
 import { LandingPreOnboarding, Landing } from '../flows/index.jsx'
@@ -4024,10 +4024,54 @@ export function OnboardingHelp({ title, children }) {
   );
 }
 
+// Enlace de compra del libro en Amazon (KDP). Placeholder configurable: vacío → la UI
+// muestra «Próximamente en Amazon». Al publicar, pega aquí la URL del producto. Cero red.
+const AMAZON_BOOK_URL = '';
+
+// "El libro" · DESPLEGABLE DE COMPRA (no se regala el PDF imprimible; gratis = leer en la web,
+// lección por lección). Portada decorativa (CSS, cero red) + qué contiene + CTA Amazon.
+function BookPromo() {
+  const [open, setOpen] = useState(false);
+  const Cover = () => (
+    <div style={{ width: 132, height: 184, flexShrink: 0, position: 'relative', borderRadius: '2px 7px 7px 2px', background: T.paper, border: '1px solid ' + T.line, boxShadow: '0 10px 24px rgba(26,22,18,0.16)', overflow: 'hidden' }} aria-hidden="true">
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 9, background: T.accent }} />
+      <div style={{ position: 'absolute', left: 22, right: 14, top: 24, fontFamily: T.serif, fontStyle: 'italic', fontSize: 11, color: T.faint }}>El libro</div>
+      <div style={{ position: 'absolute', left: 22, right: 14, top: 42, fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 20, lineHeight: 1.05, letterSpacing: T.tracking.tight, color: T.ink }}>Los conceptos que sostienen tu plan</div>
+      <div style={{ position: 'absolute', left: 22, right: 14, bottom: 16, fontFamily: T.display, fontStyle: 'italic', fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 13, color: T.accent }}>Mi Plan FIRE</div>
+    </div>
+  );
+  return (
+    <div style={{ marginTop: 20, border: '1px solid ' + T.line, borderRadius: 12, overflow: 'hidden' }}>
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
+        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '15px 18px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', appearance: 'none', WebkitAppearance: 'none' }}>
+        <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>El libro <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, color: T.muted }}>· la edición impresa</span></span>
+        <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.faint, whiteSpace: 'nowrap' }}>{open ? '▾ ocultar' : '▸ ver'}</span>
+      </button>
+      {open && (
+        <div style={{ padding: '4px 18px 22px', borderTop: '1px solid ' + T.lineSoft, display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <div style={{ paddingTop: 18 }}><Cover /></div>
+          <div style={{ flex: '1 1 280px', minWidth: 240, paddingTop: 18 }}>
+            <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.relaxed }}>
+              Todo el corpus de <strong style={{ fontStyle: 'normal' }}>Aprende</strong> reunido y ordenado, de lo esencial a lo avanzado, más páginas de <strong style={{ fontStyle: 'normal' }}>diario de finanzas personales</strong> para llevar tus cuentas a mano. Pensado para leerlo del tirón y tenerlo en la estantería.
+            </div>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, marginTop: 12, lineHeight: T.lh.normal }}>
+              ¿Lo quieres gratis? Está todo aquí, lección por lección, en esta misma sección.
+            </div>
+            <div style={{ marginTop: 16 }}>
+              {AMAZON_BOOK_URL
+                ? <a href={AMAZON_BOOK_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '10px 18px', borderRadius: 999, background: T.ink, color: T.bg, textDecoration: 'none' }}>Comprar en Amazon →</a>
+                : <span style={{ display: 'inline-block', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '10px 18px', borderRadius: 999, border: '1px solid ' + T.line, color: T.faint }}>Próximamente en Amazon</span>}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ScreenAprende() {
   const [section, setSection] = useState('conceptos'); // 'tablon' | 'glosario' | 'conceptos'
   const [activeId, setActiveId] = useState(null);
-  const [showBook, setShowBook] = useState(false); // "El libro" · vista imprimible del corpus completo
   const [searchTerm, setSearchTerm] = useState('');
   // v5.11 (F2.3) · Filter for the "Conceptos" tab by level.
   const [level, setLevel] = useState('esencial');
@@ -4082,13 +4126,9 @@ export function ScreenAprende() {
         <p style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.normal, color: T.muted, marginTop: 18, maxWidth: 580 }}>
           No tienes que leerlos todos, ni en orden. Vuelve cuando algo te confunda. Cada artículo es independiente.
         </p>
-        {/* "El libro" · todo el corpus ordenado + diario, en versión imprimible/PDF (BookView). */}
-        <div style={{ marginTop: 20 }}>
-          <button onClick={() => setShowBook(true)}
-            style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '10px 18px', borderRadius: 999, cursor: 'pointer', border: '1px solid ' + T.ink, background: T.ink, color: T.bg, appearance: 'none', WebkitAppearance: 'none' }}>
-            El libro · versión imprimible →
-          </button>
-        </div>
+        {/* "El libro" · desplegable de COMPRA (no se regala el PDF): portada decorativa + qué
+            contiene + CTA Amazon. Gratis = leer lección por lección en la web. */}
+        <BookPromo />
       </header>
 
       <nav style={{ display: 'flex', gap: 4, borderBottom: '1px solid ' + T.line, marginBottom: 28 }}>
@@ -4272,7 +4312,6 @@ export function ScreenAprende() {
       </footer>
 
       {activeId && <ConceptModal id={activeId} read={!!readLessons[activeId]} onToggleRead={() => toggleRead(activeId)} onClose={() => setActiveId(null)} />}
-      {showBook && <BookView onClose={() => setShowBook(false)} />}
     </div>
   );
 }

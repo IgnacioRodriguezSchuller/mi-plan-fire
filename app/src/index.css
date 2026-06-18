@@ -135,16 +135,3 @@ button:active { transform: scale(0.97); }
   .hero-sun { transition: none; }
   .hero-sun-halo { animation: none; opacity: 0.72; transform: none; }
 }
-
-/* "El libro" · impresión (window.print → PDF). Aísla el overlay del libro: oculta el
- * resto de la app, despliega el libro a ancho completo y evita cortar artículos/páginas
- * de diario a mitad. .no-print esconde la barra de herramientas. */
-@media print {
-  body * { visibility: hidden; }
-  .book-overlay, .book-overlay * { visibility: visible; }
-  .book-overlay { position: absolute !important; inset: 0 !important; overflow: visible !important; background: #fff !important; }
-  .book-overlay .book-page { max-width: none !important; padding: 0 !important; }
-  .no-print { display: none !important; }
-  .book-article, .book-diary-page { break-inside: avoid; }
-  @page { margin: 16mm; }
-}

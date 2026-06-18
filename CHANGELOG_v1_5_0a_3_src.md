@@ -1537,3 +1537,22 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: `npm run build` OK (`dist` 1.047 kB); `verify-content`/`verify-state` PASS; navegador: cierre de
   Plan con eyebrow+titular+`CartelBtn`; intro presente; pill «✓ Leído» verde/crema; modal de jubilación `flex-start`
   con título y botones visibles; consola limpia; hash baseline `b3ea52b1…` intacto.
+
+## «El libro» · de PDF imprimible gratis → desplegable de COMPRA (feedback, 2026-06-19)
+- **Causa raíz** (decisión de producto del dueño): regalar el PDF imprimible del corpus completo canibaliza el libro
+  de pago. El gratis debe ser **leer en la web, lección por lección**; el libro impreso es producto de pago.
+- **Cambio**:
+  - **Eliminado** `BookView` (overlay imprimible de 35 artículos + diario), su `AMAZON_BOOK_URL`, el bloque
+    `@media print` de `index.css` y todo el cableado (`showBook`, import, render, botón «versión imprimible»). −190
+    líneas en `modals`, −13 en `index.css`.
+  - **Nuevo** `BookPromo` (`screens/index.jsx`, en la cabecera de Aprende): **desplegable** «El libro · la edición
+    impresa» que al abrir muestra una **portada decorativa** (dibujada en CSS, lomo acento + título Fraunces, cero
+    red), **qué contiene** (todo el corpus ordenado + diario de finanzas), una nota explícita («¿gratis? está todo
+    aquí, lección por lección») y un **CTA de compra** (`AMAZON_BOOK_URL` placeholder → «Próximamente en Amazon»;
+    al publicar en KDP, `<a href>` a Amazon). **No hay impresión ni PDF.**
+- **No tocado**: `LEARN_CORPUS`/`content` (el corpus sigue intacto y leíble lección a lección en Aprende), motor,
+  `migrateToV2`, claves localStorage, `isPro`, baseline. Cero red (portada en CSS, compra en `<a href>`).
+- **Verificación**: `npm run build` OK (`dist` 1.040 kB, **−5 kB**); sin referencias muertas (`grep` de
+  `BookView`/`book-overlay`/`window.print` = 0); `verify-content`/`verify-state` PASS; navegador (server fresco):
+  desplegable abre con portada + «qué contiene» + «gratis = web» + «Próximamente en Amazon», **sin** botón de
+  imprimir; consola limpia; hash baseline `b3ea52b1…` intacto.
