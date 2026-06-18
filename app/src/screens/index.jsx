@@ -13,7 +13,7 @@ import {
   computeIncomeFor, toRealEur, estimateSpanishPension,
   runMonteCarlo,
   getSavingsTier, seedMonths, defaultGoals, computeUserProfile, projectStandardPlan, computeActivePhase,
-  computeSinPlanKPIs, fmtEur,
+  computeSinPlanKPIs, fmtEur, parseMonthsCSV,
 } from '../lib/index.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import {
@@ -3014,6 +3014,36 @@ export function ScreenAjustes() {
             };
             input.click();
           }}>Importar JSON</Btn>
+          <Btn variant="ghost" size="sm" onClick={() => {
+            // Importar meses (CSV) · fija el real aportado por mes (Pro). Confirmación antes de aplicar (FN7).
+            const input = document.createElement('input');
+            input.type = 'file'; input.accept = '.csv,text/csv,text/plain';
+            input.onchange = (e) => {
+              const file = e.target.files[0]; if (!file) return;
+              const reader = new FileReader();
+              reader.onload = (ev) => {
+                const rows = parseMonthsCSV(ev.target.result);
+                if (!rows.length) { alert('No se reconoció ningún mes en el CSV.\n\nFormato por línea: fecha,importe\nEj.:  2026-01,500'); return; }
+                const ok = window.confirm('Se han reconocido ' + rows.length + ' meses en el CSV.\n\nSe fijará el importe REAL aportado de cada uno (creando el mes si no existe). No borra los meses que no aparezcan. ¿Continuar?');
+                if (!ok) return;
+                update((s) => {
+                  const byKey = {}; s.months.forEach((m) => { byKey[m.key] = m; });
+                  rows.forEach(({ key, amount }) => {
+                    if (byKey[key]) byKey[key] = { ...byKey[key], actual: amount };
+                    else {
+                      const [y, mo] = key.split('-').map(Number);
+                      const dt = new Date(y, mo - 1, 1);
+                      byKey[key] = { key, label: dt.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }), year: y, monthIndex: mo - 1, planned: computePlannedFor(s.plan, key), actual: amount, note: 'importado' };
+                    }
+                  });
+                  const months = Object.values(byKey).sort((a, b) => (a.key > b.key ? 1 : -1));
+                  return { ...s, months };
+                });
+              };
+              reader.readAsText(file);
+            };
+            input.click();
+          }}>Importar meses (CSV)</Btn>
           <Btn variant="ghost" size="sm" onClick={seedDemoConfirm}>Cargar datos demo</Btn>
           <Btn variant="ghost" size="sm" onClick={resetAll} style={{ color: T.red, borderColor: T.red }}>Borrar todo</Btn>
         </div>

@@ -1500,3 +1500,19 @@ de FIRE el motor necesitaba Fat, que no existía.
   son idénticos a antes (24834.20…/23801.45…/25454.41…/22079.85…), solo el set conocido (aporte creciente +5000,
   `bandsByAge`, `lostFirstYear`); `verify-content`/`verify-state` PASS; navegador: el toggle mueve la píldora activa
   Normal→Colas gruesas y el MC se recomputa; consola limpia; hash baseline `b3ea52b1…` intacto.
+
+## Sprint 4 (Pro fase B) · Importación CSV de meses (cascada, 2026-06-18)
+- **Causa raíz**: registrar muchos meses a mano es tedioso; faltaba una vía de carga masiva del real aportado.
+- **Cambio**:
+  - `lib/index.js` `parseMonthsCSV(text)` — pura, exportada, testeable: separador coma o `;`; fecha en
+    `YYYY-MM[-DD]`, `MM/YYYY` o `YYYY/MM`; importe es-ES (`1.500,50`) o en-US (`1500.50`) o entero; descarta filas
+    no parseables (cabecera, mes inválido, importe negativo) → `[{key:'YYYY-MM', amount}]`.
+  - `screens/index.jsx` `ScreenAjustes` (card «Tus datos»): botón **«Importar meses (CSV)»** — `FileReader` →
+    `parseMonthsCSV` → **confirmación** (FN7, cuántos meses) → `update` que **fija el real de cada mes** (crea el mes
+    si no existe, no borra los que no aparezcan). Mismo patrón que «Importar JSON».
+- **No tocado**: firma de funciones existentes, `migrateToV2`, `T`, `LEARN_CORPUS`, claves localStorage, `isPro`,
+  baseline. `parseMonthsCSV` es export nuevo (verify-lib no lo testea → sin diffs nuevos). **Cero red**: `FileReader`
+  local, no `fetch`.
+- **Verificación**: `npm run build` OK (`dist` 1.045 kB); `verify-lib` sin diffs nuevos; `verify-content`/`state` PASS;
+  **test Node del parser**: `2026-01;500`→500, `02/2026;1.200,50`→1201, `2026/03;1500.75`→1501, `2026-04-15;300`→300,
+  y descarta `2026-13`, `basura`, `-5` y la cabecera; navegador: el botón aparece en Datos; hash baseline intacto.

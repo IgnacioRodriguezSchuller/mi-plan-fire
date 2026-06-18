@@ -884,6 +884,43 @@ export function parseKeyMonths(key) {
   return y * 12 + (m - 1);
 }
 
+// Importación CSV de meses (Pro) · parsea texto CSV → [{ key:'YYYY-MM', amount:Number }].
+// Pura y robusta: separador coma o punto y coma; fecha en 'YYYY-MM[-DD]', 'MM/YYYY' o 'YYYY/MM';
+// importe en formato es-ES ('1.500,50') o en-US ('1500.50') o entero. Descarta filas no
+// parseables (incl. cabecera). No toca estado: el llamador decide cómo fusionar. Cero red.
+export function parseMonthsCSV(text) {
+  const out = [];
+  if (!text || typeof text !== 'string') return out;
+  const lines = text.split(/\r?\n/);
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    const cells = (line.indexOf(';') >= 0 ? line.split(';') : line.split(',')).map((c) => c.trim());
+    if (cells.length < 2) continue;
+    // Fecha → 'YYYY-MM'
+    const dRaw = cells[0].replace(/"/g, '');
+    let key = null;
+    let mIso = dRaw.match(/^(\d{4})[-/](\d{1,2})(?:[-/]\d{1,2})?$/);   // YYYY-MM o YYYY-MM-DD o YYYY/MM
+    let mMy = dRaw.match(/^(\d{1,2})[-/](\d{4})$/);                    // MM/YYYY
+    if (mIso) { key = mIso[1] + '-' + String(+mIso[2]).padStart(2, '0'); }
+    else if (mMy) { key = mMy[2] + '-' + String(+mMy[1]).padStart(2, '0'); }
+    if (!key) continue;
+    const mo = +key.slice(5);
+    if (mo < 1 || mo > 12) continue;
+    // Importe es-ES / en-US
+    let aRaw = cells[1].replace(/["€\s]/g, '');
+    if (aRaw.indexOf(',') >= 0 && aRaw.indexOf('.') >= 0) {
+      aRaw = aRaw.replace(/\./g, '').replace(',', '.');          // 1.500,50 → 1500.50
+    } else if (aRaw.indexOf(',') >= 0) {
+      aRaw = aRaw.replace(',', '.');                              // 1500,50 → 1500.50
+    }
+    const amount = parseFloat(aRaw);
+    if (!Number.isFinite(amount) || amount < 0) continue;
+    out.push({ key, amount: Math.round(amount) });
+  }
+  return out;
+}
+
 // Tiered, non-restrictive friction for savings rate (% of income).
 // Educational signal, not a hard cap. Used in onboarding step "¿cuánto puedes guardar?".
 export function getSavingsTier(pct) {
