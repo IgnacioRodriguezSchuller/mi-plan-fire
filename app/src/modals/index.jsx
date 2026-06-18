@@ -416,14 +416,14 @@ export function PublicPensionDisclaimerModal({ open, onCancel, onConfirm }) {
       onClick={onCancel}
       style={{
         position: 'fixed', inset: 0, background: 'rgba(26,22,18,0.55)',
-        zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
         padding: '32px 16px', overflowY: 'auto',
       }}>
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
           background: T.bg, border: '1px solid ' + T.line, borderRadius: 14,
-          padding: 28, maxWidth: 560, width: '100%',
+          padding: 28, maxWidth: 560, width: '100%', margin: 'auto',
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
         }}>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8, color: T.ink }}>

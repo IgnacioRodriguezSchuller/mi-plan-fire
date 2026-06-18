@@ -1166,14 +1166,23 @@ export function RutaCincoFases({ state, d, mobile }) {
           })()}
         </Card>
         {(() => {
+          // Cierre estilo CARTEL (rima con el de Proyección: eyebrow + serif grande + sub itálica
+          // + CartelBtn, sin caja). Mantiene la lógica de veredicto/destino del NextStep anterior.
           const v = d.verdict;
           const noMeses = !(d.filledMonths && d.filledMonths.length);
-          let frase, label, dest;
-          if (v === 'sin-datos' && noMeses) { frase = 'Registra tu primer mes para seguir tu avance real.'; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; }
-          else if (v === 'atrasado' || v === 'no-llega') { frase = `${d.verdictCopy} Sube tu aporte o baja tu objetivo en Proyección.`; label = 'Ir a Proyección →'; dest = 'proy'; }
-          else if (v === 'sin-datos') { frase = d.verdictCopy; label = 'Ir a Proyección →'; dest = 'proy'; }
-          else { frase = `${d.verdictCopy} Sigue tu avance mes a mes.`; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; }
-          return <NextStep tone={VERDICT_NEXTSTEP_TONE[v]} body={frase} action={{ label, onClick: () => update({ activeTab: dest }) }} />;
+          let frase, label, dest, head;
+          if (v === 'sin-datos' && noMeses) { frase = 'Registra tu primer mes para que el plan empiece a seguir tu avance real.'; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; head = 'Ahora, mes a mes.'; }
+          else if (v === 'atrasado' || v === 'no-llega') { frase = `${d.verdictCopy} Sube tu aporte o baja tu objetivo para acercar la fecha.`; label = 'Ir a Proyección →'; dest = 'proy'; head = 'Ajústalo en Proyección.'; }
+          else if (v === 'sin-datos') { frase = d.verdictCopy; label = 'Ir a Proyección →'; dest = 'proy'; head = 'Afínalo en Proyección.'; }
+          else { frase = `${d.verdictCopy} El siguiente paso es seguirlo mes a mes.`; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; head = 'Ahora, mes a mes.'; }
+          return (
+            <div style={{ textAlign: 'center', padding: mobile ? '36px 8px 12px' : '52px 8px 20px' }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.accent }}>El siguiente paso</div>
+              <h2 style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(34px, 6.5vw, 72px)', lineHeight: 0.98, letterSpacing: '-.03em', margin: '8px 0 0', color: T.ink }}>{head}</h2>
+              <p style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(16px, 2vw, 21px)', color: T.muted, maxWidth: '40ch', margin: '18px auto 0', lineHeight: 1.45 }}>{frase}</p>
+              <div style={{ marginTop: 22 }}><CartelBtn onClick={() => update({ activeTab: dest })}>{label}</CartelBtn></div>
+            </div>
+          );
         })()}
       </div>
     </div>
@@ -1292,6 +1301,11 @@ export function ScreenHoy({ goTo }) {
           Hola, <em style={{ color: T.accent }}>{profile.name || 'amigo'}</em>.
         </div>
         <Label style={{ marginBottom: 0 }}>Mi Plan · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</Label>
+      </div>
+
+      {/* Intro editorial de la sección · qué es Plan y qué se ve (los tres movimientos). */}
+      <div style={{ fontFamily: T.serif, fontSize: T.size.lead, color: T.muted, lineHeight: T.lh.normal, maxWidth: 640, marginTop: 10 }}>
+        Esta es tu vista de conjunto: <strong style={{ color: T.ink, fontWeight: 600, fontStyle: 'normal' }}>dónde estás</strong> hoy, <strong style={{ color: T.ink, fontWeight: 600, fontStyle: 'normal' }}>hacia dónde puedes ir</strong> y <strong style={{ color: T.ink, fontWeight: 600, fontStyle: 'normal' }}>la ruta</strong> que une las dos. Los números los afinas en Proyección y los haces realidad mes a mes en Seguimiento.
       </div>
 
       {/* Household multi-account summary (only renders if list.length > 1) */}
@@ -4192,7 +4206,7 @@ export function ScreenAprende() {
                       <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>
                         {LEARN_LEVEL_LABELS[lvlId] || 'Avanzado'}
                       </span>
-                      {readLessons[c.id] && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.green }}>✓ leído</span>}
+                      {readLessons[c.id] && <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.bg, background: T.green, padding: '2px 7px', borderRadius: 999, whiteSpace: 'nowrap', flexShrink: 0 }}>✓ Leído</span>}
                     </div>
                   </div>
                   <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, lineHeight: T.lh.snug, color: T.ink, letterSpacing: T.tracking.tight }}>
@@ -4242,7 +4256,7 @@ export function ScreenAprende() {
                       <span style={{ fontSize: T.size.body, color: T.muted, marginLeft: 12 }}>— {c.short}</span>
                     </span>
                     <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexShrink: 0 }}>
-                      {readLessons[c.id] && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.green }}>✓ leído</span>}
+                      {readLessons[c.id] && <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.bg, background: T.green, padding: '2px 7px', borderRadius: 999, whiteSpace: 'nowrap', flexShrink: 0 }}>✓ Leído</span>}
                       <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint }}>→</span>
                     </span>
                   </button>

@@ -1516,3 +1516,24 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: `npm run build` OK (`dist` 1.045 kB); `verify-lib` sin diffs nuevos; `verify-content`/`state` PASS;
   **test Node del parser**: `2026-01;500`→500, `02/2026;1.200,50`→1201, `2026/03;1500.75`→1501, `2026-04-15;300`→300,
   y descarta `2026-13`, `basura`, `-5` y la cabecera; navegador: el botón aparece en Datos; hash baseline intacto.
+
+## Plan (cierre cartel + intro) + Aprende (ticker leído) + fix modal de jubilación (feedback, 2026-06-19)
+- **Causa raíz** (feedback del dueño con capturas): (1) el **cierre de Plan** (el `NextStep` «Siguiente paso» con
+  caja al pie de la ruta) se veía pobre frente al cierre poster de Proyección; (2) faltaba una **introducción** de la
+  sección Plan; (3) el **ticker «✓ leído»** de Aprende era poco visible (texto verde pequeño); (4) el **modal de
+  activar jubilación** se recortaba dentro de la ventana (sólo se veía el párrafo central, sin título ni botones).
+- **Cambio**:
+  - `screens/index.jsx` `RutaCincoFases`: el cierre pasa a **estilo cartel** (eyebrow «El siguiente paso» + titular
+    serif `clamp(34→72)` verdict-aware «Ahora, mes a mes.» / «Ajústalo en Proyección.» + sub itálica + `CartelBtn`,
+    sin caja) — rima con el cierre de Proyección. **Misma lógica** de veredicto/destino que el `NextStep` anterior.
+  - `screens/index.jsx` `ScreenHoy`: **intro editorial** nueva bajo el saludo («Esta es tu vista de conjunto: dónde
+    estás, hacia dónde puedes ir y la ruta…») que explica la sección y los tres movimientos.
+  - `screens/index.jsx` `ScreenAprende`: el «✓ leído» pasa de texto verde a **píldora rellena** (fondo `T.green`,
+    texto `T.bg`, mono uppercase) en tarjetas de Conceptos y glosario — mucho más visible, sin gamificar.
+  - `modals/index.jsx` `PublicPensionDisclaimerModal`: overlay `alignItems` **`center` → `flex-start`** + `margin:
+    auto` en la caja → centrado si cabe, **scroll desde arriba** si el contenido es más alto que el viewport (bug
+    clásico flex+overflow que recortaba el top). Mismo patrón que el resto de modales.
+- **No tocado**: motor, `migrateToV2`, `T`, `LEARN_CORPUS`, claves localStorage, `isPro`, baseline. Color por tokens.
+- **Verificación**: `npm run build` OK (`dist` 1.047 kB); `verify-content`/`verify-state` PASS; navegador: cierre de
+  Plan con eyebrow+titular+`CartelBtn`; intro presente; pill «✓ Leído» verde/crema; modal de jubilación `flex-start`
+  con título y botones visibles; consola limpia; hash baseline `b3ea52b1…` intacto.
