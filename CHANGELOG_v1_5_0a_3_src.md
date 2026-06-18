@@ -1460,3 +1460,25 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: `npm run build` OK (`dist` 1.032 kB); navegador (Proyección): las 5 señales renderizan con
   valores reales («20,1 % de tu ingreso · sólido», «… % de los futuros aguantan · Aceptable»); sin crash; consola
   limpia; hash baseline `b3ea52b1…` intacto.
+
+## «El libro» · corpus de Aprende imprimible + diario de finanzas + enlace Amazon (cascada, 2026-06-18)
+- **Causa raíz**: el pivot de producto pedía «la versión imprimible del libro» — todo Aprende ordenado + páginas de
+  diario, imprimible y conectado con Amazon.
+- **Cambio**:
+  - `modals/index.jsx` `BookView` (overlay full-page nuevo): compila **`LEARN_CORPUS` (solo lectura) ordenado por
+    nivel** (`LEARN_LEVELS`: esencial → profundizando → avanzado, 35 artículos) — portada, índice, y cada artículo
+    con lección/cuerpo/regla/aviso (reusa el render de `ConceptModal`). Después, **diario de finanzas** (contenido
+    NUEVO, plantillas imprimibles a mano: Revisión del mes · Registro de patrimonio · Mis metas · Lo que me llevo) —
+    **sin gamificación** (formularios en blanco, no marcadores). Toolbar (no se imprime): **Imprimir / Guardar PDF**
+    (`window.print`), **Comprar en Amazon** y **✕ Cerrar**.
+  - `modals/index.jsx` `AMAZON_BOOK_URL` (const placeholder `''`): vacío hasta publicar en KDP → la UI muestra
+    «Próximamente en Amazon» (span, sin enlace); al publicar, se pega la URL. **Cero red**: es un `<a href>`, no fetch.
+  - `index.css`: bloque `@media print` que **aísla** `.book-overlay` (oculta el resto de la app, ancho completo,
+    `break-inside: avoid` en artículos y páginas de diario, `@page margin`); `.no-print` esconde la toolbar.
+  - `screens/index.jsx` `ScreenAprende`: botón **«El libro · versión imprimible →»** en la cabecera + estado
+    `showBook` + render de `BookView`.
+- **No tocado**: `LEARN_CORPUS`/`content` (solo se REFERENCIA, ni un byte cambiado), motor, `migrateToV2`, claves
+  localStorage, `isPro`, baseline. El diario es contenido nuevo en la vista, no entra en el corpus editorial cerrado.
+- **Verificación**: `npm run build` OK (`dist` 1.042 kB); `verify-content`/`verify-state` PASS; navegador: el libro
+  abre con **35 artículos** (=12+13+10 de `LEARN_LEVELS`) + **4 páginas de diario** + portada + toolbar (Imprimir/PDF,
+  Cerrar) + «Próximamente en Amazon»; clase `no-print` presente; consola limpia; hash baseline `b3ea52b1…` intacto.

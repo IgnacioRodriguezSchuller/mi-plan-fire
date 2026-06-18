@@ -34,7 +34,7 @@ import {
 } from '../content/index.js'
 import {
   ConfirmModal, WhyDifferentModal, MonthlyCalendarModal, PublicPensionDisclaimerModal,
-  Concept, ConceptModal, AboutModal,
+  Concept, ConceptModal, AboutModal, BookView,
 } from '../modals/index.jsx'
 import { StateProvider, useStore, useDerived, usePlanMutators } from '../state/index.jsx'
 import { LandingPreOnboarding, Landing } from '../flows/index.jsx'
@@ -3970,6 +3970,7 @@ export function OnboardingHelp({ title, children }) {
 export function ScreenAprende() {
   const [section, setSection] = useState('conceptos'); // 'tablon' | 'glosario' | 'conceptos'
   const [activeId, setActiveId] = useState(null);
+  const [showBook, setShowBook] = useState(false); // "El libro" · vista imprimible del corpus completo
   const [searchTerm, setSearchTerm] = useState('');
   // v5.11 (F2.3) · Filter for the "Conceptos" tab by level.
   const [level, setLevel] = useState('esencial');
@@ -4024,6 +4025,13 @@ export function ScreenAprende() {
         <p style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.normal, color: T.muted, marginTop: 18, maxWidth: 580 }}>
           No tienes que leerlos todos, ni en orden. Vuelve cuando algo te confunda. Cada artículo es independiente.
         </p>
+        {/* "El libro" · todo el corpus ordenado + diario, en versión imprimible/PDF (BookView). */}
+        <div style={{ marginTop: 20 }}>
+          <button onClick={() => setShowBook(true)}
+            style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '10px 18px', borderRadius: 999, cursor: 'pointer', border: '1px solid ' + T.ink, background: T.ink, color: T.bg, appearance: 'none', WebkitAppearance: 'none' }}>
+            El libro · versión imprimible →
+          </button>
+        </div>
       </header>
 
       <nav style={{ display: 'flex', gap: 4, borderBottom: '1px solid ' + T.line, marginBottom: 28 }}>
@@ -4207,6 +4215,7 @@ export function ScreenAprende() {
       </footer>
 
       {activeId && <ConceptModal id={activeId} read={!!readLessons[activeId]} onToggleRead={() => toggleRead(activeId)} onClose={() => setActiveId(null)} />}
+      {showBook && <BookView onClose={() => setShowBook(false)} />}
     </div>
   );
 }

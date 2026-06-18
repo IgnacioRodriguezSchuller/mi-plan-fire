@@ -9,7 +9,7 @@ import { T, WEB_URL } from '../tokens/index.js'
 import { Btn, Label, EditableNumber, MonthInput } from '../ui/index.jsx'
 import { computePlannedFor, todayKey, addMonthsKey, compareKeys, readableMonth, fmtEur, uid } from '../lib/index.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
-import { LEARN_CORPUS, CATEGORY_LABELS } from '../content/index.js'
+import { LEARN_CORPUS, CATEGORY_LABELS, LEARN_LEVELS, LEARN_LEVEL_LABELS, LEARN_LEVEL_SUB } from '../content/index.js'
 
 export function ConfirmModal({ open, title, body, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', destructive = false, onConfirm, onCancel }) {
   if (!open) return null;
@@ -763,6 +763,193 @@ export function AboutModal({ onClose }) {
         <div style={{ paddingTop: 14, borderTop: '1px dashed ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, textTransform: 'uppercase' }}>
           agpl-3.0 · código en github (próximamente)
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Enlace de compra del libro en Amazon (KDP). Placeholder configurable: hasta publicar
+// en KDP queda vacío → la UI muestra "Próximamente en Amazon" (sin enlace). Al publicar,
+// pega aquí la URL del producto. Cero red: es un <a href>, no fetch.
+export const AMAZON_BOOK_URL = '';
+
+// "El libro" · compila TODO el corpus de Aprende (LEARN_CORPUS, SOLO LECTURA) ordenado por
+// nivel (LEARN_LEVELS: esencial → profundizando → avanzado) + páginas de diario de finanzas
+// personales (plantillas imprimibles, contenido NUEVO, no toca LEARN_CORPUS) → vista imprimible
+// (window.print → PDF) + enlace de compra a Amazon. Overlay full-page con className para el
+// aislamiento de @media print (ver index.css). No modifica el corpus: solo lo referencia.
+export function BookView({ onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
+  }, [onClose]);
+
+  const levels = ['esencial', 'profundizando', 'avanzado'];
+  // Render de un cuerpo de artículo: párrafos por '\n\n'; '**Título**' como subtítulo,
+  // inline **negrita** / *cursiva* (mismo patrón que ConceptModal).
+  const renderBody = (body) => (body || '').split('\n\n').map((para, i) => {
+    if (para.startsWith('**') && para.endsWith('**')) {
+      return <h4 key={i} style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, margin: '20px 0 4px', color: T.ink }}>{para.replace(/\*\*/g, '')}</h4>;
+    }
+    return <p key={i} style={{ margin: '0 0 12px', fontFamily: T.serif, fontSize: 16, lineHeight: 1.6, color: T.ink }} dangerouslySetInnerHTML={{ __html: para.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>') }} />;
+  });
+
+  const btn = { fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '8px 14px', borderRadius: 999, cursor: 'pointer', border: '1px solid ' + T.line, background: 'transparent', color: T.ink, appearance: 'none', WebkitAppearance: 'none', textDecoration: 'none', whiteSpace: 'nowrap' };
+  const h2 = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 'clamp(26px, 4vw, 38px)', letterSpacing: T.tracking.tight, lineHeight: 1.1, color: T.ink, margin: '0 0 6px' };
+  const eyebrow = { fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint };
+
+  // Líneas en blanco para escribir a mano al imprimir.
+  const Lines = ({ n }) => (
+    <div aria-hidden="true">{Array.from({ length: n }).map((_, i) => (
+      <div key={i} style={{ borderBottom: '1px solid ' + T.line, height: 26 }} />
+    ))}</div>
+  );
+
+  let chapter = 0;
+
+  return (
+    <div className="book-overlay" style={{ position: 'fixed', inset: 0, background: T.bg, zIndex: 1300, overflowY: 'auto' }}>
+      {/* Barra de herramientas (no se imprime) */}
+      <div className="no-print" style={{ position: 'sticky', top: 0, zIndex: 2, background: T.bg, borderBottom: '1px solid ' + T.line, padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <button onClick={() => window.print()} style={{ ...btn, background: T.ink, color: T.bg, border: '1px solid ' + T.ink }}>Imprimir / Guardar PDF</button>
+        {AMAZON_BOOK_URL
+          ? <a href={AMAZON_BOOK_URL} target="_blank" rel="noopener noreferrer" style={btn}>Comprar en Amazon →</a>
+          : <span style={{ ...btn, cursor: 'default', color: T.faint }}>Próximamente en Amazon</span>}
+        <button onClick={onClose} style={{ ...btn, marginLeft: 'auto' }}>✕ Cerrar</button>
+      </div>
+
+      <div className="book-page" style={{ maxWidth: 760, margin: '0 auto', padding: 'clamp(28px, 5vw, 56px)', fontFamily: T.serif, color: T.ink }}>
+        {/* Portada */}
+        <header style={{ textAlign: 'center', padding: '40px 0 48px', borderBottom: '2px solid ' + T.ink, marginBottom: 40 }}>
+          <div style={eyebrow}>El libro</div>
+          <h1 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 'clamp(40px, 9vw, 80px)', lineHeight: 0.98, letterSpacing: T.tracking.display, margin: '14px 0 0', color: T.ink }}>
+            Los conceptos que<br />sostienen tu plan
+          </h1>
+          <p style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(17px, 2.2vw, 22px)', color: T.muted, marginTop: 18, lineHeight: 1.5 }}>
+            El corpus completo de Mi Plan FIRE, ordenado de lo esencial a lo avanzado,<br />con páginas de diario para llevar tus finanzas a mano.
+          </p>
+        </header>
+
+        {/* Índice */}
+        <section style={{ marginBottom: 48, breakInside: 'avoid' }}>
+          <div style={{ ...eyebrow, marginBottom: 14 }}>Índice</div>
+          {levels.map((lvl) => (
+            <div key={lvl} style={{ marginBottom: 18 }}>
+              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.accent, marginBottom: 6 }}>{LEARN_LEVEL_LABELS[lvl] || lvl}</div>
+              <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.7 }}>
+                {(LEARN_LEVELS[lvl] || []).map((id) => LEARN_CORPUS[id] ? LEARN_CORPUS[id].title : null).filter(Boolean).join(' · ')}
+              </div>
+            </div>
+          ))}
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.accent, margin: '10px 0 6px' }}>Diario de finanzas</div>
+          <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.7 }}>Revisión del mes · Registro de patrimonio · Mis metas · Lo que me llevo</div>
+        </section>
+
+        {/* Corpus por nivel */}
+        {levels.map((lvl) => (
+          <section key={lvl} style={{ marginBottom: 24, breakBefore: 'page' }}>
+            <div style={{ ...eyebrow, color: T.accent, marginBottom: 4 }}>{LEARN_LEVEL_SUB[lvl] || ''}</div>
+            <h2 style={{ ...h2, fontSize: 'clamp(30px, 5vw, 46px)', borderBottom: '1px solid ' + T.line, paddingBottom: 12, marginBottom: 26 }}>{LEARN_LEVEL_LABELS[lvl] || lvl}</h2>
+            {(LEARN_LEVELS[lvl] || []).map((id) => {
+              const c = LEARN_CORPUS[id];
+              if (!c) return null;
+              const a = c.article;
+              chapter += 1;
+              return (
+                <article key={id} className="book-article" style={{ marginBottom: 36, breakInside: 'avoid' }}>
+                  <div style={eyebrow}>{String(chapter).padStart(2, '0')} · {CATEGORY_LABELS[c.category] || c.category}</div>
+                  <h3 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 'clamp(22px, 3.4vw, 30px)', letterSpacing: T.tracking.tight, lineHeight: 1.12, margin: '6px 0 2px', color: T.ink }}>{a ? a.heading : c.title}</h3>
+                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, color: T.muted, marginBottom: 14 }}>{c.title}</div>
+                  {a && a.lesson && (
+                    <div style={{ padding: '12px 18px', borderLeft: '3px solid ' + T.accent, background: T.accentSoft, borderRadius: '0 6px 6px 0', marginBottom: 16 }}>
+                      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 17, lineHeight: 1.4, color: T.ink }}>"{a.lesson}"</div>
+                    </div>
+                  )}
+                  {a ? renderBody(a.body) : <p style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.6, color: T.ink, whiteSpace: 'pre-line', margin: 0 }}>{c.glossary}</p>}
+                  {a && a.rule && (
+                    <div style={{ marginTop: 14, padding: '12px 18px', borderLeft: '3px solid ' + T.muted, background: 'rgba(110,98,83,0.06)', borderRadius: '0 6px 6px 0' }}>
+                      <div style={{ ...eyebrow, marginBottom: 4 }}>Regla</div>
+                      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, lineHeight: 1.4, color: T.ink }}>{a.rule}</div>
+                    </div>
+                  )}
+                  {a && a.warning && (
+                    <div style={{ marginTop: 12, padding: '12px 18px', borderLeft: '3px solid ' + T.amber, background: 'rgba(180,83,9,0.06)', borderRadius: '0 6px 6px 0' }}>
+                      <div style={{ ...eyebrow, color: T.amber, marginBottom: 4 }}>Aviso</div>
+                      <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.5, color: T.ink }}>{a.warning}</div>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </section>
+        ))}
+
+        {/* Diario de finanzas · plantillas imprimibles (contenido nuevo, no es LEARN_CORPUS) */}
+        <section style={{ breakBefore: 'page' }}>
+          <div style={{ ...eyebrow, color: T.accent, marginBottom: 4 }}>Para rellenar a mano</div>
+          <h2 style={{ ...h2, fontSize: 'clamp(30px, 5vw, 46px)', borderBottom: '1px solid ' + T.line, paddingBottom: 12, marginBottom: 10 }}>Diario de finanzas</h2>
+          <p style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, color: T.muted, lineHeight: 1.5, marginBottom: 26 }}>
+            Imprime estas páginas y vuelve a ellas cada mes. La constancia importa más que la precisión.
+          </p>
+
+          {/* Revisión del mes */}
+          <div className="book-diary-page" style={{ border: '1px solid ' + T.line, borderRadius: 12, padding: 24, marginBottom: 22, breakInside: 'avoid' }}>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 22, color: T.ink, marginBottom: 16 }}>Revisión del mes</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 }}>
+              {['Mes', 'Ingreso', 'Aportado', 'Gastado', 'Patrimonio hoy', 'Tasa de ahorro'].map((f) => (
+                <div key={f}>
+                  <div style={{ ...eyebrow, marginBottom: 8 }}>{f}</div>
+                  <div style={{ borderBottom: '1px solid ' + T.line, height: 28 }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ ...eyebrow, margin: '20px 0 8px' }}>¿Cómo fue el mes?</div>
+            <Lines n={3} />
+          </div>
+
+          {/* Registro de patrimonio */}
+          <div className="book-diary-page" style={{ border: '1px solid ' + T.line, borderRadius: 12, padding: 24, marginBottom: 22, breakInside: 'avoid' }}>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 22, color: T.ink, marginBottom: 16 }}>Registro de patrimonio</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 0 }}>
+              {['Fecha', 'Cuentas', 'Inversión', 'Total'].map((c) => (
+                <div key={c} style={{ ...eyebrow, paddingBottom: 8, borderBottom: '2px solid ' + T.ink }}>{c}</div>
+              ))}
+              {Array.from({ length: 10 }).flatMap((_, r) => ['a', 'b', 'c', 'd'].map((cc) => (
+                <div key={r + cc} style={{ borderBottom: '1px solid ' + T.lineSoft, height: 30 }} />
+              )))}
+            </div>
+          </div>
+
+          {/* Mis metas */}
+          <div className="book-diary-page" style={{ border: '1px solid ' + T.line, borderRadius: 12, padding: 24, marginBottom: 22, breakInside: 'avoid' }}>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 22, color: T.ink, marginBottom: 16 }}>Mis metas</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 0 }}>
+              {['Meta', 'Objetivo', 'Para cuándo'].map((c) => (
+                <div key={c} style={{ ...eyebrow, paddingBottom: 8, borderBottom: '2px solid ' + T.ink }}>{c}</div>
+              ))}
+              {Array.from({ length: 8 }).flatMap((_, r) => ['a', 'b', 'c'].map((cc) => (
+                <div key={r + cc} style={{ borderBottom: '1px solid ' + T.lineSoft, height: 32 }} />
+              )))}
+            </div>
+          </div>
+
+          {/* Lo que me llevo */}
+          <div className="book-diary-page" style={{ border: '1px solid ' + T.line, borderRadius: 12, padding: 24, breakInside: 'avoid' }}>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 22, color: T.ink, marginBottom: 16 }}>Lo que me llevo</div>
+            <Lines n={6} />
+          </div>
+        </section>
+
+        {/* Colofón */}
+        <footer style={{ marginTop: 48, paddingTop: 24, borderTop: '2px solid ' + T.ink, textAlign: 'center' }}>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 24, color: T.ink }}><em style={{ color: T.accent }}>Mi Plan FIRE</em></div>
+          <p style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint, marginTop: 10, lineHeight: 1.7 }}>
+            Contenido educativo · no es asesoramiento financiero ni de inversión.
+          </p>
+        </footer>
       </div>
     </div>
   );
