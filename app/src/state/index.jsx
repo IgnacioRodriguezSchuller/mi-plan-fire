@@ -72,7 +72,18 @@ export function StateProvider({ children }) {
   const update = useCallback((patch) => {
     setState((s) => (typeof patch === 'function' ? patch(s) : { ...s, ...patch }));
   }, []);
-  const updateProfile = useCallback((p) => setState((s) => ({ ...s, profile: { ...s.profile, ...p } })), []);
+  const updateProfile = useCallback((p) => setAccountsData((d) => {
+    const cur = d.accounts[d.activeId];
+    if (!cur) return d;
+    const prevName = (cur.state.profile && cur.state.profile.name) || '';
+    const newState = { ...cur.state, profile: { ...cur.state.profile, ...p } };
+    let label = cur.label;
+    // El nombre de la cuenta sigue al del usuario, salvo que se haya renombrado a mano.
+    if (p.name != null && (cur.label === 'Mi cuenta' || cur.label === 'Nueva persona' || !cur.label || cur.label === prevName)) {
+      label = (p.name && p.name.trim()) || cur.label;
+    }
+    return { ...d, accounts: { ...d.accounts, [d.activeId]: { ...cur, state: newState, label } } };
+  }), []);
 
   // updatePlan now writes to sandbox if active, otherwise to real plan
   const updatePlan = useCallback((p) => setState((s) => {
@@ -133,7 +144,12 @@ export function StateProvider({ children }) {
       },
     });
   }, []);
-  const seedDemo = useCallback(() => setState(seedState()), []);
+  const seedDemo = useCallback(() => setAccountsData((d) => {
+    const cur = d.accounts[d.activeId];
+    if (!cur) return d;
+    const s = seedState();
+    return { ...d, accounts: { ...d.accounts, [d.activeId]: { ...cur, state: s, label: (s.profile && s.profile.name) || cur.label } } };
+  }), []);
   // Variante con confirmación (H11): cargar la demo SUSTITUYE el estado entero.
   // El botón "Cargar datos demo" de Datos y el "Saltar · usar demo" del onboarding
   // (alcanzable CON datos reales vía reonboard, que conserva el estado) pasan por
@@ -146,7 +162,7 @@ export function StateProvider({ children }) {
       confirmLabel: 'Cargar demo',
       destructive: true,
       action: () => {
-        setState(seedState());
+        seedDemo();
       },
     });
   }, []);

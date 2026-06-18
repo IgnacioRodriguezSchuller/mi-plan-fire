@@ -2,7 +2,7 @@
 
 > Fuente **única** del estado del proyecto. Al cerrar cada sprint, actualiza este archivo. Para arrancar un chat de planificación, pega la sección **Resumen**.
 
-_Actualizado: 2026-06-17_
+_Actualizado: 2026-06-18_
 
 ## Resumen
 - **Versión funcional activa:** v1.5.0a3.
@@ -33,7 +33,7 @@ _Actualizado: 2026-06-17_
 - Etapa 1 (monolito → `app/src`) cerrada en `4979854`. Tag de retorno: `baseline-pre-migracion`.
 
 ## Pendientes (ABIERTOS)
-1. **[GRANDE]** Seguimiento → al lenguaje de Plan (sin empezar).
+1. ~~**[GRANDE]** Seguimiento → al lenguaje de Plan~~ → **✓ HECHO (staged, pendiente de commit):** bento «estado arriba» (veredicto + media real arriba) + divulgación progresiva (plan-vs-realidad y alta de meta tras disclosure) + **hitos como anillos visuales** (edición al tocar) + gráfica del reparto rediseñada. Además: **fix del solape de tramos** de la demo (salario base hasta mes 35 → la gráfica deja de picar) y **la cuenta toma el nombre del usuario** («Alex» en la demo, perfil en real). Al commitear, mover a «Hitos recientes» con su hash. Ver `CHANGELOG …(2026-06-18)` y `DOCTRINA §6 1.12`.
 2. **[MEDIO · En limpio / Siguiente paso]** Sistema "Siguiente paso": al marcar una fase manual el usuario espera ir a algún sitio. Hoy solo togglea + persiste (decisión consciente). Resolver con el sistema de Siguiente paso. P2 de la tanda de fases.
 3. **[MOTOR · sprint propio]** Edad real cuando NO llega + **cap `retireAge`**: la detección FI determinista está capada a `endAge = retireAge`, así que `ageAtFiReal` solo sale ≤ retireAge y el caso "vas tarde" es indetectable (el MC no está capado → asimetría). Plan: extender las series de detección vía `opts.endAge` (aditivo) + diseñar el estado "vas tarde".
 4. **[MODELO · decidir]** Etiqueta "Total al jubilarte" / convención de pagas en `RetirementCard`: la pensión se muestra como `monthlyAmount` crudo (14 pagas) y se suma al retiro de cartera (convención 12). Decidir etiqueta. (Quedó aparte tras H1.)

@@ -1331,3 +1331,32 @@ de FIRE el motor necesitaba Fat, que no existía.
   canónico): Datos (campos «Nombre/Edad…»), Aprende (Pill «Empieza aquí», tiers «Esencial»), ConceptModal
   («Matemática», «Lección clave») y Hoy/Seguimiento/Proyección con una sola voz serif; «✕ Cerrar» y cifras
   siguen mono; sin overlay de error de Vite; hash baseline intacto.
+
+## Seguimiento · bento + disclosure + hitos visuales + fix solape demo + cuenta con nombre (2026-06-18)
+- **Causa raíz**: Seguimiento seguía en cards apiladas y se veía «de otra app»; los hitos eran bloques densos
+  de texto; la cuenta demo de Alex tenía un **solape de tramos** de salario (1 mes a 6.100€ por el borde
+  inclusivo de `isKeyInSegment`, `from<=key<=to`) que **picaba la gráfica del reparto** (eje a 8k); y la cuenta
+  se quedaba como «Mi cuenta» en vez del nombre del usuario.
+- **Cambio**:
+  - `screens/index.jsx` `ScreenSeguimiento`: bento «estado arriba» (veredicto `NextStep` junto a «Tu mes» en
+    grid 2-col escritorio / 1-col móvil) + stat de **media real** en cabecera; ancho del Shell (`CONTENT_MAX 720`),
+    sin maxWidth propio.
+  - `ScreenMesAMes`: gráfico «plan vs realidad» tras disclosure (`showVsPlan`). `HitosEditor`: form de alta tras
+    disclosure (`showAdd`) + metas en rejilla.
+  - `GoalRow`: reescrito a **tarjeta visual con anillo de progreso** (SVG plano, % al centro) + nombre + objetivo
+    + píldora; las 3 sub-stats retiradas; **edición al tocar** (toggle `editing`, conserva nombre/importe/edad/
+    categoría/nota contextual + eliminar).
+  - `charts/index.jsx` `FlowTimelineCard`: reparto con inversión a la base (verde) + «para vivir» encima, curva
+    `monotone` (antes `stepAfter` con masa beige + tira verde flotando).
+  - `state/persistence.js` `seedState`: el tramo de salario base termina en el **mes 35** (no 36) → sin solape →
+    la gráfica del reparto deja de picar (eje 8k → **3,8k**).
+  - `state/index.jsx` `updateProfile`: la cuenta toma el nombre del perfil (salvo renombrado manual);
+    `seedDemo`/`seedDemoConfirm`: la demo renombra la cuenta a «Alex».
+- **No tocado**: motor (`projectV2`/`runMonteCarlo`/`migrateToV2`/firmas), objeto `T`, `LEARN_CORPUS`, claves
+  localStorage (`miplan.state.v1`/`miplan.accounts.v1`), `schemaVersion 2`, `isPro`, baseline. Las funciones de
+  Seguimiento (calendario, filas editables, plan-vs-realidad, alta/edición/borrado de metas, notas contextuales,
+  veredicto real `d.verdict`) se **conservan**, solo se repliegan o revisten.
+- **Verificación**: `npm run build` OK; `verify-state` PASS (claves intactas, roundtrip); `verify-content` PASS;
+  tokens/lib en estado conocido (sin diffs nuevos); navegador (demo): bento a 720 centrado, anillos 26/13/2%,
+  edición al tocar OK, reparto sin pico (eje 0–3,8k€), cuenta «Alex»; consola sin errores de React (solo warnings
+  dev de Recharts «width(0)» al montar, eliminados en el build de producción); hash baseline `b3ea52b1…` intacto.

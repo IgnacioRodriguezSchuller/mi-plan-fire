@@ -219,7 +219,7 @@ export function seedState() {
       salaryInflationFactor: 1.0,
       monthlyPlanned: 400,
       incomeSegments: [
-        { id: uid(), from: todayKey(), to: addMonthsKey(todayKey(), 36), amount: 2400, label: 'Salario base' },
+        { id: uid(), from: todayKey(), to: addMonthsKey(todayKey(), 35), amount: 2400, label: 'Salario base' },
         { id: uid(), from: addMonthsKey(todayKey(), 36), to: null, amount: 3200, label: 'Salario tras ascenso' },
       ],
       bonusSegments: [

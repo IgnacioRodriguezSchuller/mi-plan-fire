@@ -1591,6 +1591,8 @@ export function ScreenMesAMes() {
   const { months } = state;
   // B5 · Calendar modal toggle.
   const [showCalendar, setShowCalendar] = useState(false);
+  // Bento · el gráfico "plan vs realidad" vive tras disclosure (P3). Función intacta.
+  const [showVsPlan, setShowVsPlan] = useState(false);
 
   // Group by year — chronological ascending (oldest first, future last)
   const grouped = useMemo(() => {
@@ -1690,8 +1692,13 @@ export function ScreenMesAMes() {
         </div>
       </Card>
 
-      {/* Real vs plan projection — only when enough data */}
-      {filled.length >= 3 ? (() => {
+      {/* Plan vs realidad · gráfico tras disclosure (P3 · divulgación progresiva). Función intacta. */}
+      <div>
+        <CartelBtn variant="text" onClick={() => setShowVsPlan((s) => !s)}>
+          {showVsPlan ? '↑ Ocultar plan vs realidad' : 'Ver tu plan vs tu realidad →'}
+        </CartelBtn>
+      </div>
+      {showVsPlan && (filled.length >= 3 ? (() => {
         const realAtLast = d.realPortfolioAtLastReg;
         const planAtLast = d.planPortfolioAtLastReg;
         // Color y mensaje desde la fuente única (d.verdict). El delta €/mes deja de decidir
@@ -1739,7 +1746,7 @@ export function ScreenMesAMes() {
             Llevas <strong style={{ color: T.accent, fontStyle: 'normal' }}>{filled.length} {filled.length === 1 ? 'mes' : 'meses'}</strong>.
           </div>
         </Card>
-      )}
+      ))}
 
       {/* B5 · Mensual reducido a los últimos 3 meses. La vista anual completa
           vive en un modal expandible. */}
@@ -2259,6 +2266,8 @@ export function HitosEditor() {
   const d = useDerived();
   const { profile, plan, goals } = state;
   const [newGoal, setNewGoal] = useState({ name: '', target: 10000, targetAge: profile.age + 5, category: 'otro' });
+  // Bento · el formulario de alta vive tras disclosure (P3). Formulario intacto.
+  const [showAdd, setShowAdd] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div>
@@ -2267,49 +2276,62 @@ export function HitosEditor() {
           Metas intermedias en tu camino. Define el importe en euros de 2026 (poder adquisitivo actual); Mi Plan FIRE ajusta por <Concept id="inflacion">inflación</Concept> hasta la fecha objetivo.
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {goals.length === 0 && (
-            <Card style={{ borderStyle: 'dashed', padding: 24 }}>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal }}>
-                Aún no has añadido ningún hito a tu plan. Los hitos son metas intermedias (un colchón de liquidez, comprar una vivienda, pagar la entrada, etc.) que te ayudan a estructurar tu camino. Añade el primero cuando quieras.
-              </div>
-            </Card>
-          )}
-          {goals.map((g) => (
-            <GoalRow key={g.id} goal={g} d={d} profile={profile} plan={plan}
-              onChange={(p) => updateGoal(g.id, p)} onRemove={() => removeGoal(g.id)} />
-          ))}
-        </div>
-        <Card>
-          <CartelLabel style={{ marginBottom: 14 }}>Añadir una meta</CartelLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input value={newGoal.name} onChange={(e) => setNewGoal({ ...newGoal, name: e.target.value })} placeholder="Ej. coche eléctrico"
-              style={{ fontFamily: T.serif, fontSize: T.size.lead, padding: '10px 12px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 8, outline: 'none', color: T.ink }} />
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <Label>Importe</Label>
-              <EditableNumber value={newGoal.target} onChange={(v) => setNewGoal({ ...newGoal, target: v })} min={100} max={10_000_000} width={120} />
-              <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', color: T.muted }}>€</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {goals.length === 0 ? (
+          <Card style={{ borderStyle: 'dashed', padding: 24 }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal }}>
+              Aún no has añadido ningún hito a tu plan. Los hitos son metas intermedias (un colchón de liquidez, comprar una vivienda, pagar la entrada, etc.) que te ayudan a estructurar tu camino. Añade el primero cuando quieras.
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <Label>A los</Label>
-              <EditableNumber value={newGoal.targetAge} onChange={(v) => setNewGoal({ ...newGoal, targetAge: v })} min={profile.age + 1} max={90} width={70} />
-              <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', color: T.muted }}>años</span>
-            </div>
-            <div>
-              <Label style={{ marginBottom: 6 }}>Categoría</Label>
-              <select value={newGoal.category} onChange={(e) => setNewGoal({ ...newGoal, category: e.target.value })}
-                style={{ width: '100%', fontFamily: T.serif, fontSize: T.size.body, padding: '8px 10px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 8, outline: 'none', color: T.ink, appearance: 'none', WebkitAppearance: 'none' }}>
-                {GOAL_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-            </div>
-            <Btn variant="accent" size="sm" onClick={() => {
-              if (!newGoal.name.trim()) return;
-              addGoal(newGoal);
-              setNewGoal({ name: '', target: 10000, targetAge: profile.age + 5, category: 'otro' });
-            }}>Añadir meta</Btn>
+          </Card>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, alignItems: 'start' }}>
+            {goals.map((g) => (
+              <GoalRow key={g.id} goal={g} d={d} profile={profile} plan={plan}
+                onChange={(p) => updateGoal(g.id, p)} onRemove={() => removeGoal(g.id)} />
+            ))}
           </div>
-        </Card>
+        )}
+        {/* Añadir una meta · tras disclosure (P3). Formulario intacto. */}
+        {!showAdd ? (
+          <div>
+            <CartelBtn variant="text" onClick={() => setShowAdd(true)}>+ Añadir una meta</CartelBtn>
+          </div>
+        ) : (
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14, gap: 8 }}>
+              <CartelLabel>Añadir una meta</CartelLabel>
+              <button onClick={() => setShowAdd(false)} title="Cerrar"
+                style={{ fontFamily: T.mono, fontSize: T.size.body, color: T.faint, background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px', lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <input value={newGoal.name} onChange={(e) => setNewGoal({ ...newGoal, name: e.target.value })} placeholder="Ej. coche eléctrico"
+                style={{ fontFamily: T.serif, fontSize: T.size.lead, padding: '10px 12px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 8, outline: 'none', color: T.ink }} />
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <Label>Importe</Label>
+                <EditableNumber value={newGoal.target} onChange={(v) => setNewGoal({ ...newGoal, target: v })} min={100} max={10_000_000} width={120} />
+                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', color: T.muted }}>€</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <Label>A los</Label>
+                <EditableNumber value={newGoal.targetAge} onChange={(v) => setNewGoal({ ...newGoal, targetAge: v })} min={profile.age + 1} max={90} width={70} />
+                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', color: T.muted }}>años</span>
+              </div>
+              <div>
+                <Label style={{ marginBottom: 6 }}>Categoría</Label>
+                <select value={newGoal.category} onChange={(e) => setNewGoal({ ...newGoal, category: e.target.value })}
+                  style={{ width: '100%', fontFamily: T.serif, fontSize: T.size.body, padding: '8px 10px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 8, outline: 'none', color: T.ink, appearance: 'none', WebkitAppearance: 'none' }}>
+                  {GOAL_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </div>
+              <Btn variant="accent" size="sm" onClick={() => {
+                if (!newGoal.name.trim()) return;
+                addGoal(newGoal);
+                setNewGoal({ name: '', target: 10000, targetAge: profile.age + 5, category: 'otro' });
+                setShowAdd(false);
+              }}>Añadir meta</Btn>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
@@ -2317,62 +2339,83 @@ export function HitosEditor() {
 
 export function ScreenSeguimiento() {
   const d = useDerived();
-  const { update } = useStore();
+  const { state, update } = useStore();
+  const mobile = useIsMobile();
+
+  // Media real · promedio de los meses con aporte real registrado (stat de cabecera).
+  const filledMonths = (state.months || []).filter(m => m.actual != null);
+  const avgActual = filledMonths.length
+    ? Math.round(filledMonths.reduce((s, m) => s + m.actual, 0) / filledMonths.length)
+    : null;
+
+  // Siguiente paso · fuente ÚNICA: d.verdict (ageAtFiReal vs ageAtFiPlan). Lógica intacta;
+  // solo se reubica arriba, junto a "Tu mes" (patrón bento · estado arriba, doctrina §6 1.12).
+  const verdictNode = (() => {
+    const v = d.verdict;
+    const noMeses = !(d.filledMonths && d.filledMonths.length);
+    let frase, label, onClick;
+    if (noMeses || v === 'sin-datos') {
+      frase = 'Aún no registras meses. Anota el primero para comparar realidad y plan.';
+      label = 'Registrar un mes →';
+      onClick = () => document.getElementById('seg-mensual')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (v === 'atrasado' || v === 'no-llega') {
+      frase = `${d.verdictCopy} Sube tu aporte o baja tu objetivo en Proyección.`;
+      label = 'Ir a Proyección →';
+      onClick = () => update({ activeTab: 'proy' });
+    } else {
+      frase = `${d.verdictCopy} Mira cuánto adelanta tu fecha de libertad.`;
+      label = 'Ir a Proyección →';
+      onClick = () => update({ activeTab: 'proy' });
+    }
+    return <NextStep tone={VERDICT_NEXTSTEP_TONE[v]} body={frase} action={{ label, onClick }} />;
+  })();
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 40 }}>
-      <div>
-        <SectionTag>Seguimiento</SectionTag>
-        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4 }}>
-          Cómo va tu plan, mes a mes.
+    <div style={{ display: 'flex', flexDirection: 'column', gap: mobile ? 30 : 36, paddingBottom: 40 }}>
+      {/* Cabecera · título + stat de media real a la derecha (bento) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
+        <div>
+          <SectionTag>Seguimiento</SectionTag>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4 }}>
+            Cómo va tu plan, mes a mes.
+          </div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 8, maxWidth: 640, lineHeight: T.lh.normal }}>
+            Registra cada mes lo que has aportado de verdad, sigue el avance de tus hitos y revisa cómo se reparte tu ingreso a lo largo del tiempo.
+          </div>
         </div>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 8, maxWidth: 640, lineHeight: T.lh.normal }}>
-          Registra cada mes lo que has aportado de verdad, sigue el avance de tus hitos y revisa cómo se reparte tu ingreso a lo largo del tiempo.
-        </div>
+        {avgActual != null && (
+          <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+            <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, textTransform: 'uppercase', color: T.faint }}>
+              Media real · {readableMonth(todayKey())}
+            </div>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, marginTop: 2, lineHeight: T.lh.tight }}>
+              {fmtEur(avgActual)}<span style={{ fontSize: T.size.body, color: T.muted, fontFamily: T.display, fontWeight: 600 }}>/mes</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Bloque 1 · Mensual (flujo + registro mes a mes) */}
-      <Reveal><section id="seg-mensual" style={{ display: 'flex', flexDirection: 'column', gap: 14, scrollMarginTop: 16 }}>
+      {/* Bento · fila 1: Tu mes  |  Siguiente paso (veredicto reubicado arriba) */}
+      <Reveal><div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'minmax(0, 1.35fr) minmax(0, 1fr)', gap: 14, alignItems: 'start' }}>
         <MonthlyFlowBlock />
+        <div>{verdictNode}</div>
+      </div></Reveal>
+
+      {/* Bloque · Mensual (registro mes a mes + stats + gráfico tras disclosure + calendario) */}
+      <Reveal><section id="seg-mensual" style={{ scrollMarginTop: 16 }}>
         <ScreenMesAMes />
       </section></Reveal>
 
-      {/* Bloque 2 · Hitos (v1.4.0c BIG-A · editable in-place via HitosEditor) */}
+      {/* Bloque · Hitos (metas editables + "añadir" tras disclosure) */}
       <Reveal><section>
         <Card>
           <HitosEditor />
         </Card>
       </section></Reveal>
 
-      {/* Bloque 3 · Reparto del ingreso en el tiempo */}
+      {/* Bloque · Reparto del ingreso en el tiempo */}
       <Reveal><section>
         <RepartoIngresoBlock />
-      </section></Reveal>
-
-      {/* Siguiente paso · fuente ÚNICA: d.verdict (ageAtFiReal vs ageAtFiPlan). Antes usaba
-          avgActual≥currentAporte (media de aportes vs lo prescrito hoy), que se contradecía con
-          el destino de Hoy y con el bloque "plan vs realidad" de arriba. Ahora los tres coinciden. */}
-      <Reveal><section>
-        {(() => {
-          const v = d.verdict;
-          const noMeses = !(d.filledMonths && d.filledMonths.length);
-          let frase, label, onClick;
-          if (noMeses || v === 'sin-datos') {
-            frase = 'Aún no registras meses. Anota el primero para comparar realidad y plan.';
-            label = 'Registrar un mes →';
-            onClick = () => document.getElementById('seg-mensual')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          } else if (v === 'atrasado' || v === 'no-llega') {
-            frase = `${d.verdictCopy} Sube tu aporte o baja tu objetivo en Proyección.`;
-            label = 'Ir a Proyección →';
-            onClick = () => update({ activeTab: 'proy' });
-          } else {
-            frase = `${d.verdictCopy} Mira cuánto adelanta tu fecha de libertad.`;
-            label = 'Ir a Proyección →';
-            onClick = () => update({ activeTab: 'proy' });
-          }
-          return (
-            <NextStep tone={VERDICT_NEXTSTEP_TONE[v]} body={frase} action={{ label, onClick }} />
-          );
-        })()}
       </section></Reveal>
     </div>
   );
@@ -2389,73 +2432,70 @@ export function MonthlyFlowBlock() {
 }
 
 export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
+  const [editing, setEditing] = useState(false);
   const tg = useMemo(() => {
     const series = d.seriesPlan || [];
     for (let i = 0; i < series.length; i++) {
-      if (series[i].portfolio >= goal.target) {
-        return { age: series[i].age, months: i };
-      }
+      if (series[i].portfolio >= goal.target) return { age: series[i].age, months: i };
     }
     return null;
   }, [d.seriesPlan, goal.target]);
-
-  const needMonthly = useMemo(() => monthlyForGoal({
-    age: profile.age, targetAge: goal.targetAge, capital: d.currentPortfolio, ret: plan.annualReturn, target: goal.target,
-  }), [profile, goal, plan, d]);
-  const currentAporte = d.currentAporte || 0;
   const onTrack = tg && tg.age <= goal.targetAge;
   const progress = Math.min(100, d.currentPortfolio / goal.target * 100);
+  const faltan = Math.max(0, goal.target - d.currentPortfolio);
   const category = goal.category || 'otro';
-  const categoryLabel = GOAL_CATEGORY_LABEL[category] || 'Otro';
 
+  // ── Vista · anillo de progreso (clic en la tarjeta para editar) ───────────
+  if (!editing) {
+    const RAD = 34, CIRC = 2 * Math.PI * RAD, dash = CIRC * progress / 100;
+    const col = onTrack ? T.green : T.amber;
+    return (
+      <Card>
+        <div onClick={() => setEditing(true)} role="button" tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setEditing(true); }}
+          style={{ cursor: 'pointer', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+          <svg viewBox="0 0 86 86" width="86" height="86" style={{ marginBottom: 8 }} aria-hidden="true">
+            <circle cx="43" cy="43" r={RAD} fill="none" stroke={T.lineSoft} strokeWidth="7" />
+            <circle cx="43" cy="43" r={RAD} fill="none" stroke={col} strokeWidth="7" strokeLinecap="round"
+              strokeDasharray={`${dash.toFixed(1)} ${CIRC.toFixed(1)}`} transform="rotate(-90 43 43)" />
+            <text x="43" y="48" textAnchor="middle" fontFamily={T.display} fontWeight="600" fontSize="22" fill={T.ink}>
+              {Math.round(progress)}<tspan fontSize="12" fill={T.muted}>%</tspan>
+            </text>
+          </svg>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, letterSpacing: T.tracking.tight, lineHeight: 1.15, color: T.ink }}>{goal.name}</div>
+          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.muted, marginTop: 2 }}>{fmtEur(goal.target)} · {goal.targetAge} años</div>
+          <Pill color={onTrack ? T.green : T.amber} bg={onTrack ? T.greenSoft : 'rgba(180,83,9,0.10)'} border="transparent" style={{ fontSize: T.size.eyebrow, padding: '4px 10px', marginTop: 10 }}>
+            {onTrack ? 'En camino' : 'Falta'} · faltan {fmtEur(faltan)}
+          </Pill>
+        </div>
+      </Card>
+    );
+  }
+
+  // ── Edición · campos editables (la función no se pierde, solo se pliega) ───
   return (
     <Card>
       <button onClick={onRemove} title="Eliminar meta"
-        style={{
-          position: 'absolute', top: 10, right: 12,
-          fontFamily: T.mono, fontSize: T.size.body, color: T.faint,
-          background: 'transparent', border: 'none', cursor: 'pointer',
-          padding: '4px 6px', lineHeight: 1, borderRadius: 4,
-        }}>×</button>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 100%', minWidth: 0, paddingRight: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
-            <input value={goal.name} onChange={(e) => onChange({ name: e.target.value })}
-              style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, background: 'transparent', border: 'none', outline: 'none', color: T.ink, padding: 0, flex: '1 1 100%', minWidth: 0 }} />
-            <Pill color={onTrack ? T.green : T.amber} bg={onTrack ? T.greenSoft : 'rgba(180,83,9,0.10)'} border="transparent" style={{ fontSize: T.size.eyebrow, padding: '3px 8px' }}>
-              {onTrack ? 'En camino' : 'Falta'}
-            </Pill>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
-            <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0 }}>Categoría</span>
-            <select value={category} onChange={(e) => onChange({ category: e.target.value })}
-              style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '4px 8px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 999, color: T.ink, letterSpacing: T.tracking.wide, appearance: 'none', WebkitAppearance: 'none' }}>
-              {GOAL_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginTop: 8 }}>
-            <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.accent }}>
-              <EditableNumber value={goal.target} onChange={(v) => onChange({ target: v })} min={100} max={10_000_000} width={100} color={T.accent} />€
-            </span>
-            <span style={{ fontFamily: T.serif, color: T.muted }}>a los <EditableNumber value={goal.targetAge} onChange={(v) => onChange({ targetAge: v })} min={profile.age + 1} max={90} width={36} color={T.ink} /> años</span>
-          </div>
-          <div style={{ marginTop: 14, height: 8, background: T.line, borderRadius: 999, overflow: 'hidden' }}>
-            <div style={{ width: progress + '%', height: '100%', background: onTrack ? T.green : T.accent, borderRadius: 999, transition: 'width 0.4s' }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, marginTop: 4, letterSpacing: T.tracking.wide }}>
-            <span>{Math.round(progress)}% logrado · {fmtEur(d.currentPortfolio)}</span>
-            <span>faltan {fmtEur(Math.max(0, goal.target - d.currentPortfolio))}</span>
-          </div>
-        </div>
+        style={{ position: 'absolute', top: 10, right: 12, fontFamily: T.mono, fontSize: T.size.body, color: T.faint, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 6px', lineHeight: 1, borderRadius: 4 }}>×</button>
+      <input value={goal.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="Nombre de la meta"
+        style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, background: 'transparent', border: 'none', outline: 'none', color: T.ink, padding: 0, width: '100%', minWidth: 0, marginBottom: 10, paddingRight: 24 }} />
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.accent }}>
+          <EditableNumber value={goal.target} onChange={(v) => onChange({ target: v })} min={100} max={10_000_000} width={100} color={T.accent} />€
+        </span>
+        <span style={{ fontFamily: T.serif, color: T.muted }}>a los <EditableNumber value={goal.targetAge} onChange={(v) => onChange({ targetAge: v })} min={profile.age + 1} max={90} width={36} color={T.ink} /> años</span>
       </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10, marginTop: 18, paddingTop: 18, borderTop: '1px dashed ' + T.lineSoft }}>
-        <SmallStat label="A tu ritmo actual" value={tg ? `${tg.age.toFixed(1)} años` : '—'} sub={tg ? `en ${(tg.months / 12).toFixed(1)} años` : 'fuera de alcance'} />
-        <SmallStat label="Hace falta al mes" value={fmtEur(needMonthly)} sub={`para llegar a los ${goal.targetAge}`} accent={needMonthly > currentAporte} />
-        <SmallStat label="Diferencia" value={needMonthly > currentAporte ? `+${fmtEur(needMonthly - currentAporte)}/mes` : 'Vas sobrado'} sub={needMonthly > currentAporte ? `extra sobre tu ${fmtEur(currentAporte)}` : 'al ritmo actual'} good={needMonthly <= currentAporte} bad={needMonthly > currentAporte} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+        <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0 }}>Categoría</span>
+        <select value={category} onChange={(e) => onChange({ category: e.target.value })}
+          style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '4px 8px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 999, color: T.ink, letterSpacing: T.tracking.wide, appearance: 'none', WebkitAppearance: 'none' }}>
+          {GOAL_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+        </select>
       </div>
-
       <GoalContextualBlock goal={goal} category={category} portfolio={d.currentPortfolio} />
+      <div style={{ marginTop: 16 }}>
+        <Btn variant="ghost" size="sm" onClick={() => setEditing(false)}>Hecho</Btn>
+      </div>
     </Card>
   );
 }

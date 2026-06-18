@@ -540,11 +540,21 @@ export function FlowTimelineCard({ plan, profile, maxYears, compact }) {
               labelStyle={{ color: 'rgba(255,255,255,0.6)', fontSize: T.size.eyebrow, marginBottom: 4 }}
               itemStyle={{ color: '#fff' }}
             />
-            {/* Stacked area convention: largest-magnitude series at the base,
-                smaller series on top. "Para vivir" (life) is typically 80-85%
-                of income, so it's the base. "Inversión" (invest) sits above. */}
-            <Area type="stepAfter" dataKey="life" stackId="1" stroke={T.line} strokeWidth={1} fill={T.panel} fillOpacity={0.6} isAnimationActive={false} />
-            <Area type="stepAfter" dataKey="invest" stackId="1" stroke={T.green} strokeWidth={1.4} fill={T.green} fillOpacity={0.7} isAnimationActive={false} />
+            <defs>
+              <linearGradient id="reparto-invest" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={T.green} stopOpacity={0.34} />
+                <stop offset="100%" stopColor={T.green} stopOpacity={0.06} />
+              </linearGradient>
+              <linearGradient id="reparto-life" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={T.panel} stopOpacity={0.85} />
+                <stop offset="100%" stopColor={T.panel} stopOpacity={0.42} />
+              </linearGradient>
+            </defs>
+            {/* Reparto · inversión a la BASE (verde con degradado, anclada a 0) + "para vivir"
+                encima como banda beige suave (T.panel, visible pero ligera). Curva monotone (suave).
+                Antes: life a la base (masa beige pesada) + invest flotando arriba en tira fina (feo). */}
+            <Area type="monotone" dataKey="invest" stackId="1" stroke={T.green} strokeWidth={2} fill="url(#reparto-invest)" isAnimationActive={false} />
+            <Area type="monotone" dataKey="life" stackId="1" stroke={T.line} strokeWidth={1} fill="url(#reparto-life)" isAnimationActive={false} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
