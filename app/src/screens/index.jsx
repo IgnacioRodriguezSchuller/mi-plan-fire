@@ -2049,6 +2049,9 @@ export function ScreenProyeccion() {
   const [gastoSheetOpen, setGastoSheetOpen] = useState(false);
   const [openSalario, setOpenSalario] = useState(false);
   const [openComplementos, setOpenComplementos] = useState(false);
+  // MC Pro · modo de secuencia de retornos (riesgo de orden): 'random' (default),
+  // 'early-crash' (crisis nada más jubilarte, el peor caso), 'late-crash' (crisis tardía).
+  const [seqMode, setSeqMode] = useState('random');
 
   // ── Editables ──
   const retireAge = profile.retireAge;
@@ -2105,7 +2108,8 @@ export function ScreenProyeccion() {
     d.fatEdad != null && { age: d.fatEdad, color: T.muted, fill: false },
   ].filter(Boolean);
 
-  const mc = useMemo(() => { try { return runMonteCarlo(plan, profile, { trials: 400, startCapital: d.currentPortfolio, includeHypothetical: false }); } catch (e) { return null; } }, [plan, profile, d.currentPortfolio]);
+  const mc = useMemo(() => { try { return runMonteCarlo(plan, profile, { trials: 400, startCapital: d.currentPortfolio, includeHypothetical: false, sequenceMode: seqMode }); } catch (e) { return null; } }, [plan, profile, d.currentPortfolio, seqMode]);
+  const depStats = mc ? mc.depletionAgeStats : null;
   const successPct = mc ? Math.round(mc.successRate * 100) : 0;
   const bands = mc && mc.bandsByAge ? mc.bandsByAge : [];
   const pAt = bands.length ? (bands.find((r) => r.age === retireAge) || bands[bands.length - 1]) : null;
@@ -2276,7 +2280,39 @@ export function ScreenProyeccion() {
             { value: fmtMoneyBig(realMode ? p50 / deflator : p50), em: `mediana · ${retireAge}` },
             { value: fmtMoneyBig(realMode ? p90 / deflator : p90), color: T.accent, em: `P90 · ${retireAge} (el mejor 10 %)` },
           ]} /></Reveal>
-          <Reveal delay={240}><p style={note}>En el {100 - successPct} % de simulaciones la cartera se agota antes de los {lifeExpectancy} — el riesgo de secuencia de retornos que la línea recta ignora.</p></Reveal>
+          {/* MC Pro · SECUENCIA DE RETORNOS (riesgo de orden): mismas medias, distinto orden →
+              el % de éxito y la nube cambian. early-crash (crisis al jubilarte) = el peor caso. */}
+          <Reveal delay={240}>
+            <div style={{ marginTop: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, color: T.muted }}>¿Y si la crisis llega en el peor momento?</div>
+              <div role="group" aria-label="Orden de los retornos" style={{ display: 'inline-flex', gap: 3, padding: 3, background: T.panel, borderRadius: 999, border: '1px solid ' + T.line, flexWrap: 'wrap', justifyContent: 'center' }}>
+                {[
+                  { id: 'random', label: 'Aleatorio' },
+                  { id: 'early-crash', label: 'Crisis al jubilarte' },
+                  { id: 'late-crash', label: 'Crisis tardía' },
+                ].map((o) => {
+                  const active = seqMode === o.id;
+                  return (
+                    <button key={o.id} onClick={() => setSeqMode(o.id)} aria-pressed={active}
+                      style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '5px 13px', borderRadius: 999, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', background: active ? T.accent : 'transparent', color: active ? T.bg : T.muted, transition: 'background .15s ease, color .15s ease', appearance: 'none', WebkitAppearance: 'none' }}>{o.label}</button>
+                  );
+                })}
+              </div>
+            </div>
+          </Reveal>
+          {/* Si el plan falla · qué pasa EXACTAMENTE en la cola que se agota (depletionAgeStats). */}
+          <Reveal delay={270}>
+            {depStats ? (
+              <div style={{ marginTop: 22, padding: '16px 20px', border: '1px solid ' + T.line, borderRadius: 12, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto', textAlign: 'left' }}>
+                <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.amber, marginBottom: 8 }}>Si el plan falla</div>
+                <div style={{ fontFamily: T.serif, fontSize: 17, color: T.ink, lineHeight: 1.5 }}>
+                  En el <b>{100 - successPct} %</b> de futuros que no llegan, la cartera se suele agotar hacia los <b style={{ color: T.amber }}>{depStats.median}</b> — entre los {depStats.p25} y los {depStats.p75}. {seqMode === 'early-crash' ? 'Una crisis nada más jubilarte adelanta el agotamiento: ese es el riesgo de secuencia.' : seqMode === 'late-crash' ? 'Si la crisis llega tarde, ya has acumulado colchón y aguanta más.' : 'Una caída en los primeros años de retiro es lo que más adelanta el agotamiento.'}
+                </div>
+              </div>
+            ) : (
+              <p style={note}>{successPct >= 100 ? `Ningún futuro simulado se queda sin dinero antes de los ${lifeExpectancy}: margen sólido incluso en las peores secuencias.` : `En el ${100 - successPct} % de simulaciones la cartera se agota antes de los ${lifeExpectancy} — el riesgo de secuencia de retornos que la línea recta ignora.`}</p>
+            )}
+          </Reveal>
         </Spread>
 
         {/* 7 · CIERRE · ir a Mes a mes */}

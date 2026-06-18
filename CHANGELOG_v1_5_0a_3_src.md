@@ -1426,3 +1426,23 @@ de FIRE el motor necesitaba Fat, que no existía.
   periodos», sin botón viejo); Plan 10 monedas visibles por defecto + recordatorio plegado; Aprende toggle leído↔no
   leído, **persiste tras recargar** (`interes-compuesto: true`, tarjeta muestra «✓ leído»). `ConceptModal` y el
   calendario inline montan en vivo (descarta error de sintaxis en `modals`); hash baseline `b3ea52b1…` intacto.
+
+## Sprint 3 · Monte Carlo Pro — secuencia de retornos + «si el plan falla» (cascada, 2026-06-18)
+- **Causa raíz**: el motor (`runMonteCarlo`) ya calculaba `percentiles {p10,p25,p50,p75,p90}`, `depletionAgeStats`
+  (`{median,p25,p75,count}`) y aceptaba `opts.sequenceMode` ('random'/'early-crash'/'late-crash'), pero la UI solo
+  mostraba el % de éxito + las 5 bandas + P10/P50/P90. Faltaba **exponer** el riesgo de secuencia y el detalle del fallo.
+- **Cambio** (`screens/index.jsx` `ScreenProyeccion`, Spread «¿Y te dura?»):
+  - Estado `seqMode` ('random' por defecto) cableado al `useMemo` de `mc` (`sequenceMode: seqMode`, aditivo).
+  - **Segmented control** «¿Y si la crisis llega en el peor momento?» — Aleatorio / Crisis al jubilarte / Crisis
+    tardía (mismo patrón Cartel que `DisplayModeToggle`, §6 1.13). Mismas medias, distinto orden → el % de éxito y la
+    nube se recalculan en vivo.
+  - Bloque **«Si el plan falla»** (contorno, eyebrow ámbar) derivado de `depletionAgeStats`: en el N % que no llega,
+    la cartera se agota hacia los `median` (entre `p25` y `p75`), con copy adaptado al `seqMode`. Si no hay
+    agotamientos (100 % éxito) → nota positiva en su lugar (`depStats` null).
+  - **Allocation editable por clase de activo**: ya existía (`AllocRow` en «Editar gastos y asignación →» de Datos,
+    con retorno ponderado `effRetPreview`); no se reconstruye.
+- **No tocado**: `lib/index.js` (motor; solo se consume `opts.sequenceMode`/`depletionAgeStats` ya existentes),
+  firmas, `migrateToV2`, `T`, `LEARN_CORPUS`, claves localStorage, `isPro` (sigue zombie, no gate nada), baseline.
+- **Verificación**: `npm run build` OK (`dist` 1.029 kB); `verify-content`/`verify-state` PASS; navegador: los 3
+  botones renderizan, la píldora activa se mueve al pulsar (`[true,·,·]`→`[·,true,·]`) y el MC se recomputa con la
+  secuencia; consola sin errores; hash baseline `b3ea52b1…` intacto.
