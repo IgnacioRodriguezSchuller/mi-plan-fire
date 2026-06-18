@@ -1482,3 +1482,21 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: `npm run build` OK (`dist` 1.042 kB); `verify-content`/`verify-state` PASS; navegador: el libro
   abre con **35 artículos** (=12+13+10 de `LEARN_LEVELS`) + **4 páginas de diario** + portada + toolbar (Imprimir/PDF,
   Cerrar) + «Próximamente en Amazon»; clase `no-print` presente; consola limpia; hash baseline `b3ea52b1…` intacto.
+
+## Monte Carlo avanzado · colas gruesas (Student-t) — aditivo al motor (cascada, 2026-06-18)
+- **Causa raíz**: el pivot pedía «montecarlo complejo». El MC usaba shocks **normales** (campana), que infravaloran
+  la frecuencia de crisis extremas (los mercados tienen colas más gruesas que la normal).
+- **Cambio**:
+  - `lib/index.js`: nueva `randomStudentT(nu)` (Student-t estandarizado a varianza 1: `t = Z/√(W/ν)`, `W~χ²(ν)`,
+    reescalado `×√((ν-2)/ν)`). En `runMonteCarlo`, `drawShock = opts.fatTails ? ()=>randomStudentT(tailDf) :
+    randomNormal` y la generación de retornos usa `drawShock()`. **100 % aditivo y default-off**: sin `opts.fatTails`,
+    `drawShock === randomNormal` → mismo consumo de `Math.random` → **salida byte-idéntica** al baseline. **No se
+    añade ningún campo al objeto de retorno** (para no crear diffs nuevos en verify-lib).
+  - `screens/index.jsx` `ScreenProyeccion`: estado `fatTails` cableado al `useMemo` del MC (`fatTails`) + **segmented
+    control** «Normal / Colas gruesas» bajo el de secuencia, con una nota cuando está activo.
+- **No tocado**: **firma de `runMonteCarlo`** (solo `opts` opcionales nuevos: `fatTails`, `tailDf`), `projectV2`,
+  `migrateToV2`, `T`, `LEARN_CORPUS`, claves localStorage, `isPro`, baseline.
+- **Verificación**: `npm run build` OK (`dist` 1.043 kB); **`verify-lib` sin diffs nuevos** — los `paths` por defecto
+  son idénticos a antes (24834.20…/23801.45…/25454.41…/22079.85…), solo el set conocido (aporte creciente +5000,
+  `bandsByAge`, `lostFirstYear`); `verify-content`/`verify-state` PASS; navegador: el toggle mueve la píldora activa
+  Normal→Colas gruesas y el MC se recomputa; consola limpia; hash baseline `b3ea52b1…` intacto.

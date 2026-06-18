@@ -613,6 +613,19 @@ export function randomNormal() {
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
+// MC AVANZADO · Student-t estandarizado (varianza 1) para COLAS GRUESAS: t = Z / sqrt(W/ν),
+// con W ~ χ²(ν) = suma de ν normales²; reescalado ×sqrt((ν-2)/ν) para conservar varianza 1
+// (ν>2). Menor ν = colas más gruesas → más crisis extremas que la normal. ADITIVO: el motor
+// solo lo usa cuando opts.fatTails está activo; el camino por defecto sigue en randomNormal
+// (mismo consumo de Math.random → salida idéntica al baseline, verify-lib sin diffs nuevos).
+export function randomStudentT(nu) {
+  const df = Math.max(3, nu | 0);
+  const z = randomNormal();
+  let w = 0;
+  for (let i = 0; i < df; i++) { const n = randomNormal(); w += n * n; }
+  return (z / Math.sqrt(w / df)) * Math.sqrt((df - 2) / df);
+}
+
 // Infer annual standard deviation from expected return.
 // Mapping based on typical asset-class observations:
 //   2-3%  return → 1-2% σ (cash / short-term bonds)
@@ -710,11 +723,17 @@ export function runMonteCarlo(plan, profile, opts = {}) {
   const crashWindow = Math.min(5, yearsTotal);
   const depletionYears = [];
 
+  // MC avanzado · COLAS GRUESAS opcional (opts.fatTails). Default OFF → shock normal, idéntico
+  // al baseline (mismo consumo de Math.random, verify-lib sin diffs nuevos). ON → Student-t:
+  // más masa en escenarios extremos (crisis profundas más probables) → tasa de éxito más honesta.
+  const tailDf = opts.tailDf || 5;
+  const drawShock = opts.fatTails ? () => randomStudentT(tailDf) : randomNormal;
+
   // Build the ordered list of returns for one trial, applying the sequence mode.
   const buildYearReturns = () => {
     const all = new Array(yearsTotal);
     for (let i = 0; i < yearsTotal; i++) {
-      all[i] = Math.exp(muLog + sigma * randomNormal()) - 1;
+      all[i] = Math.exp(muLog + sigma * drawShock()) - 1;
     }
     if (sequenceMode === 'random' || yearsTotal <= crashWindow) return all;
 

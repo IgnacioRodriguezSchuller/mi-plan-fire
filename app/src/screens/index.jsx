@@ -2052,6 +2052,8 @@ export function ScreenProyeccion() {
   // MC Pro · modo de secuencia de retornos (riesgo de orden): 'random' (default),
   // 'early-crash' (crisis nada más jubilarte, el peor caso), 'late-crash' (crisis tardía).
   const [seqMode, setSeqMode] = useState('random');
+  // MC avanzado · colas gruesas (Student-t): crisis extremas más probables que la normal.
+  const [fatTails, setFatTails] = useState(false);
 
   // ── Editables ──
   const retireAge = profile.retireAge;
@@ -2108,7 +2110,7 @@ export function ScreenProyeccion() {
     d.fatEdad != null && { age: d.fatEdad, color: T.muted, fill: false },
   ].filter(Boolean);
 
-  const mc = useMemo(() => { try { return runMonteCarlo(plan, profile, { trials: 400, startCapital: d.currentPortfolio, includeHypothetical: false, sequenceMode: seqMode }); } catch (e) { return null; } }, [plan, profile, d.currentPortfolio, seqMode]);
+  const mc = useMemo(() => { try { return runMonteCarlo(plan, profile, { trials: 400, startCapital: d.currentPortfolio, includeHypothetical: false, sequenceMode: seqMode, fatTails }); } catch (e) { return null; } }, [plan, profile, d.currentPortfolio, seqMode, fatTails]);
   const depStats = mc ? mc.depletionAgeStats : null;
   const successPct = mc ? Math.round(mc.successRate * 100) : 0;
   const bands = mc && mc.bandsByAge ? mc.bandsByAge : [];
@@ -2298,6 +2300,17 @@ export function ScreenProyeccion() {
                   );
                 })}
               </div>
+              {/* MC avanzado · COLAS GRUESAS (Student-t): crisis extremas más probables que la normal (aditivo, motor). */}
+              <div role="group" aria-label="Modelo de retornos" style={{ display: 'inline-flex', gap: 3, padding: 3, background: T.panel, borderRadius: 999, border: '1px solid ' + T.line, marginTop: 4 }}>
+                {[{ id: false, label: 'Normal' }, { id: true, label: 'Colas gruesas' }].map((o) => {
+                  const active = fatTails === o.id;
+                  return (
+                    <button key={String(o.id)} onClick={() => setFatTails(o.id)} aria-pressed={active}
+                      style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '5px 13px', borderRadius: 999, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', background: active ? T.accent : 'transparent', color: active ? T.bg : T.muted, transition: 'background .15s ease, color .15s ease', appearance: 'none', WebkitAppearance: 'none' }}>{o.label}</button>
+                  );
+                })}
+              </div>
+              {fatTails && <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: T.faint, maxWidth: 380, textAlign: 'center', lineHeight: 1.4 }}>Las crisis profundas pesan más que en una campana normal (t-Student): la tasa de éxito baja y se vuelve más honesta.</div>}
             </div>
           </Reveal>
           {/* Si el plan falla · qué pasa EXACTAMENTE en la cola que se agota (depletionAgeStats). */}
