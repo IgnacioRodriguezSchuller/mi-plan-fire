@@ -10,7 +10,7 @@ import {
   compareKeys, isKeyInSegment, findActiveSegment, sumActiveSegments,
   readableMonth, projectV2, sumExpenses,
   buildMortgageSchedule, currentMonthlyAporte, computePlannedFor,
-  computeIncomeFor, toRealEur, estimateSpanishPension,
+  computeIncomeFor, toRealEur, estimateSpanishPension, computeEffectiveCapitalReturn,
   runMonteCarlo,
   getSavingsTier, seedMonths, defaultGoals, computeUserProfile, projectStandardPlan, computeActivePhase,
   computeSinPlanKPIs, fmtEur, parseMonthsCSV,
@@ -2840,12 +2840,47 @@ export function PublicPensionCard({ plan, updatePlan, profile }) {
   );
 }
 
+// Comparador de escenarios · resumen por cuenta/persona con la MISMA fórmula que useDerived
+// (fiTarget = gasto·12/wdr; cruce FIRE deflactando cada punto a € de hoy; patrimonio a la
+// jubilación en nominal) → no contradice al resto de la app. Pura: recibe el state de una
+// cuenta. Cero red. Tolerante a cuentas sin datos (resumen vacío → "—").
+function scenarioSummary(st) {
+  const profile = (st && st.profile) || {};
+  const plan = (st && st.plan) || {};
+  let edadLibertad = null, patrimonioFinal = 0, aporte = 0, ahorroPct = 0;
+  try {
+    const tk = todayKey();
+    const income = computeIncomeFor(plan, tk);
+    const investment = computePlannedFor(plan, tk);
+    const al = plan.actualLife;
+    const monthlyLife = (al && al.completed) ? sumExpenses(al) : Math.max(0, income - investment);
+    const wdr = (plan.withdrawalRate != null ? plan.withdrawalRate : 4.0) / 100;
+    const fiTarget = wdr > 0 ? monthlyLife * 12 / wdr : 0;
+    const effectiveReturn = computeEffectiveCapitalReturn(plan);
+    const series = projectV2(plan, profile, { capital: plan.capital || 0, endAge: 90, includeHypothetical: false, effectiveReturn }) || [];
+    if (fiTarget > 0) {
+      for (let i = 0; i < series.length; i++) {
+        const real = toRealEur(series[i].portfolio || 0, (series[i].age - (profile.age || 0)) * 12, plan.inflationRate);
+        if (real >= fiTarget) { edadLibertad = Math.ceil(series[i].age); break; }
+      }
+    }
+    const retire = profile.retireAge != null ? profile.retireAge : 65;
+    const atRetire = series.find((r) => r.age >= retire) || series[series.length - 1];
+    patrimonioFinal = atRetire ? (atRetire.portfolio || 0) : 0;
+    aporte = Math.round(currentMonthlyAporte(plan) || 0);
+    ahorroPct = income > 0 ? Math.round((investment / income) * 100) : 0;
+  } catch (e) { /* cuenta sin datos suficientes → resumen vacío */ }
+  return { edadLibertad, patrimonioFinal, aporte, ahorroPct };
+}
+
 export function AccountsCard() {
   const { accounts, activeAccountId, switchAccount, createAccount, renameAccount, deleteAccount } = useStore();
   const [renaming, setRenaming] = useState(null);
   const [draftLabel, setDraftLabel] = useState('');
   const list = Object.values(accounts || {});
   const hasMultiple = list.length > 1;
+  // Resumen comparativo por persona (memoizado; recalcula al cambiar las cuentas).
+  const compareRows = useMemo(() => hasMultiple ? list.map((a) => ({ id: a.id, label: a.label, s: scenarioSummary(a.state) })) : [], [accounts, hasMultiple]);
 
   const beginRename = (a) => { setRenaming(a.id); setDraftLabel(a.label); };
   const commitRename = () => {
@@ -2922,6 +2957,35 @@ export function AccountsCard() {
           );
         })}
       </div>
+
+      {/* Comparador de escenarios · solo con 2+ personas. Edad de libertad (★) + patrimonio a la
+          jubilación de cada una, con su propio plan. Cifras con la misma fórmula que el resto. */}
+      {hasMultiple && (
+        <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line }}>
+          <Label style={{ marginBottom: 10 }}>Comparar escenarios</Label>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {compareRows.map((r) => {
+              const active = r.id === activeAccountId;
+              return (
+                <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr 1fr', gap: 12, alignItems: 'baseline', padding: '10px 0', borderBottom: '1px solid ' + T.lineSoft }}>
+                  <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.body, color: active ? T.accent : T.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: T.tracking.tight }}>{r.label}</div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 11, color: T.faint }}>libre a los</div>
+                    <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: r.s.edadLibertad != null ? T.green : T.faint, letterSpacing: T.tracking.tight }}>{r.s.edadLibertad != null ? '★ ' + r.s.edadLibertad : '—'}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 11, color: T.faint }}>patrimonio</div>
+                    <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(r.s.patrimonioFinal)}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, marginTop: 10, lineHeight: T.lh.normal }}>
+            Edad de libertad y patrimonio a la jubilación de cada persona, con su propio plan. Cambia cualquiera en su pestaña y la diferencia se ve aquí.
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

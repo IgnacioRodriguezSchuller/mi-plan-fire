@@ -1556,3 +1556,22 @@ de FIRE el motor necesitaba Fat, que no existía.
   `BookView`/`book-overlay`/`window.print` = 0); `verify-content`/`verify-state` PASS; navegador (server fresco):
   desplegable abre con portada + «qué contiene» + «gratis = web» + «Próximamente en Amazon», **sin** botón de
   imprimir; consola limpia; hash baseline `b3ea52b1…` intacto.
+
+## Comparador de escenarios (Pro fase B) · por persona/cuenta (siguiente sprint, 2026-06-19)
+- **Causa raíz**: la app ya tiene **multi-cuenta** (cada persona = un escenario aislado: pareja, hijo, escenario
+  alternativo), pero no había forma de **compararlas** de un vistazo.
+- **Cambio** (`screens/index.jsx`): helper puro **`scenarioSummary(state)`** que, por cuenta, calcula la **edad de
+  libertad** (cruce FIRE deflactando cada punto a € de hoy) y el **patrimonio a la jubilación** con la **MISMA
+  fórmula que `useDerived`** (`fiTarget = gasto·12/wdr`, `projectV2` con `effectiveReturn`) → no contradice al resto
+  de la app. En `AccountsCard` (Datos), con **2+ personas**, una tabla **«Comparar escenarios»**: por persona,
+  nombre + ★ edad de libertad + patrimonio final; la activa en acento. Memoizado (`useMemo` sobre `accounts`).
+- **No tocado**: motor (solo se consume), `migrateToV2`, `T`, `LEARN_CORPUS`, claves localStorage, `isPro`, baseline.
+- **Decisiones del dueño de este sprint**: (1) **«versión pro» = gratis** — `isPro` no gate nada (campo zombie); se
+  deja tal cual, todo accesible sin muro. **Cero código.** (2) **Sync multidispositivo en la nube**: aprobado por el
+  dueño pero **NO se implementa aquí** — requiere backend (auth + BD + hosting) que no existe ni se provisiona desde
+  el repo, y rompe «cero red» con datos financieros; queda como **proyecto de infra aparte** (elegir backend →
+  construir la capa de sync). No se falsea ningún `fetch`.
+- **Verificación**: `npm run build` OK (`dist` 1.042 kB); `verify-content`/`verify-state` PASS; navegador (2 cuentas
+  inyectadas): «Comparar escenarios» con 2 filas — **la fila de la cuenta activa coincide exactamente con su KPI**
+  (★42 / 7,18 M€), y el patrimonio difiere por cuenta (2,92 M€ con jubilación a 50) → helper fiel y per-cuenta;
+  consola limpia; hash baseline `b3ea52b1…` intacto.
