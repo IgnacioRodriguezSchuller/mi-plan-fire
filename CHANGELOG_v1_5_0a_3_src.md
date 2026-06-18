@@ -1391,3 +1391,38 @@ de FIRE el motor necesitaba Fat, que no existía.
   — sin diffs nuevos; navegador (demo Alex): toggle en Hero conmuta nominal↔real en toda la pantalla; tramos
   colapsados al cargar (0 inputs de importe), expanden/editan; **aporte 18 % +50 € → 20,083 %** = (432+50)/2400,
   mismo `id`/etiqueta (suma, no sustituye); consola sin errores de React; hash baseline `b3ea52b1…` intacto.
+
+## Redondeo global de % + calendario inline + monedas M2 por defecto + marcar Aprende como leído (2026-06-18)
+- **Causa raíz**: (1) **Float crudo en la UI** — la tasa de ahorro recalculada por `applyBump` (Sprint 1) se
+  guardaba y mostraba sin redondear: «Aporte 22.166666666666668 % del ingreso» (reportado con captura). (2)
+  *Seguimiento*: el calendario completo vivía tras «Ver calendario completo →» en un **modal**; se pedía verlo
+  **desde el inicio**. (3) *Plan*: las **monedas del M2** estaban tras «Ver el detalle →» (densidad S8); se pedían
+  visibles por defecto. (4) *Aprende*: «leído» se **auto-marcaba al abrir** (poco fiable) y el indicador solo
+  salía en las tarjetas de Conceptos; se pedía un **control explícito** y verlo al volver.
+- **Cambio**:
+  - **Redondeo** (`screens/index.jsx`): helper de módulo `fmtPctView(n)` (máx 1 decimal, sin coma colgando,
+    separador es-ES). `applyBump` redondea el % a 1 decimal **antes de persistir** (no más floats de 17 dígitos en
+    `localStorage`). `savingsPct` se redondea en lectura (limpia también valores feos ya guardados). Aplicado a la
+    fila del aporte (`CartelTramoRow`) y a los `{seg.value}%` de los tramos de los meses. (Las cifras € ya pasaban
+    por `fmtEur`/`fmtNum`; los `%` ya tenían `toFixed(0/1/2)` salvo estos.)
+  - **Calendario inline** (`modals/index.jsx` + `screens/index.jsx`): `MonthlyCalendarModal` gana modo `inline`
+    (mismo grid + editor de detalle + «añadir periodos», sin overlay, sin lock de scroll, sin botón cerrar, sin
+    captura global de Escape). `ScreenMesAMes` lo renderiza **siempre** donde estaba el botón; se retira el estado
+    `showCalendar`, el botón y el modal flotante.
+  - **Monedas M2** (`screens/index.jsx` `ScreenHoy`): `monedas()` sale del disclosure `verMasFuturo` y se muestra
+    **desde el primer momento**; solo el **recordatorio en € de hoy** (real) queda plegado tras «Ver el equivalente
+    en € de hoy →» (antes «Ver el detalle →»). `verMasFuturo` se conserva (ahora solo gobierna el recordatorio).
+  - **Aprende «leído»** (`screens/index.jsx` `ScreenAprende` + `modals/index.jsx` `ConceptModal`): se sustituye el
+    auto-marcado-al-abrir por un **control explícito** dentro del concepto (`onToggleRead`): botón «Marcar como
+    leído» (contorno) ↔ «✓ Leído» (verde sólido). Persiste en `plan.readLessons` (aditivo). El indicador «✓ leído»
+    se muestra ahora también en el **Glosario** y pasa a **verde** (antes `T.faint`) en las tarjetas de Conceptos.
+- **No tocado**: motor (`lib/index.js`: `projectV2`/`runMonteCarlo`/`findActiveSegment`/firmas), `migrateToV2`,
+  objeto `T`, `LEARN_CORPUS` (solo se referencia), claves localStorage, `schemaVersion 2`, `isPro`, baseline. El
+  redondeo es de **presentación/handler**; `readLessons` es un campo **aditivo** del plan (no rompe roundtrip).
+- **Verificación**: `npm run build` OK (`dist/index.html` 1.027 kB); `verify-content`/`verify-state` PASS;
+  tokens/lib en estado conocido (sin diffs nuevos: Fraunces; aporte creciente MC; `bandsByAge`; `lostFirstYear`);
+  navegador (estado real, demo): el aporte `20.083333333333332` se muestra **«20,1 %»** y `anyUglyFloat: []` en todo
+  el DOM (Proyección/Seguimiento/Plan/Aprende); Seguimiento calendario inline (24 celdas, leyenda, «añadir
+  periodos», sin botón viejo); Plan 10 monedas visibles por defecto + recordatorio plegado; Aprende toggle leído↔no
+  leído, **persiste tras recargar** (`interes-compuesto: true`, tarjeta muestra «✓ leído»). `ConceptModal` y el
+  calendario inline montan en vivo (descarta error de sintaxis en `modals`); hash baseline `b3ea52b1…` intacto.

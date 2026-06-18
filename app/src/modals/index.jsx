@@ -234,9 +234,10 @@ export function WhyDifferentModal({ onClose }) {
 }
 
 
-export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensureMonth, update, onClose }) {
+export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensureMonth, update, onClose, inline = false }) {
   const [activeKey, setActiveKey] = useState(null);
   useEffect(() => {
+    if (inline) return;  // inline: vive en el flujo de la página, sin lock de scroll ni captura global de Escape
     const onKey = (e) => { if (e.key === 'Escape') { if (activeKey) setActiveKey(null); else onClose(); } };
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
@@ -245,7 +246,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [onClose, activeKey]);
+  }, [onClose, activeKey, inline]);
 
   // Re-derivar el mes activo desde grouped (siempre fresco tras updates).
   const activeMonth = activeKey ? grouped.flatMap(([_, ms]) => ms).find(m => m.key === activeKey) : null;
@@ -257,23 +258,26 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
     return [new Date().getFullYear()];
   }, [grouped]);
 
-  return (
-    <div onClick={onClose} style={{
-      position: 'fixed', inset: 0, background: 'rgba(26,22,18,0.55)',
-      zIndex: 1100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-      padding: '24px 16px', overflowY: 'auto',
-    }}>
-      <div onClick={(e) => e.stopPropagation()} style={{
+  const body = (
+      <div onClick={(e) => e.stopPropagation()} style={inline ? {
+        background: T.bg, width: '100%',
+        borderRadius: 14, padding: 'clamp(20px, 3vw, 30px)',
+        fontFamily: T.serif, color: T.ink,
+        border: '1px solid ' + T.line,
+        position: 'relative',
+      } : {
         background: T.bg, maxWidth: 760, width: '100%',
         borderRadius: 14, padding: 'clamp(22px, 4vw, 36px)',
         fontFamily: T.serif, color: T.ink,
         boxShadow: '0 24px 60px rgba(26,22,18,0.3)',
         position: 'relative',
       }}>
-        <button onClick={onClose} aria-label="Cerrar"
-          style={{ position: 'absolute', top: 14, right: 14, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, padding: 8, letterSpacing: T.tracking.wider }}>
-          ✕ CERRAR
-        </button>
+        {!inline && (
+          <button onClick={onClose} aria-label="Cerrar"
+            style={{ position: 'absolute', top: 14, right: 14, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, padding: 8, letterSpacing: T.tracking.wider }}>
+            ✕ CERRAR
+          </button>
+        )}
         <Label>Calendario completo</Label>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, marginTop: 4, marginBottom: 18 }}>
           Tu año en aportaciones.
@@ -381,6 +385,14 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
           <Btn variant="ghost" size="sm" onClick={() => addMonths(12)}>+ 1 año</Btn>
         </div>
       </div>
+  );
+  return inline ? body : (
+    <div onClick={onClose} style={{
+      position: 'fixed', inset: 0, background: 'rgba(26,22,18,0.55)',
+      zIndex: 1100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+      padding: '24px 16px', overflowY: 'auto',
+    }}>
+      {body}
     </div>
   );
 }
@@ -536,7 +548,7 @@ export function Concept({ id, children, inline = true }) {
 }
 
 
-export function ConceptModal({ id, onClose }) {
+export function ConceptModal({ id, onClose, read = false, onToggleRead }) {
   // Hooks first, then guard (Rules of Hooks).
   const [activeRelated, setActiveRelated] = useState(null);
   useEffect(() => {
@@ -673,7 +685,25 @@ export function ConceptModal({ id, onClose }) {
           </div>
         )}
 
-        <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, lineHeight: T.lh.relaxed, color: T.faint }}>
+        {/* Marcar/desmarcar como leído · control EXPLÍCITO (persistente en plan.readLessons).
+            Verde sólido = leído; contorno = sin leer. Común a artículo y glosario. */}
+        {onToggleRead && (
+          <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid ' + T.lineSoft }}>
+            <button onClick={onToggleRead} aria-pressed={read}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase',
+                padding: '8px 16px', borderRadius: 999, cursor: 'pointer',
+                background: read ? T.green : 'transparent',
+                color: read ? T.bg : T.muted,
+                border: '1px solid ' + (read ? T.green : T.line),
+                appearance: 'none', WebkitAppearance: 'none',
+              }}>
+              {read ? '✓ Leído' : 'Marcar como leído'}
+            </button>
+          </div>
+        )}
+        <div style={{ marginTop: onToggleRead ? 18 : 32, paddingTop: onToggleRead ? 0 : 20, borderTop: onToggleRead ? 'none' : '1px solid ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, lineHeight: T.lh.relaxed, color: T.faint }}>
           Contenido educativo. No es asesoramiento financiero ni de inversión.
         </div>
       </div>

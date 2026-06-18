@@ -55,6 +55,14 @@ const INCLUDE_POSSIBLE = false;
 const VERDICT_COLOR = { adelantado: T.green, 'en-linea': T.accent, atrasado: T.amber, 'no-llega': T.amber, 'sin-datos': T.muted };
 const VERDICT_NEXTSTEP_TONE = { adelantado: 'forward', 'en-linea': 'forward', atrasado: 'behind', 'no-llega': 'behind', 'sin-datos': 'forward' };
 
+// Redondeo de PORCENTAJES para presentación · evita que un float crudo (p.ej.
+// 22.166666666666668 de una tasa recalculada) se filtre a la UI. Máx 1 decimal, sin
+// coma decimal colgando, separador es-ES (coma). Para CIFRAS € usar fmtEur/fmtNum.
+const fmtPctView = (n) => {
+  const r = Math.round((Number(n) || 0) * 10) / 10;
+  return Number.isInteger(r) ? String(r) : r.toFixed(1).replace('.', ',');
+};
+
 // Control de vista global de Proyección: cómo mostrar las cifras. Segmented Cartel
 // (Nominal / € de hoy). Vive arriba (Hero), afecta a toda la pantalla. Antes era un switch
 // "Ajustar por inflación" al final de Asunciones (doctrina §6 1.12+: control de vista global arriba).
@@ -1466,17 +1474,16 @@ export function ScreenHoy({ goTo }) {
                   <>
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 21 : 24, color: T.muted, letterSpacing: T.tracking.tight, lineHeight: 1.15 }}>{headL1}</div>
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 27 : 33, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1.1, marginTop: 4 }}>{headL2}</div>
-                    {/* Densidad (S8 · GX2): las monedas y el recordatorio real se colapsan tras
-                        «Ver el detalle →» para que el foco por defecto sea el titular + la renta. */}
+                    {/* Las monedas se ven DESDE EL PRIMER MOMENTO (decisión de producto): son el
+                        detalle visual del bloque, no algo que haya que desplegar. Solo el recordatorio
+                        en € de hoy (real) queda tras «Ver el equivalente…» (densidad S8 · GX2). */}
+                    {monedas()}
                     {verMasFuturo ? (
-                      <>
-                        {monedas()}
-                        <div style={{ fontFamily: T.serif, color: T.muted, fontSize: 16, lineHeight: T.lh.normal, marginTop: mobile ? 14 : 16 }}>
-                          Recuerda: ajustado por la inflación, ese patrimonio equivale a <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong> de 2026.
-                        </div>
-                      </>
+                      <div style={{ fontFamily: T.serif, color: T.muted, fontSize: 16, lineHeight: T.lh.normal, marginTop: mobile ? 14 : 16 }}>
+                        Recuerda: ajustado por la inflación, ese patrimonio equivale a <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(finalReal)}</strong> de 2026.
+                      </div>
                     ) : (
-                      <div style={{ marginTop: 12 }}><CartelBtn variant="text" onClick={() => setVerMasFuturo(true)}>Ver el detalle →</CartelBtn></div>
+                      <div style={{ marginTop: 12 }}><CartelBtn variant="text" onClick={() => setVerMasFuturo(true)}>Ver el equivalente en € de hoy →</CartelBtn></div>
                     )}
                   </>
                 )}
@@ -1541,7 +1548,8 @@ export function WhatIfCard({ d, plan }) {
     const s = segs[idx];
     if (s.type === 'percent') {
       const income = computeIncomeFor(p, tk);
-      const newPct = income > 0 ? ((computePlannedFor(p, tk) + bump) / income) * 100 : (Number(s.value) || 0);
+      const rawPct = income > 0 ? ((computePlannedFor(p, tk) + bump) / income) * 100 : (Number(s.value) || 0);
+      const newPct = Math.round(rawPct * 10) / 10;  // 1 decimal · no persistir floats de 17 dígitos
       return { ...p, savingSegments: segs.map((seg, i) => i === idx ? { ...seg, value: newPct } : seg) };
     }
     return { ...p, savingSegments: segs.map((seg, i) => i === idx ? { ...seg, value: (Number(seg.value) || 0) + bump } : seg) };
@@ -1590,8 +1598,6 @@ export function ScreenMesAMes() {
   const { state, setMonth, update } = useStore();
   const d = useDerived();
   const { months } = state;
-  // B5 · Calendar modal toggle.
-  const [showCalendar, setShowCalendar] = useState(false);
   // Bento · el gráfico "plan vs realidad" vive tras disclosure (P3). Función intacta.
   const [showVsPlan, setShowVsPlan] = useState(false);
 
@@ -1760,8 +1766,18 @@ export function ScreenMesAMes() {
           <MonthRow key={m.key} month={m} isCurrent={m.key === currentKey} onChange={(patch) => setMonth(m.key, patch)} />
         ))}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 14, borderTop: '1px dashed ' + T.line, flexWrap: 'wrap' }}>
-        <CartelBtn variant="text" onClick={() => setShowCalendar(true)}>Ver calendario completo →</CartelBtn>
+      {/* Calendario completo · INLINE desde el inicio (antes tras «Ver calendario completo →» en modal).
+          Mismo componente en modo `inline`: sin overlay, sin lock de scroll, en el flujo de la página. */}
+      <div style={{ paddingTop: 4 }}>
+        <MonthlyCalendarModal
+          inline
+          grouped={grouped}
+          plan={state.plan}
+          setMonth={setMonth}
+          addMonths={addMonths}
+          ensureMonth={ensureMonth}
+          update={update}
+        />
       </div>
       <div style={{ paddingTop: 14 }}>
         <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, fontStyle: 'italic', lineHeight: T.lh.normal }}>
@@ -1769,17 +1785,6 @@ export function ScreenMesAMes() {
         </div>
       </div>
 
-      {showCalendar && (
-        <MonthlyCalendarModal
-          grouped={grouped}
-          plan={state.plan}
-          setMonth={setMonth}
-          addMonths={addMonths}
-          ensureMonth={ensureMonth}
-          update={update}
-          onClose={() => setShowCalendar(false)}
-        />
-      )}
     </div>
   );
 }
@@ -1835,7 +1840,7 @@ export function MonthRow({ month, isCurrent, onChange }) {
             </div>
             {seg && seg.type === 'percent' && incomeAtMonth > 0 && (
               <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 1, letterSpacing: T.tracking.wide, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {seg.value}% · {fmtEur(incomeAtMonth)}
+                {fmtPctView(seg.value)}% · {fmtEur(incomeAtMonth)}
               </div>
             )}
           </div>
@@ -1907,7 +1912,7 @@ export function MonthRow({ month, isCurrent, onChange }) {
         </div>
         {seg && seg.type === 'percent' && incomeAtMonth > 0 && (
           <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 1, letterSpacing: T.tracking.wide }}>
-            {seg.value}% · {fmtEur(incomeAtMonth)}
+            {fmtPctView(seg.value)}% · {fmtEur(incomeAtMonth)}
           </div>
         )}
       </div>
@@ -2056,7 +2061,7 @@ export function ScreenProyeccion() {
   const incomeNow = computeIncomeFor(plan, todayKey());
   const aporte = Math.round(currentMonthlyAporte(plan) || 0);
   const savingSeg = findActiveSegment(plan.savingSegments, todayKey());
-  const savingsPct = savingSeg && savingSeg.type === 'percent' ? savingSeg.value : (incomeNow > 0 ? Math.round((aporte / incomeNow) * 100) : 0);
+  const savingsPct = savingSeg && savingSeg.type === 'percent' ? Math.round(savingSeg.value * 10) / 10 : (incomeNow > 0 ? Math.round((aporte / incomeNow) * 100) : 0);
   const salarioNow = Math.round(sumActiveSegments(plan.incomeSegments, todayKey()));
   const complementosNow = Math.round(sumActiveSegments(plan.bonusSegments, todayKey()));
   const nSalario = (plan.incomeSegments || []).length;
@@ -2230,7 +2235,7 @@ export function ScreenProyeccion() {
               <div style={{ textAlign: 'left', marginTop: 12 }}><CartelBtn variant="text" onClick={() => m.addBonus()}>+ añadir complemento</CartelBtn></div>
             </>)}
             <div style={subhead}>Aporte</div>
-            <CartelTramoRow name={`Aporte ${savingsPct} % del ingreso`} dates={savingSeg ? tramoDates(savingSeg) : ''} staticAmt={`≈ ${fmtNum(aporte)} €/mes`} />
+            <CartelTramoRow name={`Aporte ${fmtPctView(savingsPct)} % del ingreso`} dates={savingSeg ? tramoDates(savingSeg) : ''} staticAmt={`≈ ${fmtNum(aporte)} €/mes`} />
           </Reveal>
           {hayPosibles && <Reveal delay={140}><p style={note}>Eventos y boosts incluidos: a los {retireAge} llegarías a {fmtMoneyBig(finalConPosible)}.</p></Reveal>}
         </Spread>
@@ -3891,13 +3896,13 @@ export function ScreenAprende() {
   // Súbelo (p.ej. a 0.40) si quedan poco legibles como clicables en device real.
   const INACTIVE_OPACITY = 0.35;
 
-  // "Leído" persistente (para retomar): se marca al ABRIR un concepto. Vive en
-  // plan.readLessons ({id:true}, patrón de phaseManualChecks); default en lectura, sin
-  // tocar migrateToV2 ni LEARN_CORPUS (contenido editorial cerrado, solo se referencia).
+  // "Leído" persistente (para retomar): el usuario lo marca/desmarca EXPLÍCITAMENTE con un
+  // control dentro del concepto (antes se auto-marcaba solo con abrir, poco fiable). Vive en
+  // plan.readLessons ({id:true}); aditivo, sin tocar migrateToV2 ni LEARN_CORPUS (cerrado).
   const { state, mutatePlan } = useStore();
   const readLessons = (state.plan && state.plan.readLessons) || {};
-  const markRead = (id) => { if (id && !readLessons[id]) mutatePlan(p => ({ ...p, readLessons: { ...(p.readLessons || {}), [id]: true } })); };
-  const openConcept = (id) => { markRead(id); setActiveId(id); };
+  const toggleRead = (id) => { if (!id) return; mutatePlan(p => { const cur = p.readLessons || {}; return { ...p, readLessons: { ...cur, [id]: !cur[id] } }; }); };
+  const openConcept = (id) => setActiveId(id);
 
   const allConcepts = Object.entries(LEARN_CORPUS).map(([id, c]) => ({ id, ...c }));
   // For the Conceptos tab, surface every entry of LEARN_CORPUS as a card —
@@ -4054,7 +4059,7 @@ export function ScreenAprende() {
                       <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>
                         {LEARN_LEVEL_LABELS[lvlId] || 'Avanzado'}
                       </span>
-                      {readLessons[c.id] && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.faint }}>✓ leído</span>}
+                      {readLessons[c.id] && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.green }}>✓ leído</span>}
                     </div>
                   </div>
                   <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, lineHeight: T.lh.snug, color: T.ink, letterSpacing: T.tracking.tight }}>
@@ -4103,7 +4108,10 @@ export function ScreenAprende() {
                       <span style={{ fontSize: T.size.lead, color: T.ink }}>{c.title}</span>
                       <span style={{ fontSize: T.size.body, color: T.muted, marginLeft: 12 }}>— {c.short}</span>
                     </span>
-                    <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint }}>→</span>
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexShrink: 0 }}>
+                      {readLessons[c.id] && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.green }}>✓ leído</span>}
+                      <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint }}>→</span>
+                    </span>
                   </button>
                 ))}
               </div>
@@ -4116,7 +4124,7 @@ export function ScreenAprende() {
         {LEARN_DISCLAIMER}
       </footer>
 
-      {activeId && <ConceptModal id={activeId} onClose={() => setActiveId(null)} />}
+      {activeId && <ConceptModal id={activeId} read={!!readLessons[activeId]} onToggleRead={() => toggleRead(activeId)} onClose={() => setActiveId(null)} />}
     </div>
   );
 }
