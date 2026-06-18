@@ -1360,3 +1360,34 @@ de FIRE el motor necesitaba Fat, que no existía.
   tokens/lib en estado conocido (sin diffs nuevos); navegador (demo): bento a 720 centrado, anillos 26/13/2%,
   edición al tocar OK, reparto sin pico (eje 0–3,8k€), cuenta «Alex»; consola sin errores de React (solo warnings
   dev de Recharts «width(0)» al montar, eliminados en el build de producción); hash baseline `b3ea52b1…` intacto.
+
+## Proyección · toggle de vista arriba + tramos colapsables + FIX del aporte + auditoría (Sprint 1, 2026-06-18)
+- **Causa raíz**: tres problemas en Proyección. (1) El toggle Nominal/«€ de hoy» (`DisplayModeToggle`) vivía
+  enterrado en el Spread 5 (Asunciones) pese a ser un control de vista que afecta a **toda** la pantalla. (2) Los
+  tramos de Salario base / Complementos siempre desplegados saturaban el Spread de Ingresos. (3) **Bug del aporte
+  en `WhatIfCard`**: «aplicar +X €» **sustituía** el aporte base en vez de sumarlo. El motor lee los segmentos de
+  ahorro con `findActiveSegment` = *«last matching wins»* (override, NO suma); el handler añadía un segmento de
+  ahorro **solapado** con el activo → el motor leía solo el nuevo (el extra) e ignoraba el aporte base.
+- **Cambio** (`screens/index.jsx`, solo UI/handler — firmas del motor intactas):
+  - **1.1** `DisplayModeToggle` rediseñado a **segmented control Cartel** («Nominal» / «€ de hoy», mono, píldora
+    activa en `T.accent`) y **movido al Hero** (Spread 1); retirado de Asunciones (queda una nota que remite arriba).
+  - **1.2** Salario base y Complementos **colapsables** tras fila-resumen («… · {actual} €/mes» + `▸ editar`/
+    `▾ ocultar`), por defecto cerrados (`openSalario`/`openComplementos`); al abrir, los `CartelTramoRow` editables
+    + «añadir tramo». El aporte se queda estático.
+  - **1.3 FIX**: `applyBump(p)` **modifica el segmento de ahorro activo en su sitio** (ya no añade uno solapado):
+    si es `percent` recalcula el % para que el € efectivo sea `computePlannedFor(hoy) + bump` (mantiene el ligado al
+    salario); si es `fixed`, `value += bump`; si no hay segmento activo, crea uno desde hoy. La **preview** y el
+    **aplicar** comparten `applyBump` → la edad de libertad que se previsualiza casa con la confirmada.
+  - **1.4** Coherencia real/nominal: las bandas del Monte Carlo se **deflactan** (`bandsShown`) cuando
+    `displayMode==='real'` (antes el hero deflactaba pero las bandas seguían nominales).
+- **No tocado**: firmas `projectV2`/`runMonteCarlo`, `migrateToV2`, `findActiveSegment` y el resto del motor
+  (`lib/index.js`), objeto `T`, `LEARN_CORPUS`, claves localStorage, `schemaVersion 2`, `isPro`, baseline. El fix
+  vive **fuera del motor** (en el handler): no se cambió la semántica «last matching wins» de los segmentos.
+- **Auditoría — fragilidades anotadas (NO arregladas, en `BUGS_ENCONTRADOS.md`)**: canary `fiTargetImplausible`
+  (umbral ×5 arbitrario), volatilidad MC por tabla fija (`inferVolatility`), pensión hardcodeada a España
+  (`estimateSpanishPension`), Coast/Fat devuelven `null` en silencio fuera de rango.
+- **Verificación**: `npm run build` OK (`dist/index.html` 1.026 kB); `verify-content`/`verify-state` PASS;
+  tokens/lib en estado conocido (solo divergencias previas: Fraunces, campos aditivos `bandsByAge`/`lostFirstYear`)
+  — sin diffs nuevos; navegador (demo Alex): toggle en Hero conmuta nominal↔real en toda la pantalla; tramos
+  colapsados al cargar (0 inputs de importe), expanden/editan; **aporte 18 % +50 € → 20,083 %** = (432+50)/2400,
+  mismo `id`/etiqueta (suma, no sustituye); consola sin errores de React; hash baseline `b3ea52b1…` intacto.

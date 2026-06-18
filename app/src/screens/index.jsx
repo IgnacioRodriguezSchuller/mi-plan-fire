@@ -55,45 +55,35 @@ const INCLUDE_POSSIBLE = false;
 const VERDICT_COLOR = { adelantado: T.green, 'en-linea': T.accent, atrasado: T.amber, 'no-llega': T.amber, 'sin-datos': T.muted };
 const VERDICT_NEXTSTEP_TONE = { adelantado: 'forward', 'en-linea': 'forward', atrasado: 'behind', 'no-llega': 'behind', 'sin-datos': 'forward' };
 
+// Control de vista global de Proyección: cómo mostrar las cifras. Segmented Cartel
+// (Nominal / € de hoy). Vive arriba (Hero), afecta a toda la pantalla. Antes era un switch
+// "Ajustar por inflación" al final de Asunciones (doctrina §6 1.12+: control de vista global arriba).
 export function DisplayModeToggle() {
   const { state, update, activePlan } = useStore();
   const mode = state.displayMode || 'nominal';
-  const on = mode === 'real';
   const infl = activePlan.inflationRate != null ? activePlan.inflationRate : 2.5;
-  const toggle = () => update({ displayMode: on ? 'nominal' : 'real' });
+  const opts = [
+    { id: 'nominal', label: 'Nominal', title: 'Cifras en valor nominal (los euros que tendrás, sin descontar inflación)' },
+    { id: 'real', label: '€ de hoy', title: 'Cifras en poder adquisitivo actual (descuenta ' + infl + '% anual)' },
+  ];
   return (
-    <div
-      title={on
-        ? ('Cifras en poder adquisitivo actual (descuenta ' + infl + '% anual)')
-        : 'Cifras en valor nominal (sin descontar inflación)'}
+    <div role="group" aria-label="Cómo mostrar las cifras"
       style={{
-        display: 'inline-flex', alignItems: 'center', gap: 10,
-        padding: '6px 12px',
-        background: T.panel, borderRadius: 999, border: '1px solid ' + T.line,
-        whiteSpace: 'nowrap', flexShrink: 0,
+        display: 'inline-flex', alignItems: 'center', gap: 3, padding: 3,
+        background: T.panel, borderRadius: 999, border: '1px solid ' + T.line, flexShrink: 0,
       }}>
-      <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted }}>
-        Ajustar por inflación
-      </span>
-      <button onClick={toggle}
-        aria-pressed={on}
-        aria-label={on ? 'Desactivar ajuste por inflación' : 'Activar ajuste por inflación'}
-        style={{
-          position: 'relative', width: 40, height: 22, padding: 0,
-          background: on ? T.accent : T.line,
-          border: 'none', borderRadius: 999, cursor: 'pointer',
-          transition: 'background 0.15s ease',
-        }}>
-        <span style={{
-          position: 'absolute', top: 2, left: on ? 20 : 2,
-          width: 18, height: 18, borderRadius: '50%',
-          background: '#fff', transition: 'left 0.15s ease',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
-        }} />
-      </button>
-      <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, color: on ? T.accent : T.faint, fontWeight: 600 }}>
-        {on ? 'I' : 'O'}
-      </span>
+      {opts.map((o) => {
+        const active = mode === o.id;
+        return (
+          <button key={o.id} onClick={() => update({ displayMode: o.id })} title={o.title} aria-pressed={active}
+            style={{
+              fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase',
+              padding: '5px 13px', borderRadius: 999, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+              background: active ? T.accent : 'transparent', color: active ? T.bg : T.muted,
+              transition: 'background 0.15s ease, color 0.15s ease', appearance: 'none', WebkitAppearance: 'none',
+            }}>{o.label}</button>
+        );
+      })}
     </div>
   );
 }
@@ -1537,8 +1527,27 @@ export function WhatIfCard({ d, plan }) {
   const { state, mutatePlan } = useStore();
   const { profile } = state;
   const fiTarget = d.fiTarget;
-  const sim = useMemo(() => projectV2(plan, profile, {
-    capital: d.currentPortfolio, extraMonthly: bump, includeHypothetical: false, endAge: 90,
+  // "Aplicar" sube el aporte ACTIVO a (efectivo actual + extra) modificándolo EN SU SITIO — NO se
+  // añade un segmento solapado, porque el motor lee los ahorros con findActiveSegment ("el último
+  // que matchea gana", NO suma): un segmento nuevo sustituía al base (era el bug). Si el aporte es %,
+  // se sube el % para que hoy = actual+extra (sigue ligado al salario); si es fijo, se suma. La
+  // preview proyecta EXACTAMENTE ese plan → coincide con lo que pasa al confirmar.
+  const applyBump = (p) => {
+    const tk = todayKey();
+    const segs = p.savingSegments && p.savingSegments.length ? [...p.savingSegments] : [];
+    let idx = -1;
+    for (let i = 0; i < segs.length; i++) if (isKeyInSegment(tk, segs[i])) idx = i;
+    if (idx < 0) return { ...p, savingSegments: [...segs, { id: uid(), from: tk, to: null, type: 'fixed', value: bump, label: 'Aporte' }] };
+    const s = segs[idx];
+    if (s.type === 'percent') {
+      const income = computeIncomeFor(p, tk);
+      const newPct = income > 0 ? ((computePlannedFor(p, tk) + bump) / income) * 100 : (Number(s.value) || 0);
+      return { ...p, savingSegments: segs.map((seg, i) => i === idx ? { ...seg, value: newPct } : seg) };
+    }
+    return { ...p, savingSegments: segs.map((seg, i) => i === idx ? { ...seg, value: (Number(seg.value) || 0) + bump } : seg) };
+  };
+  const sim = useMemo(() => projectV2(applyBump(plan), profile, {
+    capital: d.currentPortfolio, includeHypothetical: false, endAge: 90,
   }), [profile, d.currentPortfolio, plan, bump]);
   const newAge = useMemo(() => {
     if (!(fiTarget > 0)) return null;
@@ -1572,15 +1581,7 @@ export function WhatIfCard({ d, plan }) {
           ? <>Serías libre a los <b style={{ color: T.green, fontWeight: 600 }}>{newAgeCeil}</b>{adelanta != null && adelanta > 0 ? <> — adelantas <b style={{ color: T.green, fontWeight: 600 }}>{adelanta}</b> {adelanta === 1 ? 'año' : 'años'}.</> : '.'}</>
           : <>Con este aporte tu número aún no llega.</>}
       </div>
-      <CartelBtn variant="text" style={{ marginTop: 14 }} onClick={() => mutatePlan(p => {
-        const tk = todayKey();
-        const segs = p.savingSegments && p.savingSegments.length ? p.savingSegments : [{ id: uid(), from: tk, to: null, type: 'fixed', value: 0, label: 'Aporte' }];
-        const idx = segs.findIndex(s => isKeyInSegment(tk, s));
-        if (idx < 0) return { ...p, savingSegments: [...segs, { id: uid(), from: tk, to: null, type: 'fixed', value: bump, label: 'Extra' }] };
-        const s = segs[idx];
-        if (s.type === 'fixed') return { ...p, savingSegments: segs.map((seg, i) => i === idx ? { ...seg, value: (Number(seg.value) || 0) + bump } : seg) };
-        return { ...p, savingSegments: [...segs, { id: uid(), from: tk, to: null, type: 'fixed', value: bump, label: 'Extra sobre ' + (s.label || 'aporte') }] };
-      })}>Aplicar al plan →</CartelBtn>
+      <CartelBtn variant="text" style={{ marginTop: 14 }} onClick={() => mutatePlan(applyBump)}>Aplicar al plan →</CartelBtn>
     </CartelCard>
   );
 }
@@ -2041,6 +2042,8 @@ export function ScreenProyeccion() {
   const d = useDerived();
   const mobile = useIsMobile();
   const [gastoSheetOpen, setGastoSheetOpen] = useState(false);
+  const [openSalario, setOpenSalario] = useState(false);
+  const [openComplementos, setOpenComplementos] = useState(false);
 
   // ── Editables ──
   const retireAge = profile.retireAge;
@@ -2054,6 +2057,10 @@ export function ScreenProyeccion() {
   const aporte = Math.round(currentMonthlyAporte(plan) || 0);
   const savingSeg = findActiveSegment(plan.savingSegments, todayKey());
   const savingsPct = savingSeg && savingSeg.type === 'percent' ? savingSeg.value : (incomeNow > 0 ? Math.round((aporte / incomeNow) * 100) : 0);
+  const salarioNow = Math.round(sumActiveSegments(plan.incomeSegments, todayKey()));
+  const complementosNow = Math.round(sumActiveSegments(plan.bonusSegments, todayKey()));
+  const nSalario = (plan.incomeSegments || []).length;
+  const nComplementos = (plan.bonusSegments || []).length;
 
   // ── Calculados (motor) ──
   const estado = d.destinoEstado;
@@ -2099,6 +2106,13 @@ export function ScreenProyeccion() {
   const pAt = bands.length ? (bands.find((r) => r.age === retireAge) || bands[bands.length - 1]) : null;
   const p10 = pAt ? pAt.p10 : 0, p50 = pAt ? pAt.p50 : 0, p90 = pAt ? pAt.p90 : 0;
   const zona = successPct >= 90 ? 'Excelente' : successPct >= 75 ? 'Aceptable' : successPct >= 50 ? 'Frágil' : 'Crítico';
+  // Coherencia real/nominal (auditoría): en modo real, las bandas del MC se deflactan POR EDAD (cada
+  // punto a € de hoy con su propio factor), igual que los P10/P50/P90 de abajo. Antes el gráfico se
+  // quedaba nominal mientras los números bajo él iban en real → inconsistencia visual.
+  const bandsShown = realMode ? bands.map((b) => {
+    const f = Math.pow(1 + inflationRate / 100, Math.max(0, b.age - currentAge));
+    return { age: b.age, p10: b.p10 / f, p25: b.p25 / f, p50: b.p50 / f, p75: b.p75 / f, p90: b.p90 / f };
+  }) : bands;
 
   // ── Cableado al motor ──
   // Editar el gasto = declarar tu gasto mensual (global, como en el resto de la app): fija el
@@ -2134,6 +2148,7 @@ export function ScreenProyeccion() {
         {/* 1 · HERO */}
         <Spread>
           <Reveal><SectionTag>Proyección</SectionTag></Reveal>
+          <Reveal delay={30}><div style={{ marginTop: 14 }}><DisplayModeToggle /></div></Reveal>
           <Reveal delay={50}>
             <h1 style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(44px, 8.5vw, 112px)', lineHeight: 0.95, letterSpacing: '-.03em', margin: '12px 0 0', color: T.ink }}>
               {estado === 'no-llega'
@@ -2180,26 +2195,40 @@ export function ScreenProyeccion() {
           <Reveal delay={70}><p style={cap}>Lo que entra cada mes. El salario base sube con el IPC; los complementos van aparte.</p></Reveal>
           <Reveal delay={90}><p style={note}>El salario sigue al IPC al <EditableValue value={ipcPct} onChange={setIpcPct} min={0} max={100} suffix="%" ariaLabel="Seguimiento del salario al IPC" /> (100 % = sube como la inflación; 0 % = se queda fijo). Distinto de la inflación general, que ajustas en Asunciones.</p></Reveal>
           <Reveal delay={100} style={{ width: '100%', maxWidth: 600 }}>
-            <div style={subhead}>Salario base</div>
-            {(plan.incomeSegments || []).map((s) => (
-              <CartelTramoRow key={s.id} name={s.label || 'Salario'}
-                fromNode={<CartelMonthValue value={s.from} onChange={(v) => m.updateIncome(s.id, { from: v })} ariaLabel="Desde" />}
-                toNode={<CartelMonthValue value={s.to} allowEmpty onChange={(v) => m.updateIncome(s.id, { to: v })} ariaLabel="Hasta" />}
-                onDelete={() => m.deleteIncome(s.id)}>
-                <EditableValue value={Math.round(s.amount || 0)} onChange={(v) => m.updateIncome(s.id, { amount: Math.round(v) })} min={0} max={100000} ariaLabel={`Importe ${s.label || 'salario'}`} />
-              </CartelTramoRow>
-            ))}
-            <div style={{ textAlign: 'left', marginTop: 12 }}><CartelBtn variant="text" onClick={() => m.addIncome()}>+ añadir tramo de salario</CartelBtn></div>
-            <div style={subhead}>Complementos</div>
-            {(plan.bonusSegments || []).map((s) => (
-              <CartelTramoRow key={s.id} name={s.label || 'Complemento'}
-                fromNode={<CartelMonthValue value={s.from} onChange={(v) => m.updateBonus(s.id, { from: v })} ariaLabel="Desde" />}
-                toNode={<CartelMonthValue value={s.to} allowEmpty onChange={(v) => m.updateBonus(s.id, { to: v })} ariaLabel="Hasta" />}
-                onDelete={() => m.deleteBonus(s.id)}>
-                <EditableValue value={Math.round(s.amount || 0)} onChange={(v) => m.updateBonus(s.id, { amount: Math.round(v) })} min={0} max={100000} ariaLabel={`Importe ${s.label || 'complemento'}`} />
-              </CartelTramoRow>
-            ))}
-            <div style={{ textAlign: 'left', marginTop: 12 }}><CartelBtn variant="text" onClick={() => m.addBonus()}>+ añadir complemento</CartelBtn></div>
+            {/* Salario base · colapsable (resumen → editar tramos) */}
+            <button onClick={() => setOpenSalario((o) => !o)} aria-expanded={openSalario}
+              style={{ ...subhead, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, background: 'transparent', border: 'none', borderBottom: '1px solid ' + T.lineSoft, padding: '6px 0 8px', cursor: 'pointer' }}>
+              <span>Salario base <span style={{ fontStyle: 'normal', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.muted }}>· {fmtNum(salarioNow)} €/mes · {nSalario} {nSalario === 1 ? 'tramo' : 'tramos'}</span></span>
+              <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.faint, whiteSpace: 'nowrap' }}>{openSalario ? '▾ ocultar' : '▸ editar'}</span>
+            </button>
+            {openSalario && (<>
+              {(plan.incomeSegments || []).map((s) => (
+                <CartelTramoRow key={s.id} name={s.label || 'Salario'}
+                  fromNode={<CartelMonthValue value={s.from} onChange={(v) => m.updateIncome(s.id, { from: v })} ariaLabel="Desde" />}
+                  toNode={<CartelMonthValue value={s.to} allowEmpty onChange={(v) => m.updateIncome(s.id, { to: v })} ariaLabel="Hasta" />}
+                  onDelete={() => m.deleteIncome(s.id)}>
+                  <EditableValue value={Math.round(s.amount || 0)} onChange={(v) => m.updateIncome(s.id, { amount: Math.round(v) })} min={0} max={100000} ariaLabel={`Importe ${s.label || 'salario'}`} />
+                </CartelTramoRow>
+              ))}
+              <div style={{ textAlign: 'left', marginTop: 12 }}><CartelBtn variant="text" onClick={() => m.addIncome()}>+ añadir tramo de salario</CartelBtn></div>
+            </>)}
+            {/* Complementos · colapsable */}
+            <button onClick={() => setOpenComplementos((o) => !o)} aria-expanded={openComplementos}
+              style={{ ...subhead, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, background: 'transparent', border: 'none', borderBottom: '1px solid ' + T.lineSoft, padding: '6px 0 8px', cursor: 'pointer' }}>
+              <span>Complementos <span style={{ fontStyle: 'normal', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.muted }}>· {complementosNow > 0 ? fmtNum(complementosNow) + ' €/mes' : 'ninguno'}{nComplementos > 0 ? ` · ${nComplementos}` : ''}</span></span>
+              <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.faint, whiteSpace: 'nowrap' }}>{openComplementos ? '▾ ocultar' : '▸ editar'}</span>
+            </button>
+            {openComplementos && (<>
+              {(plan.bonusSegments || []).map((s) => (
+                <CartelTramoRow key={s.id} name={s.label || 'Complemento'}
+                  fromNode={<CartelMonthValue value={s.from} onChange={(v) => m.updateBonus(s.id, { from: v })} ariaLabel="Desde" />}
+                  toNode={<CartelMonthValue value={s.to} allowEmpty onChange={(v) => m.updateBonus(s.id, { to: v })} ariaLabel="Hasta" />}
+                  onDelete={() => m.deleteBonus(s.id)}>
+                  <EditableValue value={Math.round(s.amount || 0)} onChange={(v) => m.updateBonus(s.id, { amount: Math.round(v) })} min={0} max={100000} ariaLabel={`Importe ${s.label || 'complemento'}`} />
+                </CartelTramoRow>
+              ))}
+              <div style={{ textAlign: 'left', marginTop: 12 }}><CartelBtn variant="text" onClick={() => m.addBonus()}>+ añadir complemento</CartelBtn></div>
+            </>)}
             <div style={subhead}>Aporte</div>
             <CartelTramoRow name={`Aporte ${savingsPct} % del ingreso`} dates={savingSeg ? tramoDates(savingSeg) : ''} staticAmt={`≈ ${fmtNum(aporte)} €/mes`} />
           </Reveal>
@@ -2225,9 +2254,7 @@ export function ScreenProyeccion() {
               ))}
             </div>
           </Reveal>
-          <Reveal delay={120}><p style={note}>Medias razonables a largo plazo. El 4 % asume ~30 años de jubilación (estudio Trinity); para 40+ años, baja a 3–3,5 %. Cambiarlos actualiza toda la proyección.</p></Reveal>
-          <Reveal delay={160} style={{ marginTop: '3vh' }}><DisplayModeToggle /></Reveal>
-          <Reveal delay={200}><p style={note}>Las cifras se muestran en valor nominal (lo que tendrás) o, con el ajuste activado, en poder adquisitivo de hoy.</p></Reveal>
+          <Reveal delay={120}><p style={note}>Medias razonables a largo plazo. El 4 % asume ~30 años de jubilación (estudio Trinity); para 40+ años, baja a 3–3,5 %. Cambiarlos actualiza toda la proyección. El selector <b>Nominal / € de hoy</b> de arriba cambia cómo se muestran todas las cifras.</p></Reveal>
         </Spread>
 
         {/* 6 · ¿Y TE DURA? */}
@@ -2237,7 +2264,7 @@ export function ScreenProyeccion() {
           <Reveal delay={70}><p style={cap}>{mc ? mc.trials : 500} simulaciones con volatilidad real. ¿En cuántas tu dinero aguanta hasta los {lifeExpectancy}?</p></Reveal>
           <ComputedNumber value={successPct} format={(v) => Math.round(v) + ' %'} style={{ ...mega(T.green, true), marginTop: 4 }} ariaLabel="Tasa de éxito Monte Carlo" />
           <Reveal delay={120}><p style={cap}>{zona} — {successPct} de cada 100 futuros aguantan hasta los {lifeExpectancy}; {100 - successPct} se agotan antes.</p></Reveal>
-          <Reveal delay={150} style={{ width: '100%' }}><MonteCarloChart bands={bands} retireAge={retireAge} style={{ marginTop: 24 }} /></Reveal>
+          <Reveal delay={150} style={{ width: '100%' }}><MonteCarloChart bands={bandsShown} retireAge={retireAge} style={{ marginTop: 24 }} /></Reveal>
           <Reveal delay={180}><p style={note}>Hasta los {retireAge} la nube es estrecha: todos los futuros acumulan parecido. Al jubilarte se abre — arriba los que crecen, abajo la cola que se agota antes de los {lifeExpectancy}.</p></Reveal>
           <Reveal delay={210}><Stats3 items={[
             { value: fmtMoneyBig(realMode ? p10 / deflator : p10), em: `P10 · ${retireAge} (el peor 10 %)` },

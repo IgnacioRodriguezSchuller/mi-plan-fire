@@ -19,3 +19,17 @@ Anotados durante el trabajo de Prompt 1. Formato: descripción · gravedad estim
 - **`computeCurrentPortfolio` sigue usando `plan.capital` como seed independientemente de cuándo se editó** · gravedad baja · línea ~906.
   Si el usuario edita `plan.capital` después de haber registrado meses, la "real reconstructed" curve usará el nuevo capital como punto de partida desde el primer mes registrado, lo que reescribe la historia. No es nuevo (existía antes de C4), pero ahora es más visible con las curvas duales. Necesitaría un snapshot de "capital inicial al primer mes registrado" para fijarlo. Fuera del scope.
 
+## Encontrados durante la auditoría de Proyección (Sprint 1 · 2026-06-18)
+
+- **`fiTargetImplausible` (canary de pensión) es frágil** · gravedad media · `state/index.jsx` `useDerived`.
+  Con pensión activa y `fiTarget < gastoAnual·5` se emite `verdict='sin-datos'` para no mostrar un veredicto inverosímil. Es un parche tras quitar la resta de pensión del nº FIRE; funciona como red de seguridad pero el umbral (×5) es arbitrario y no se explica. Revisar si el modelo de pensión se estabiliza. Fuera del scope de Sprint 1.
+
+- **Volatilidad del Monte Carlo por tabla fija (`inferVolatility`)** · gravedad baja · `lib/index.js`.
+  σ se infiere del retorno anual con una tabla de lookup (≤2 %→1,5σ … >12 %→20σ), no de la composición real de la cartera. Aceptable como aproximación; se sustituirá en el sprint de "MC avanzado".
+
+- **Pensión hardcodeada a España** · gravedad baja · `lib/index.js` (`estimateSpanishPension`, 14 pagas).
+  Reglas y nº de pagas españolas codificadas. Correcto hoy (app ES-only), frágil si se internacionaliza.
+
+- **Coast/Fat FIRE devuelven `null` en silencio fuera de rango** · gravedad muy baja · `state/index.jsx` `useDerived`.
+  Cuando la edad de Coast/Fat cae fuera del dominio de detección (≤90), se devuelve `null` y la UI muestra "—" / "fuera de alcance". Correcto, pero no distingue "no aplica" de "no se alcanza nunca". Suficiente por ahora.
+
