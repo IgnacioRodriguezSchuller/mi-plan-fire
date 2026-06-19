@@ -1734,3 +1734,75 @@ de FIRE el motor necesitaba Fat, que no existía.
   lección (p.ej. Monte Carlo → ConceptModal del shell), el CTA navega a Aprende, el teaser claro aparece (fondo
   `#fffdf7`, 2 círculos, «46k€ · Alex y Marta») y al clicar va a Hogar; con 1 cuenta no aparece (guard); consola
   limpia; baseline `b3ea52b1…` intacto. Cierra el lote de 6 ítems (P3/3).
+
+## ───────────── Lote feedback 2 (2026-06-19) · 10 ítems · 5 commits ─────────────
+> Segundo lote del dueño sobre el dashboard. 8 ítems implementados en 5 commits (C1–C5); 2 informativos
+> respondidos en chat (pasos donaciones, dominio `app.`); **ítem 9 (comprar piso, dos vías) DIFERIDO** a su
+> propio sprint. Plan aprobado: `Lote feedback 2 · Plan→Aprende · tasa de retiro dinámica · chrome y navegación`.
+
+### C1 · Tasa de retiro dinámica (estilo Trinity) + toggle auto/manual (2026-06-19)
+- **Causa raíz**: la tasa de retiro era fija (4 %); el dueño la quiere recalculada según el **horizonte de jubilación**
+  (jubilación declarada → esperanza de vida), cumpliendo la filosofía Trinity al 100 %.
+- **Cambio**: `lib/index.js` gana **`recommendedWithdrawalRate(profile, plan)`** (deriva la SWR del horizonte
+  `lifeExpectancy − retireAge`: anclas 20a→4,5 · 30→4,0 · 40→3,5 · 50→3,3 %, interpolación lineal + clamp [3,3 ; 5,0];
+  patrón «derivar, no persistir» como `recommendedTargetRV`) y **`effectiveWithdrawalRate`** (respeta el override).
+  Campo **aditivo** `plan.withdrawalRateAuto` (default true vía `?? true`; **NO** se toca `migrateToV2`). `useDerived`
+  y `ScreenProyeccion` calculan la efectiva y la pasan vía `{...plan, withdrawalRate: eff}` a
+  `projectDecumulation`/`runMonteCarlo` (**firmas del motor intactas**); `fiTarget` usa la efectiva; `useDerived`
+  expone `d.withdrawalRate`. `computeActivePhase` prioriza `d.withdrawalRate` (fallback a `plan` → tests puros
+  idénticos). Proyección: control **auto/manual** junto al stat; en auto, tasa derivada de solo lectura.
+- **No tocado**: firmas de `projectV2`/`runMonteCarlo`, `migrateToV2`, claves/campos persistidos, baseline.
+- **Verificación**: navegador — horizonte 30→4 %, 40→3,5 %, el nº FIRE y el múltiplo se mueven coherentes; toggle
+  persiste. `verify-lib` **sin diffs nuevos** (helpers fuera de su set; `computeActivePhase` cae a `plan` en tests).
+  Build OK; content/state PASS; consola limpia; baseline intacto.
+
+### C2 · Cierre de Plan → Aprende (no «mes a mes») + «Tu destino» rediseñado + por qué 8 % (2026-06-19)
+- **Causa raíz**: (ítem 1) gran parte del valor está en *entender*; el cierre de Plan mandaba a «mes a mes» y el
+  empuje a Aprende debía pesar más; «Tu destino» pedía verse mejor. (ítem 5) faltaba explicar por qué el 8 %.
+- **Cambio** (`screens/index.jsx`, solo UI): el cierre de `RutaCincoFases` deja de redirigir a Seguimiento; pasa a
+  **empujar Aprende** (hero estilo cartel: «Entender es la mitad del plan.» + 3 conceptos clicables + «Ir a Aprende»)
+  con enlace **secundario** a Proyección (ajustar; copy según veredicto). Se **elimina** la sección Aprende duplicada
+  de `ScreenHoy`. Card **«Tu destino»** rediseñada: ★ edad de libertad como héroe centrado (clamp 52→84 px, **siempre
+  `T.green`** por doctrina §6 1.6). El «8 % anual asumido» de M1 enlaza a `<Concept id="retorno-anual">`.
+- **No tocado**: motor, claves, baseline. Color por tokens; ★ en `T.green` (excepción documentada).
+- **Verificación**: navegador — el cierre va a Aprende (sin «mes a mes»), secundario a Proyección; el «8 %» abre su
+  lección; sin sección duplicada. Build OK; content/state PASS; consola limpia; baseline intacto.
+
+### C3 · DCA a Plan (fase Inversión) + aplicar rebalanceo más consciente (2026-06-19)
+- **Causa raíz**: (ítem 10) el DCA «¿de golpe o poco a poco?» encaja en la fase de inversión de Plan; (ítem 6)
+  aplicar el rebalanceo en un clic era poco consciente/didáctico.
+- **Cambio** (`screens/index.jsx`, `modals/index.jsx`): `DcaCard` se **mueve** de Proyección a `RutaCincoFases` bajo
+  `selPhase.num===4` (Inversión sistemática), con su título/intro propios, junto a `RebalanceCard`. El botón «Aplicar
+  lo recomendado» abre ahora un **modal didáctico** (reusa `ConfirmModal` + prop aditivo `confirmDisabled`): explica
+  que el rebalanceo cambia *dónde* está el dinero (no *cuánto* se ahorra), muestra el desglose `byClass`
+  actual→objetivo con el € a mover, y exige marcar un **checkbox de comprensión** antes de habilitar «Fijar mi
+  objetivo»; solo entonces muta (`updatePlan`).
+- **No tocado**: `computeRebalance`/`recommendedAllocation`, motor, claves, baseline.
+- **Verificación**: navegador — Plan fase 4 muestra Rebalanceo + DCA; Proyección sin DCA (MC intacto); el modal abre
+  con desglose+nota+checkbox, confirmar deshabilitado hasta marcar. Build OK; content/state PASS; consola limpia.
+
+### C4 · Logo en onboarding = solo presentación + donaciones dentro de la presentación (2026-06-19)
+- **Causa raíz** (ítem 2): en onboarding, el menú del logo exponía «Acerca de»/«Apóyanos» (que son lo mismo)
+  demasiado directo; las donaciones deberían vivir dentro de la presentación, tras un icono de café.
+- **Cambio**: `LogoMenu` gana prop **`presentationOnly`** (activo en `Onboarding`): el clic abre directamente la
+  presentación (`window.__openLanding`), sin desplegable. Fuera del onboarding el menú se **consolida** en un único
+  «Acerca de» (se retira «Apóyanos»). La `Landing` (`flows/index.jsx`) gana un **icono de café** (SVG inline) que abre
+  un popover de donaciones (`DONATE_KOFI_URL`/`DONATE_GITHUB_URL`, o «próximamente»), con cierre por click-fuera/Escape.
+- **No tocado**: motor, claves, baseline, `AboutModal` (conserva su sección de apoyo). Cero red (`<a href>` + SVG).
+- **Verificación**: navegador — dashboard: menú «Ver presentación» + «Acerca de» (sin «Apóyanos»); presentación: el
+  café abre Ko-fi/GitHub; onboarding: el logo abre solo la presentación. Build OK; content/state PASS; consola limpia.
+
+### C5 · Navegación por los laterales + pista de scroll + demo con lecciones leídas (2026-06-19)
+- **Causa raíz**: (ítem 4) navegar entre secciones clicando los márgenes laterales; (ítem 8) en secciones cortas no
+  se entendía que había que scrollear; (ítem 7) la demo debía enseñar Aprende «vivido».
+- **Cambio** (`screens/index.jsx`, `index.css`, `state/persistence.js`): en el Shell (desktop) **zonas clicables en
+  los márgenes** → tab anterior/siguiente del array (respetan el «Hogar» condicional; inertes en los extremos; chevron
+  al hover). **Pista de scroll** app-wide (degradado a `T.bg` + chevron al pie) cuando hay contenido por debajo y aún
+  no se ha llegado al final; aparece sin scrollear (ResizeObserver sobre el body) y se oculta cerca del fondo; en móvil
+  sube sobre la barra inferior; bob del chevron con `prefers-reduced-motion`. `seedAlex` siembra `plan.readLessons`
+  (Alex: interés compuesto, inflación; Marta: + retorno anual, regla 4, Monte Carlo).
+- **No tocado**: motor, `migrateToV2`, claves/campos persistidos (`readLessons` ya existía), baseline. `verify-state`
+  no comprueba valores de seed.
+- **Verificación**: navegador — side-nav (desktop 1280) navega y actualiza zonas, sin zona en los extremos; la pista
+  aparece al cargar y se oculta al fondo; la demo arranca con lecciones «Leído» en Aprende. Build OK; content/state
+  PASS; consola limpia; baseline intacto. Cierra el lote 2 (C5/5).
