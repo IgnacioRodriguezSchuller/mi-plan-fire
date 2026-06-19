@@ -5,7 +5,17 @@
 // NO incluido: SinMiPlanModal (L5600) -> renderiza <ScreenSinMiPlan embedded/>,
 // una screen aún no migrada. Pendiente para la tanda de screens.
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { T, WEB_URL } from '../tokens/index.js'
+
+// Portal a document.body: los overlays `position:fixed` se rompen si un ANCESTRO tiene
+// `transform`/`will-change`/`filter` (p.ej. el `Reveal`, que anima con transform) → el fixed se
+// ancla a ese ancestro y se RECORTA dentro del bloque en vez de cubrir el viewport. Renderizar el
+// overlay en document.body lo saca de ese contexto. Cero red; SSR-safe (fallback sin document).
+function Portal({ children }) {
+  if (typeof document === 'undefined' || !document.body) return children;
+  return createPortal(children, document.body);
+}
 import { Btn, Label, EditableNumber, MonthInput } from '../ui/index.jsx'
 import { computePlannedFor, todayKey, addMonthsKey, compareKeys, readableMonth, fmtEur, uid } from '../lib/index.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
@@ -14,6 +24,7 @@ import { LEARN_CORPUS, CATEGORY_LABELS } from '../content/index.js'
 export function ConfirmModal({ open, title, body, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', destructive = false, confirmDisabled = false, onConfirm, onCancel }) {
   if (!open) return null;
   return (
+    <Portal>
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -41,6 +52,7 @@ export function ConfirmModal({ open, title, body, confirmLabel = 'Confirmar', ca
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 
@@ -82,6 +94,7 @@ export function ProgressionWizard({ onClose, onApply }) {
   }, [data]);
 
   return (
+    <Portal>
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -170,6 +183,7 @@ export function ProgressionWizard({ onClose, onApply }) {
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 
@@ -388,6 +402,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
       </div>
   );
   return inline ? body : (
+    <Portal>
     <div onClick={onClose} style={{
       position: 'fixed', inset: 0, background: 'rgba(26,22,18,0.55)',
       zIndex: 1100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
@@ -395,6 +410,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
     }}>
       {body}
     </div>
+    </Portal>
   );
 }
 
@@ -413,6 +429,7 @@ export function PublicPensionDisclaimerModal({ open, onCancel, onConfirm }) {
   }, [open, onCancel]);
   if (!open) return null;
   return (
+    <Portal>
     <div
       onClick={onCancel}
       style={{
@@ -450,6 +467,7 @@ export function PublicPensionDisclaimerModal({ open, onCancel, onConfirm }) {
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 
@@ -566,6 +584,7 @@ export function ConceptModal({ id, onClose, read = false, onToggleRead }) {
   if (!concept) return null;
   const article = concept.article;
   return (
+    <Portal>
     <div
       onClick={onClose}
       style={{
@@ -711,6 +730,7 @@ export function ConceptModal({ id, onClose, read = false, onToggleRead }) {
 
       {activeRelated && <ConceptModal id={activeRelated} onClose={() => setActiveRelated(null)} />}
     </div>
+    </Portal>
   );
 }
 
