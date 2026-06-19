@@ -11,7 +11,7 @@ import { computePlannedFor, todayKey, addMonthsKey, compareKeys, readableMonth, 
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import { LEARN_CORPUS, CATEGORY_LABELS } from '../content/index.js'
 
-export function ConfirmModal({ open, title, body, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', destructive = false, onConfirm, onCancel }) {
+export function ConfirmModal({ open, title, body, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', destructive = false, confirmDisabled = false, onConfirm, onCancel }) {
   if (!open) return null;
   return (
     <div style={{
@@ -32,10 +32,11 @@ export function ConfirmModal({ open, title, body, confirmLabel = 'Confirmar', ca
             background: 'transparent', color: T.ink, border: '1px solid ' + T.line,
             cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase',
           }}>{cancelLabel}</button>
-          <button onClick={onConfirm} style={{
+          <button onClick={confirmDisabled ? undefined : onConfirm} disabled={confirmDisabled} style={{
             fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '10px 18px', borderRadius: 999,
             background: destructive ? T.red : T.ink, color: '#fff',
-            border: 'none', cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase', fontWeight: 600,
+            border: 'none', cursor: confirmDisabled ? 'not-allowed' : 'pointer', opacity: confirmDisabled ? 0.4 : 1,
+            letterSpacing: T.tracking.wider, textTransform: 'uppercase', fontWeight: 600,
           }}>{confirmLabel}</button>
         </div>
       </div>

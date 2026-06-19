@@ -1171,7 +1171,14 @@ export function RutaCincoFases({ state, d, mobile }) {
           )}
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: T.accent, marginTop: 14, letterSpacing: 0 }}>{phaseEstimate(selPhase.num)}</div>
           {/* Rebalanceo · su sitio natural es la fase de INVERSIÓN (allocation/rebalanceo). Solo al clicar la fase 4. */}
-          {selPhase.num === 4 && <div style={{ marginTop: 16 }}><RebalanceCard /></div>}
+          {selPhase.num === 4 && <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <RebalanceCard />
+            <div>
+              <SectionTag style={{ marginBottom: 6 }}>¿De golpe o poco a poco?</SectionTag>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, lineHeight: T.lh.normal, marginBottom: 14 }}>Si te cae una cantidad de una vez —una herencia, un bonus, unos ahorros parados—, ¿la inviertes toda hoy o la repartes en el tiempo?</div>
+              <DcaCard annualReturn={plan.annualReturn || 8} />
+            </div>
+          </div>}
         </div>
 
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: T.faint, marginTop: 14 }}>Toca cualquier fase para ver sus pasos.</div>
@@ -2448,12 +2455,7 @@ export function ScreenProyeccion() {
           </Reveal>
         </Spread>
 
-        {/* 7 · DCA · ¿de golpe o poco a poco? Junto al Monte Carlo: ambos van de riesgo de entrada/timing. */}
-        <Spread>
-          <Reveal><SectionTag>¿De golpe o poco a poco?</SectionTag></Reveal>
-          <Reveal delay={40}><p style={cap}>Si te cae una cantidad de una vez —una herencia, un bonus, unos ahorros parados—, ¿la inviertes toda hoy o la repartes en el tiempo?</p></Reveal>
-          <Reveal delay={80} style={{ width: '100%' }}><div style={{ marginTop: 24 }}><DcaCard annualReturn={annualReturn} /></div></Reveal>
-        </Spread>
+        {/* DCA «¿de golpe o poco a poco?» movido a Plan · fase 4 «Inversión sistemática» (lote 2). */}
 
         {/* 8 · DIAGNÓSTICO · síntesis de salud del plan en cinco señales (Pro · Diagnóstico FIRE).
             Sin score ni nota (sin gamificación): plain rows + color semántico (verde sólido / ámbar
@@ -3113,6 +3115,7 @@ export function RebalanceCard({ compact = false }) {
   const { state, updatePlan } = useStore();
   const d = useDerived();
   const [confirming, setConfirming] = useState(false);
+  const [understood, setUnderstood] = useState(false);
   const { plan, profile } = state;
   const reb = computeRebalance(plan, profile, d.currentPortfolio || 0);
   if (!reb) return null;
@@ -3120,12 +3123,15 @@ export function RebalanceCard({ compact = false }) {
   const col = aligned ? T.green : T.amber;
 
   // Aplicar lo recomendado: fija la allocation al objetivo (reversible editando a mano). Confirmación
-  // en DOS pasos (sin native confirm, bloqueado en iframes). No toca el aporte mensual.
+  // CONSCIENTE en un modal didáctico (desglose + qué es rebalancear + checkbox de comprensión). No
+  // toca el aporte mensual.
   const applyTarget = () => {
     const cur = (plan.actualLife && plan.actualLife.allocation) || {};
     updatePlan({ actualLife: { ...(plan.actualLife || {}), allocation: { ...cur, ...target } } });
     setConfirming(false);
+    setUnderstood(false);
   };
+  const cancelApply = () => { setConfirming(false); setUnderstood(false); };
 
   const msg = aligned
     ? <>Tu cartera está <strong style={{ fontStyle: 'normal', color: T.green }}>alineada</strong> con tu horizonte. Revísala una vez al año.</>
@@ -3140,7 +3146,7 @@ export function RebalanceCard({ compact = false }) {
         <div style={{ maxWidth: 480, margin: '26px auto 0', textAlign: 'center' }}>
           <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: col, marginBottom: 8 }}>Rebalanceo · {currentRV} % → {targetRV} % en renta variable</div>
           <div style={{ fontFamily: T.serif, fontSize: 17, color: T.ink, lineHeight: 1.5 }}>{msg}</div>
-          {!aligned && <div style={{ marginTop: 10, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint }}>Ajústalo (o aplícalo de un toque) en Datos → Rebalanceo.</div>}
+          {!aligned && <div style={{ marginTop: 10, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint }}>Ajústalo o aplícalo en Plan → Inversión sistemática (o en Datos).</div>}
         </div>
       </Reveal>
     );
@@ -3185,23 +3191,47 @@ export function RebalanceCard({ compact = false }) {
         ))}
       </div>
 
-      {/* Aplicar lo recomendado · confirmación en dos pasos. */}
+      {/* Aplicar lo recomendado · paso CONSCIENTE en modal didáctico (desglose + qué es rebalancear + checkbox). */}
       {!aligned && (
         <div style={{ marginTop: 16 }}>
-          {confirming ? (
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, fontStyle: 'italic' }}>¿Fijar tu asignación al objetivo recomendado?</span>
-              <CartelBtn variant="text" onClick={applyTarget}>Sí, aplicar</CartelBtn>
-              <CartelBtn variant="text" onClick={() => setConfirming(false)}>Cancelar</CartelBtn>
-            </div>
-          ) : (
-            <CartelBtn onClick={() => setConfirming(true)}>Aplicar lo recomendado →</CartelBtn>
-          )}
+          <CartelBtn onClick={() => setConfirming(true)}>Aplicar lo recomendado →</CartelBtn>
         </div>
       )}
       <div style={{ marginTop: 12, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, lineHeight: T.lh.normal }}>
         Aplicar solo cambia el reparto de tu cartera, no tu aporte mensual. El rebalanceo se hace una vez al año, o cuando te desvías mucho.
       </div>
+      <ConfirmModal
+        open={confirming}
+        title="Antes de fijar tu objetivo"
+        confirmLabel="Fijar mi objetivo"
+        cancelLabel="Cancelar"
+        confirmDisabled={!understood}
+        onConfirm={applyTarget}
+        onCancel={cancelApply}
+        body={(
+          <div style={{ textAlign: 'left' }}>
+            <p style={{ margin: '0 0 14px' }}>
+              El rebalanceo cambia <strong style={{ color: T.ink, fontStyle: 'normal' }}>dónde</strong> está tu dinero —el reparto entre clases—, no <strong style={{ color: T.ink, fontStyle: 'normal' }}>cuánto</strong> ahorras cada mes. No se vende por miedo ni se compra por euforia: se devuelve la cartera a su rumbo.
+            </p>
+            <div style={{ borderTop: '1px solid ' + T.lineSoft, borderBottom: '1px solid ' + T.lineSoft, padding: '4px 0', margin: '0 0 14px' }}>
+              {byClass.filter((c) => c.moveEur !== 0).map((c) => (
+                <div key={c.key} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr auto', gap: 8, alignItems: 'baseline', padding: '7px 0' }}>
+                  <span style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.ink }}>{c.label}</span>
+                  <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, textAlign: 'right' }}>{c.currentPct}% → {c.targetPct}%</span>
+                  <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: c.moveEur > 0 ? T.green : T.amber, textAlign: 'right', minWidth: 72 }}>{(c.moveEur > 0 ? '+' : '−') + fmtEur(Math.abs(c.moveEur))}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ margin: '0 0 14px', fontStyle: 'italic', fontSize: T.size.caption, color: T.faint }}>
+              Mi Plan solo registra tu objetivo. El movimiento real lo haces tú, sin prisa, en tu bróker o gestora.
+            </p>
+            <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
+              <input type="checkbox" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} style={{ marginTop: 3, width: 16, height: 16, accentColor: T.accent, cursor: 'pointer', flexShrink: 0 }} />
+              <span>Lo entiendo: esto fija mi objetivo en Mi Plan; el movimiento lo hago yo.</span>
+            </label>
+          </div>
+        )}
+      />
     </Card></Reveal>
   );
 }
