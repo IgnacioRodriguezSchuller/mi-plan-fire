@@ -2837,7 +2837,7 @@ export function GoalContextualBlock({ goal, category, portfolio }) {
 // tipo y revalorización (el precio es la propia meta) y ves al instante el PATRIMONIO NETO + la
 // EDAD DE LIBERTAD ★ por cada vía. Mates en compareHousingPaths (lib): el ★ solo cuenta la cartera
 // líquida (no vives de tu casa); el neto incluye la casa. Cero red; no persiste (hasta «aplicar», H3).
-export function HousingPathsCard({ goal, d, plan, profile, onApply }) {
+export function HousingPathsCard({ goal, d, plan, profile }) {
   const price = Math.max(0, goal.target || 0);
   const purchaseAge = goal.targetAge;
   const [downPaymentPct, setDownPaymentPct] = useState(20);
@@ -2850,6 +2850,29 @@ export function HousingPathsCard({ goal, d, plan, profile, onApply }) {
     price, downPaymentPct, mortgageYears, mortgageRate, appreciation, purchaseAge, currentRent: rent,
   }), [plan, profile, d.currentPortfolio, d.fiTarget, price, downPaymentPct, mortgageYears, mortgageRate, appreciation, purchaseAge, rent]);
   const c = cmp.contado, h = cmp.hipoteca;
+
+  // «Aplicar» una vía al plan (paso CONSCIENTE, como el rebalanceo de C3): escribe un evento
+  // negativo (salida de capital) y, en hipoteca, fija actualLife.mortgage. No toca el aporte/alquiler.
+  const { updatePlan } = useStore();
+  const [applyPath, setApplyPath] = useState(null); // 'contado' | 'hipoteca' | null
+  const [understood, setUnderstood] = useState(false);
+  const purchaseKey = addMonthsKey(todayKey(), Math.max(0, Math.round((purchaseAge - profile.age) * 12)));
+  const startYear = Number(purchaseKey.split('-')[0]);
+  const closeApply = () => { setApplyPath(null); setUnderstood(false); };
+  const doApply = () => {
+    const events = [...(plan.events || [])];
+    if (applyPath === 'contado') {
+      events.push({ id: uid(), date: purchaseKey, amount: -price, label: 'Compra vivienda (contado)', status: 'confirmado' });
+      updatePlan({ events });
+    } else if (applyPath === 'hipoteca') {
+      events.push({ id: uid(), date: purchaseKey, amount: -cmp.downPayment, label: 'Entrada de la vivienda', status: 'confirmado' });
+      updatePlan({
+        events,
+        actualLife: { ...(plan.actualLife || {}), mortgage: { enabled: true, originalAmount: cmp.loan, termYears: mortgageYears, startYear, type: 'fixed', fixedRate: mortgageRate, spread: 1.0, euriborRef: 3.0 } },
+      });
+    }
+    closeApply();
+  };
 
   const lbl = { fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0, marginBottom: 4 };
   const valBig = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 'clamp(20px, 3vw, 28px)', letterSpacing: T.tracking.tight, color: T.ink, lineHeight: 1 };
@@ -2901,11 +2924,40 @@ export function HousingPathsCard({ goal, d, plan, profile, onApply }) {
         </div>
         <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid ' + T.lineSoft, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal, textAlign: 'left' }}>
           El patrimonio neto incluye tu casa, pero tu <b style={{ fontStyle: 'normal' }}>edad de libertad ★ solo cuenta la cartera</b> (no vives de tu casa). Apalancarse mantiene la cartera invertida → libertad antes <i>mientras tu cartera rente más que el tipo de la hipoteca</i>, a cambio de cargar deuda. Pagar al contado te deja sin deuda, pero retrasa tu ★.
-          <div style={{ marginTop: 10, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ marginTop: 12, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
             <button onClick={() => window.__openLearnConcept && window.__openLearnConcept('pignoracion')} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, color: T.accent }}>→ Lee «Pignoración: cuándo tiene sentido»</button>
-            {onApply && <button onClick={() => onApply(cmp)} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, color: T.accent }}>→ Aplicar una vía a mi plan</button>}
+          </div>
+          <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted }}>Aplicar al plan:</span>
+            {c.affordable && <CartelBtn variant="text" onClick={() => setApplyPath('contado')}>Al contado →</CartelBtn>}
+            <CartelBtn variant="text" onClick={() => setApplyPath('hipoteca')}>Con hipoteca →</CartelBtn>
           </div>
         </div>
+        <ConfirmModal
+          open={applyPath != null}
+          title="Aplicar la compra a tu plan"
+          confirmLabel="Aplicar"
+          cancelLabel="Cancelar"
+          confirmDisabled={!understood}
+          onConfirm={doApply}
+          onCancel={closeApply}
+          body={(
+            <div style={{ textAlign: 'left' }}>
+              <p style={{ margin: '0 0 12px' }}>
+                {applyPath === 'contado'
+                  ? <>Registramos una <b style={{ color: T.ink, fontStyle: 'normal' }}>salida de {fmtEur(price)}</b> en {purchaseKey} (compra al contado): tu cartera baja ese importe en esa fecha.</>
+                  : <>Registramos la <b style={{ color: T.ink, fontStyle: 'normal' }}>entrada de {fmtEur(cmp.downPayment)}</b> en {purchaseKey} y una <b style={{ color: T.ink, fontStyle: 'normal' }}>hipoteca de {fmtEur(cmp.loan)}</b> a {mortgageYears} años al {fmtPctView(mortgageRate)} %. La verás en el «coste oculto» de Datos.</>}
+              </p>
+              <p style={{ margin: '0 0 12px', fontStyle: 'italic', fontSize: T.size.caption, color: T.faint }}>
+                No tocamos tu aporte ni tu alquiler: si cambian al comprar, ajústalos en Datos / Proyección.
+              </p>
+              <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
+                <input type="checkbox" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} style={{ marginTop: 3, width: 16, height: 16, accentColor: T.accent, cursor: 'pointer', flexShrink: 0 }} />
+                <span>Lo entiendo: esto escribe la compra en mi plan (reversible en Proyección / Datos).</span>
+              </label>
+            </div>
+          )}
+        />
       </CartelCard>
     </div>
   );

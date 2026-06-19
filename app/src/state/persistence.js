@@ -282,12 +282,12 @@ export function seedAlex(stage) {
     months: buildDemoMonths(aporte),
     goals: joven
       ? [
-          { id: 'g1', name: 'Entrada del piso', target: 30000, targetAge: 33 },
+          { id: 'g1', name: 'Comprar piso', target: 160000, targetAge: 45, category: 'vivienda' },
           { id: 'g2', name: 'Fondo de emergencia', target: 12000, targetAge: 27 },
           { id: 'g3', name: 'Independencia financiera', target: 500000, targetAge: 60 },
         ]
       : [
-          { id: 'g1', name: 'Cambiar de coche', target: 18000, targetAge: 38 },
+          { id: 'g1', name: 'Comprar piso', target: 250000, targetAge: 45, category: 'vivienda' },
           { id: 'g2', name: 'Año sabático', target: 60000, targetAge: 45 },
           { id: 'g3', name: 'Independencia financiera', target: 600000, targetAge: 60 },
         ],

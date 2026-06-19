@@ -1806,3 +1806,48 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: navegador — side-nav (desktop 1280) navega y actualiza zonas, sin zona en los extremos; la pista
   aparece al cargar y se oculta al fondo; la demo arranca con lecciones «Leído» en Aprende. Build OK; content/state
   PASS; consola limpia; baseline intacto. Cierra el lote 2 (C5/5).
+
+## ───────────── Sprint · Comprar un piso · dos vías (2026-06-19) · 3 commits ─────────────
+> Materializa la promesa de la Landing («ver cómo afecta comprar un piso»). Ítem 9 del feedback,
+> antes diferido. Decisiones del dueño: vive en el **hito de vivienda** (Seguimiento), compara
+> **patrimonio neto + edad ★** y es **sandbox + aplicar**. Plan aprobado: «Comprar un piso · dos vías».
+
+### H1 · Motor · `compareHousingPaths` (helper puro) (2026-06-19)
+- **Causa raíz**: faltaba modelar comprar vivienda por dos vías (al contado = descapitalizar vs hipoteca =
+  apalancarse) sin tocar el motor.
+- **Cambio** (`lib/index.js`): nuevo helper **PURO** `compareHousingPaths({plan,profile,currentPortfolio,fiTarget,
+  price,downPaymentPct,mortgageYears,mortgageRate,appreciation,purchaseAge,currentRent})`. Reusa `projectV2` para la
+  trayectoria de aporte (respeta segmentos/IPC) y modela la casa + amortización francesa **aparte** (el motor no
+  trackea el inmueble). Devuelve por vía: `netWorthSeries` (cartera + valor casa − hipoteca, en € de hoy),
+  `freedomAge` (el ★ usa **solo la cartera líquida** vs `fiTarget` en real, mismo criterio que `useDerived`),
+  `finalNetWorth`, `monthlyPayment`, `totalInterest`, `affordable`. Al comprar dejas de pagar alquiler (se invierte;
+  la cuota se descuenta de ahí) → comparación honesta.
+- **No tocado**: firmas de `projectV2`/`runMonteCarlo`, `migrateToV2`, claves/campos, baseline.
+- **Verificación**: Node, escenario realista (cartera≥precio, 8%>3%) → la hipoteca **adelanta el ★** y da más
+  patrimonio neto; con tipo>retorno la ventaja se invierte; `affordable` correcto. `verify-lib` sin diffs nuevos.
+
+### H2 · UI · `HousingPathsCard` (sandbox de dos vías) (2026-06-19)
+- **Cambio** (`screens/index.jsx`): nueva `HousingPathsCard` montada en `GoalRow` (categoría `vivienda`, en edición)
+  debajo del aviso de pignoración de `GoalContextualBlock`; la meta de vivienda en edición **ocupa todo el ancho**
+  del grid (`gridColumn: 1/-1`). Editas entrada %, plazo, tipo, revalorización (el precio es la meta); dos columnas
+  **Descapitalizar** vs **Apalancarse** → patrimonio neto + **libre ★** por vía; `MultiLineChart` de las dos curvas;
+  línea editorial honesta + enlace a la lección `pignoracion`. Si **no puedes pagar al contado**, esa columna
+  muestra «No llegas» (con el déficit) y su curva (ficción por el clamp) se omite del gráfico.
+- **Verificación**: navegador — la tarjeta aparece al abrir una meta vivienda; caso no-asequible → «No llegas» + 1
+  curva; asequible (demo Marta) → contado 3,68 M€ ★59 vs hipoteca 4,22 M€ ★55 (apalancarse gana, 8 %>3 %); 2 curvas.
+
+### H3 · «Aplicar» al plan + demo vivienda + docs (2026-06-19)
+- **Cambio**: «aplicar» (paso **consciente** como el rebalanceo de C3, `ConfirmModal` + checkbox): por vía, un botón
+  abre un modal que resume qué se escribe y exige comprensión. **Contado** → `updatePlan` añade un evento negativo
+  `−precio` en el mes de compra. **Hipoteca** → evento `−entrada` **+** `actualLife.mortgage` (lo refleja el «coste
+  oculto» de Datos). No toca aporte ni alquiler (se avisa). **Demo**: `seedAlex` siembra una meta **`vivienda`**
+  «Comprar piso» (Alex 160 k a los 45; Marta 250 k a los 45) → la feature se ve de un vistazo.
+- **No tocado**: la compra usa `plan.events`/`actualLife.mortgage` ya existentes (sin esquema nuevo); `migrateToV2`,
+  claves, baseline intactos.
+- **Verificación**: navegador — «Con hipoteca» escribe el evento `−50 k€` (2041-06) + la hipoteca (200 k, 25 a, 3 %);
+  confirmar deshabilitado hasta el checkbox. Build OK; content/state PASS; `verify-lib` sin diffs nuevos; baseline
+  intacto; consola limpia. Cierra el sprint (H3/3) y el ítem 9 del feedback.
+
+### Nota / límite conocido
+- El patrimonio del resto de la app (Proyección/Hogar) sigue siendo **cartera líquida** (el motor no trackea el
+  valor de la casa); el patrimonio neto con casa vive **dentro de la comparación** (el momento didáctico).
