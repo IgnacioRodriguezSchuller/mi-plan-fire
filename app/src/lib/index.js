@@ -1292,15 +1292,17 @@ export function computeActivePhase(state, d) {
   ];
   const phase1Done = f1.every(s => s.completed);
 
-  // FASE 2 · Saneamiento de deuda (CONDICIONAL)
+  // FASE 2 · Saneamiento de deuda. #6 · YA NO se omite («No aplica»): puede aplicar aunque el
+  // usuario no haya declarado la deuda como meta (quizá la tiene y no la dijo). Se muestra SIEMPRE
+  // con sus pasos (checks manuales, auto-evaluables). hasBadDebt solo decide si BLOQUEA la fase
+  // activa — para no atascar a quien de verdad no tiene deuda cara.
   const hasBadDebt = (goals || []).some(g => /deuda|debt|tarjeta|préstamo|prestamo/i.test(g.name || ''));
-  const f2 = hasBadDebt ? [
+  const f2 = [
     { id: '2.1', label: 'Pagar mínimos de todas las deudas', completed: manual['2.1'] != null, source: manual['2.1'] ? 'manual' : 'pending' },
     { id: '2.2', label: 'Refinanciar lo refinanciable', completed: manual['2.2'] != null, source: manual['2.2'] ? 'manual' : 'pending' },
     { id: '2.3', label: 'Amortizar deudas de mayor interés primero', completed: manual['2.3'] != null, source: manual['2.3'] ? 'manual' : 'pending' },
-  ] : [];
-  const phase2Skipped = !hasBadDebt;
-  const phase2Done = phase2Skipped || (f2.length > 0 && f2.every(s => s.completed));
+  ];
+  const phase2Done = f2.every(s => s.completed);
 
   // FASE 3 · Colchón de liquidez
   const liquidityGoal = (goals || []).find(g => g.category === 'liquidez');
@@ -1360,7 +1362,7 @@ export function computeActivePhase(state, d) {
     profileAge: profile.age,
     phases: [
       { num: 1, title: 'Cimientos', subtitle: 'Conoce tus gastos, número FIRE, capacidad de ahorro', steps: f1, done: phase1Done, skipped: false },
-      { num: 2, title: 'Saneamiento de deuda', subtitle: hasBadDebt ? 'Pagar deuda mala antes de invertir agresivamente' : 'Solo aplica si tienes deuda mala >10% interés', steps: f2, done: phase2Done, skipped: phase2Skipped },
+      { num: 2, title: 'Saneamiento de deuda', subtitle: hasBadDebt ? 'Pagar deuda mala antes de invertir agresivamente' : 'Por si arrastras deuda cara (>10 % interés): límpiala antes de invertir', steps: f2, done: phase2Done, skipped: false },
       { num: 3, title: 'Colchón de liquidez', subtitle: 'Reserva remunerada para imprevistos', steps: f3, done: phase3Done, skipped: false, editorialInline: 'El colchón vive en cuenta remunerada o renta fija a corto plazo, no en cuenta corriente.' },
       { num: 4, title: 'Inversión sistemática', subtitle: 'Asset allocation, indexado mundial, DCA mensual, rebalanceo', steps: f4, done: phase4Done, skipped: false, parallel: true },
       { num: 5, title: 'Optimización fiscal', subtitle: 'Plan pensiones empresa, IRPF, compensación de pérdidas', steps: f5, done: false, skipped: false, continuous: true },

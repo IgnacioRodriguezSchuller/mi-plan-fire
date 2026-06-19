@@ -959,6 +959,8 @@ export function RutaCincoFases({ state, d, mobile }) {
   const { plan } = state;
   const { updatePlan, update } = useStore();
   const route = useMemo(() => computeActivePhase(state, d), [state, d]);
+  // #5 · Confirmaciones manuales del usuario (override sobre lo auto-detectado).
+  const manual = plan.phaseManualChecks || {};
   // Selección de fase para el panel de detalle integrado (por defecto = activa).
   const [selected, setSelected] = useState(null);
   // Ref al panel de detalle: al tocar una pestaña en móvil, lo traemos a la vista
@@ -1128,42 +1130,42 @@ export function RutaCincoFases({ state, d, mobile }) {
           {!selPhase.skipped && selPhase.steps.length > 0 && (
             <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
               {selPhase.steps.map(step => {
-                const isAutoCompleted = step.completed && step.source === 'auto';
-                const isManualCompleted = step.completed && step.source === 'manual';
-                const isManualStep = selPhase.num >= 4 && step.id === '4.3' || selPhase.num === 5 || selPhase.num === 2;
+                // #5 · TODAS las casillas son tickables. Tres estados (por tokens):
+                //   · confirmada por ti (manual[id]) → verde PLENO.
+                //   · auto-detectada sin confirmar → SEMI-marcada (verde flojo = T.green a opacidad baja).
+                //   · pendiente → vacía (papel + borde muted).
+                // Tap → toggleManual: añade/quita tu confirmación. Una casilla auto-detectada que
+                // «destildas» vuelve a semi (la app la sigue detectando), no a vacía.
+                const manualChecked = manual[step.id] != null;
+                const semi = !manualChecked && step.completed;
+                const filled = manualChecked || semi;
                 return (
                   <div key={step.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 0', borderTop: '1px dashed ' + T.lineSoft }}>
-                    {isManualStep ? (
-                      // FIX 1/4 · CASILLA manual (cuadrada): el usuario la marca. Hit area
-                      // ≥44px vía padding 11 + margin −11 (invisible, no empuja el layout);
-                      // el cuadro visible sigue a 22px.
-                      <button
-                        onClick={() => toggleManual(step.id, isManualCompleted)}
-                        aria-pressed={step.completed}
-                        title="Tócalo para marcar o desmarcar"
-                        style={{ flexShrink: 0, padding: 11, margin: -11, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', lineHeight: 0 }}>
-                        {/* CASILLA manual (cuadrada, tappable): cuando está vacía se ve como un
-                            control pulsable — fondo papel + borde marcado + relieve sutil — para
-                            que NO se confunda con el indicador de estado (redondo) de al lado. */}
-                        <span style={{ width: 22, height: 22, borderRadius: 5, background: step.completed ? T.green : T.paper, border: '1.5px solid ' + (step.completed ? T.green : T.muted), boxShadow: step.completed ? 'none' : '0 1px 2px rgba(26,22,18,0.12)', color: '#fff', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{step.completed ? '✓' : ''}</span>
-                      </button>
-                    ) : (
-                      // INDICADOR de estado (redondo): lo detecta la app, NO es una casilla. Sin
-                      // botón, sin cursor pointer. Pendiente = punto pequeño muted (no un círculo
-                      // hueco con borde, que se leía como checkbox vacío y la gente intentaba
-                      // pulsarlo); hecho = ✓ en círculo verde. La forma/relleno lo distingue del cuadrado.
-                      <span aria-hidden="true" title={isAutoCompleted ? 'Detectado automáticamente' : 'Pendiente'}
-                        style={{ flexShrink: 0, width: 22, height: 22, borderRadius: '50%', background: step.completed ? T.green : 'transparent', color: '#fff', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, cursor: 'default' }}>
-                        {step.completed ? '✓' : <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.faint, display: 'inline-block' }} />}
-                      </span>
-                    )}
+                    {/* Hit area ≥44px vía padding 11 + margin −11 (invisible); el cuadro visible a 22px. */}
+                    <button
+                      onClick={() => toggleManual(step.id, manualChecked)}
+                      aria-pressed={manualChecked}
+                      title="Tócalo para marcar o desmarcar"
+                      style={{ flexShrink: 0, padding: 11, margin: -11, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', lineHeight: 0 }}>
+                      <span style={{ width: 22, height: 22, borderRadius: 5, background: filled ? T.green : T.paper, opacity: semi ? 0.4 : 1, border: '1.5px solid ' + (filled ? T.green : T.muted), boxShadow: filled ? 'none' : '0 1px 2px rgba(26,22,18,0.12)', color: '#fff', fontFamily: T.mono, fontSize: T.size.caption, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{filled ? '✓' : ''}</span>
+                    </button>
                     <div style={{ flex: 1, fontFamily: T.serif, fontSize: 17, color: T.ink, lineHeight: T.lh.normal }}>
                       {step.label}
-                      {isAutoCompleted && <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide, marginTop: 2 }}>detectado automáticamente</div>}
+                      {semi && <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide, marginTop: 2 }}>detectado automáticamente · confírmalo si quieres</div>}
                     </div>
                   </div>
                 );
               })}
+            </div>
+          )}
+          {/* #6 · Nota didáctica de saneamiento (en pantalla, no en el corpus de Aprende). La fase
+              ya no se omite: aunque no hayas declarado deuda, conviene saber por qué iría primero. */}
+          {selPhase.num === 2 && (
+            <div style={{ marginTop: 12, padding: '14px 16px', background: T.paper, border: '1px solid ' + T.lineSoft, borderLeft: '3px solid ' + T.amber, borderRadius: 8 }}>
+              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.amber, marginBottom: 6 }}>Por qué la deuda cara va primero</div>
+              <div style={{ fontFamily: T.serif, fontSize: 15, color: T.ink, lineHeight: T.lh.normal }}>
+                Una deuda al 18 % (tarjetas, revolving, descubiertos) te cuesta más de lo que una cartera indexada renta de media. Amortizarla es la mejor «inversión» garantizada que existe: te ahorras ese interés <b>sin riesgo</b>. El orden sensato: cubre los mínimos de todo, refinancia lo que puedas y ataca primero la de mayor interés. La hipoteca de tu vivienda, al ser barata, no cuenta como deuda cara.
+              </div>
             </div>
           )}
           {selPhase.editorialInline && (
