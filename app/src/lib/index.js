@@ -1007,6 +1007,35 @@ export function recommendedTargetRV(profile, plan) {
   return Math.round(rv * 100);
 }
 
+// Tasa de retiro (SWR) · DERIVADA del horizonte de jubilación = años desde la edad de
+// jubilación DECLARADA (profile.retireAge) hasta la esperanza de vida (plan.lifeExpectancy).
+// Estilo Trinity: a más años de retiro, tasa más prudente. Anclas horizonte(años)→tasa(%):
+// 20→4,5 · 30→4,0 · 40→3,5 · 50→3,3, interpolación lineal (con extrapolación por los tramos
+// extremos) y clamp [3,3 ; 5,0]. Pura y aditiva; NO se persiste (como recommendedTargetRV).
+// Anclamos en retireAge (no en la edad FIRE calculada) para evitar circularidad tasa↔número.
+export function recommendedWithdrawalRate(profile, plan) {
+  const retire = (profile && profile.retireAge) || 65;
+  const lifeExp = (plan && plan.lifeExpectancy) || 90;
+  const h = Math.max(1, lifeExp - retire);
+  const A = [[20, 4.5], [30, 4.0], [40, 3.5], [50, 3.3]];
+  let i = 0;
+  while (i < A.length - 2 && h > A[i + 1][0]) i++;
+  const [x0, y0] = A[i];
+  const [x1, y1] = A[i + 1];
+  let rate = y0 + (y1 - y0) * (h - x0) / (x1 - x0);
+  rate = Math.min(5.0, Math.max(3.3, rate));
+  return Math.round(rate * 10) / 10;
+}
+
+// Tasa de retiro EFECTIVA: si plan.withdrawalRateAuto (aditivo, default true) → derivada del
+// horizonte; si el usuario la fijó a mano (auto=false) → plan.withdrawalRate. Pura.
+export function effectiveWithdrawalRate(profile, plan) {
+  const auto = (!plan || plan.withdrawalRateAuto == null) ? true : !!plan.withdrawalRateAuto;
+  return auto
+    ? recommendedWithdrawalRate(profile, plan)
+    : (plan.withdrawalRate != null ? plan.withdrawalRate : 4.0);
+}
+
 // Rebalanceo · cartera RECOMENDADA por clase (% que suman 100), derivada del RV objetivo por
 // horizonte: el RV en fondos (~2/3) + planes (~1/3); el resto en efectivo (colchón ≤8) + depósitos.
 // Puro y aditivo; no se persiste.
@@ -1179,7 +1208,9 @@ export function computeActivePhase(state, d) {
   const phase4CanStart = phase3MinDone;
 
   // v1.2.1 · Exponer derivadas usadas por phaseEstimate (Item 4).
-  const withdrawalRate = plan.withdrawalRate != null ? plan.withdrawalRate : 4.0;
+  // Tasa de retiro: prioriza la EFECTIVA ya calculada en useDerived (d.withdrawalRate, deriva del
+  // horizonte salvo override); fallback a plan.withdrawalRate si no viene en d (p.ej. tests puros).
+  const withdrawalRate = (d && d.withdrawalRate != null) ? d.withdrawalRate : (plan.withdrawalRate != null ? plan.withdrawalRate : 4.0);
   const annualReturn = plan.annualReturn || 8;
   const lifeExpectancy = plan.lifeExpectancy || 90;
   const fireNumber = monthlyLife > 0 ? (monthlyLife * 12) / (withdrawalRate / 100) : 0;

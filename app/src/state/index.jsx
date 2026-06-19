@@ -6,7 +6,7 @@ import {
   computePlannedFor, computeEffectiveCapitalReturn, computeCurrentPortfolio,
   currentMonthlyAporte, currentMonthlyIncome, computeIncomeFor, sumExpenses,
   projectV2, projectDecumulation, compareKeys, todayKey, addMonthsKey, uid,
-  normalizeSegments, parseKeyMonths, toRealEur,
+  normalizeSegments, parseKeyMonths, toRealEur, effectiveWithdrawalRate,
 } from '../lib/index.js'
 import { ConfirmModal } from '../modals/index.jsx'
 import {
@@ -300,7 +300,11 @@ export function useDerived() {
     // temporal (projectDecumulation / runMonteCarlo, desde startAge), que es donde hace
     // que el dinero dure más. Antes se restaba la pensión desde hoy y el objetivo se
     // anulaba a 0 cuando pensión ≥ gasto, borrando el ★.
-    const wdr = (plan.withdrawalRate != null ? plan.withdrawalRate : 4.0) / 100;
+    // Tasa de retiro EFECTIVA: por defecto se DERIVA del horizonte (jubilación declarada →
+    // esperanza de vida, estilo Trinity); el usuario puede fijarla a mano (withdrawalRateAuto=false).
+    // Aditivo: el motor sigue leyendo plan.withdrawalRate; aquí pasamos la efectiva donde toca.
+    const effWdrRate = effectiveWithdrawalRate(profile, plan);
+    const wdr = effWdrRate / 100;
     const fiTarget = monthlyLifeNow * 12 / wdr;
 
     // Edad de independencia financiera · comparación REAL vs REAL.
@@ -462,6 +466,7 @@ export function useDerived() {
       plan,
       profile.retireAge,
       lifeExp,
+      { withdrawalRate: effWdrRate },
     );
     const seriesDecum = decumResult.series;
     const depletedAtMonth = decumResult.depletedAtMonth;
@@ -501,6 +506,7 @@ export function useDerived() {
       planPortfolioAtLastReg, realPortfolioAtLastReg,
       realVsPlanDelta, realVsPlanRatio,
       fiTarget, ageAtFiPlan, ageAtFiReal,
+      withdrawalRate: effWdrRate,
       cruceEdad, destinoEstado,
       // Veredicto único "¿voy bien?" (fuente de verdad para Hoy/Seguimiento/KpiPill)
       verdict, verdictAge, verdictCopy,

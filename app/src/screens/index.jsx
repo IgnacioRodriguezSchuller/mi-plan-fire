@@ -11,7 +11,7 @@ import {
   readableMonth, projectV2, sumExpenses, sumAllocation,
   buildMortgageSchedule, currentMonthlyAporte, computePlannedFor,
   computeIncomeFor, toRealEur, estimateSpanishPension, computeEffectiveCapitalReturn,
-  computeRebalance,
+  computeRebalance, recommendedWithdrawalRate, effectiveWithdrawalRate,
   runMonteCarlo,
   getSavingsTier, seedMonths, defaultGoals, computeUserProfile, projectStandardPlan, computeActivePhase,
   computeSinPlanKPIs, fmtEur, parseMonthsCSV,
@@ -1297,7 +1297,7 @@ export function ScreenHoy({ goTo }) {
   const aportadoNominal = (d.seriesPlan || []).reduce((acc, row) => row.monthIndex > 0 ? acc + (row.monthlyAporte || 0) : acc, 0);
   const aportadoBaseNominal = aportadoNominal + (d.currentPortfolio || 0);
   const crecimientoRatio = aportadoBaseNominal > 0 ? finalNominal / aportadoBaseNominal : 0;
-  const withdrawalRate = plan.withdrawalRate != null ? plan.withdrawalRate : 4.0;
+  const withdrawalRate = d.withdrawalRate != null ? d.withdrawalRate : (plan.withdrawalRate != null ? plan.withdrawalRate : 4.0);
   const retirementMonthly = d.retirementMonthlyIncome || 0;
   const retirementMonthlyReal = toRealEur(retirementMonthly, monthsToRetire, inflRate);
   const sufficiencyRatio = monthlyLife > 0 ? retirementMonthlyReal / monthlyLife : null;
@@ -1545,7 +1545,7 @@ export function ScreenHoy({ goTo }) {
               </div>
             )}
             <OnboardingHelp title="Supuestos">
-              Cifras en euros nominales (los que tendrás en el futuro); el recordatorio las ajusta a € de 2026 por la inflación. Asumiendo {planReturn}% de rentabilidad media anual y una tasa de retiro del {withdrawalRate}%. La edad de libertad sale de tu ritmo de ahorro real — todo configurable en Proyección.
+              Cifras en euros nominales (los que tendrás en el futuro); el recordatorio las ajusta a € de 2026 por la inflación. Asumiendo {planReturn}% de rentabilidad media anual y una tasa de retiro del {fmtPctView(withdrawalRate)} %. La edad de libertad sale de tu ritmo de ahorro real — todo configurable en Proyección.
             </OnboardingHelp>
           </div>
           );
@@ -2181,7 +2181,11 @@ export function ScreenProyeccion() {
   const currentAge = profile.age;
   const annualReturn = plan.annualReturn != null ? plan.annualReturn : 8;
   const inflationRate = plan.inflationRate != null ? plan.inflationRate : 2.5;
-  const withdrawalRate = plan.withdrawalRate != null ? plan.withdrawalRate : 4;
+  // Tasa de retiro: AUTO (default) la deriva del horizonte (jubilación → esperanza de vida,
+  // estilo Trinity); en Manual el usuario la fija. `withdrawalRate` es la EFECTIVA (la que ve y usa).
+  const withdrawalRateAuto = plan.withdrawalRateAuto == null ? true : !!plan.withdrawalRateAuto;
+  const recommendedRate = recommendedWithdrawalRate(profile, plan);
+  const withdrawalRate = withdrawalRateAuto ? recommendedRate : (plan.withdrawalRate != null ? plan.withdrawalRate : 4);
   const lifeExpectancy = plan.lifeExpectancy != null ? plan.lifeExpectancy : 90;
   const pensionAge = (plan.publicPension && plan.publicPension.startAge) || 67;
   const incomeNow = computeIncomeFor(plan, todayKey());
@@ -2231,7 +2235,7 @@ export function ScreenProyeccion() {
     d.fatEdad != null && { age: d.fatEdad, color: T.muted, fill: false },
   ].filter(Boolean);
 
-  const mc = useMemo(() => { try { return runMonteCarlo(plan, profile, { trials: 400, startCapital: d.currentPortfolio, includeHypothetical: false, sequenceMode: seqMode, fatTails }); } catch (e) { return null; } }, [plan, profile, d.currentPortfolio, seqMode, fatTails]);
+  const mc = useMemo(() => { try { return runMonteCarlo({ ...plan, withdrawalRate }, profile, { trials: 400, startCapital: d.currentPortfolio, includeHypothetical: false, sequenceMode: seqMode, fatTails }); } catch (e) { return null; } }, [plan, profile, d.currentPortfolio, seqMode, fatTails, withdrawalRate]);
   const depStats = mc ? mc.depletionAgeStats : null;
   const successPct = mc ? Math.round(mc.successRate * 100) : 0;
   const bands = mc && mc.bandsByAge ? mc.bandsByAge : [];
@@ -2304,9 +2308,9 @@ export function ScreenProyeccion() {
           <Reveal><CartelIcon id="interes-compuesto" size={72} color={T.accent} style={{ margin: '0 auto 6px' }} /></Reveal>
           <Reveal delay={40}><SectionTag>Tu línea de vida</SectionTag></Reveal>
           <Reveal delay={80} style={{ width: '100%' }}><LifeChart points={lifePoints} cruceAge={d.cruceEdad} markers={milestones} style={{ marginTop: 24 }} /></Reveal>
-          <Reveal delay={120}><p style={cap}>Tu número — <EditableValue value={gasto} onChange={setGasto} min={0} max={100000} suffix="€/mes" ariaLabel="Gasto mensual" /> → {fmtNum(gasto * 12)} €/año × {fiMult} = {fmtNum(fireTargetReal)} € de 2026 (regla del {withdrawalRate} %).</p></Reveal>
+          <Reveal delay={120}><p style={cap}>Tu número — <EditableValue value={gasto} onChange={setGasto} min={0} max={100000} suffix="€/mes" ariaLabel="Gasto mensual" /> → {fmtNum(gasto * 12)} €/año × {fiMult} = {fmtNum(fireTargetReal)} € de 2026 (regla del {fmtPctView(withdrawalRate)} %).</p></Reveal>
           <Reveal delay={140}><CartelBtn variant="text" onClick={() => setGastoSheetOpen(true)} style={{ marginTop: 14 }}>Desglosar mi gasto →</CartelBtn></Reveal>
-          <Reveal delay={160}><p style={note}>Tu meta sube con los años porque tus gastos también subirán. El ★ es el cruce: a los {libreAge != null ? libreAge : '—'}, el {withdrawalRate} % anual de tu cartera iguala tu gasto.</p></Reveal>
+          <Reveal delay={160}><p style={note}>Tu meta sube con los años porque tus gastos también subirán. El ★ es el cruce: a los {libreAge != null ? libreAge : '—'}, el {fmtPctView(withdrawalRate)} % anual de tu cartera iguala tu gasto.</p></Reveal>
           <Reveal delay={200}><p style={note}>Tipos de FIRE: <b style={{ color: T.accent }}>Lean</b> a los {leanAge != null ? leanAge : '—'} (gasto ajustado), <b style={{ color: T.accent }}>Coast</b> a los {coastAge != null ? coastAge : '—'} (dejas de aportar), <b style={{ color: T.green }}>FIRE pleno</b> a los {libreAge != null ? libreAge : '—'} (tu número) y <b style={{ color: T.muted }}>Fat</b> {fatAge != null ? `a los ${fatAge}` : 'fuera de alcance'} (vida holgada, ×1,5).</p></Reveal>
         </Spread>
 
@@ -2375,7 +2379,7 @@ export function ScreenProyeccion() {
               {[
                 { id: 'retorno-anual', label: 'retorno anual', node: <EditableValue value={annualReturn} onChange={(v) => updatePlan({ annualReturn: v })} min={0} max={20} decimals={dec(annualReturn)} suffix="%" ariaLabel="Retorno anual" /> },
                 { id: 'inflacion', label: 'inflación esperada', node: <EditableValue value={inflationRate} onChange={(v) => updatePlan({ inflationRate: v })} min={0} max={15} decimals={1} suffix="%" ariaLabel="Inflación" /> },
-                { id: 'tasa-retiro', label: 'tasa de retiro', node: <EditableValue value={withdrawalRate} onChange={(v) => updatePlan({ withdrawalRate: v })} min={2} max={8} decimals={dec(withdrawalRate)} suffix="%" ariaLabel="Tasa de retiro" /> },
+                { id: 'tasa-retiro', label: (<>tasa de retiro · <button onClick={() => updatePlan({ withdrawalRateAuto: true })} style={{ background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'pointer', fontFamily: T.mono, fontSize: 11, letterSpacing: T.tracking.wide, textTransform: 'uppercase', fontStyle: 'normal', color: withdrawalRateAuto ? T.accent : T.faint }}>auto</button><span style={{ color: T.faint }}> / </span><button onClick={() => updatePlan({ withdrawalRateAuto: false, withdrawalRate })} style={{ background: 'transparent', border: 'none', padding: 0, margin: 0, cursor: 'pointer', fontFamily: T.mono, fontSize: 11, letterSpacing: T.tracking.wide, textTransform: 'uppercase', fontStyle: 'normal', color: !withdrawalRateAuto ? T.accent : T.faint }}>manual</button></>), node: withdrawalRateAuto ? <span aria-label="Tasa de retiro automática">{fmtPctView(withdrawalRate)} %</span> : <EditableValue value={withdrawalRate} onChange={(v) => updatePlan({ withdrawalRate: v })} min={2} max={8} decimals={dec(withdrawalRate)} suffix="%" ariaLabel="Tasa de retiro" /> },
                 { id: 'esperanza-vida', label: 'esperanza de vida', node: <EditableValue value={lifeExpectancy} onChange={(v) => updatePlan({ lifeExpectancy: Math.round(v) })} min={70} max={110} ariaLabel="Esperanza de vida" /> },
               ].map((it) => (
                 <div key={it.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
@@ -2386,7 +2390,7 @@ export function ScreenProyeccion() {
               ))}
             </div>
           </Reveal>
-          <Reveal delay={120}><p style={note}>Medias razonables a largo plazo. El 4 % asume ~30 años de jubilación (estudio Trinity); para 40+ años, baja a 3–3,5 %. Cambiarlos actualiza toda la proyección. El selector <b>Nominal / € de hoy</b> de arriba cambia cómo se muestran todas las cifras.</p></Reveal>
+          <Reveal delay={120}><p style={note}>Medias razonables a largo plazo. En <b>auto</b>, la tasa de retiro se ajusta a tu horizonte de jubilación (estudio Trinity): ~30 años → 4 %, 40+ años → 3–3,5 %; en <b>manual</b> la fijas tú. Cambiarlos actualiza toda la proyección. El selector <b>Nominal / € de hoy</b> de arriba cambia cómo se muestran todas las cifras.</p></Reveal>
         </Spread>
 
         {/* 6 · ¿Y TE DURA? */}
@@ -2971,7 +2975,7 @@ function scenarioSummary(st) {
     const investment = computePlannedFor(plan, tk);
     const al = plan.actualLife;
     const monthlyLife = (al && al.completed) ? sumExpenses(al) : Math.max(0, income - investment);
-    const wdr = (plan.withdrawalRate != null ? plan.withdrawalRate : 4.0) / 100;
+    const wdr = effectiveWithdrawalRate(profile, plan) / 100;
     const fiTarget = wdr > 0 ? monthlyLife * 12 / wdr : 0;
     const effectiveReturn = computeEffectiveCapitalReturn(plan);
     const series = projectV2(plan, profile, { capital: plan.capital || 0, endAge: 90, includeHypothetical: false, effectiveReturn }) || [];
@@ -3772,7 +3776,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
             <div style={{ marginTop: 18, padding: '12px 14px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 10, fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, lineHeight: T.lh.normal }}>
               <strong style={{ color: T.ink, fontStyle: 'normal' }}>Lo que cambia en tu plan:</strong>
               <ul style={{ margin: '8px 0 0 0', paddingLeft: 18 }}>
-                <li>El gasto anual para la regla del {((state.plan.withdrawalRate || 4).toFixed(1))}% pasa a ser <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(totalExpenses * 12)}</strong>{income > 0 && <> (antes derivado de {fmtEur((income - investment) * 12)})</>}.</li>
+                <li>El gasto anual para la regla del {effectiveWithdrawalRate(state.profile, state.plan).toFixed(1)}% pasa a ser <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(totalExpenses * 12)}</strong>{income > 0 && <> (antes derivado de {fmtEur((income - investment) * 12)})</>}.</li>
                 {effRetPreview != null && Math.abs(effRetPreview - planReturn) > 0.1 && (
                   <li>El retorno efectivo de tu capital inicial pasa del {planReturn}% al <strong style={{ color: T.ink, fontStyle: 'normal' }}>{effRetPreview.toFixed(1)}%</strong>.</li>
                 )}
