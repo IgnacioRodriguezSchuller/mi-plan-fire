@@ -1698,3 +1698,15 @@ de FIRE el motor necesitaba Fat, que no existía.
   abre el dropdown (Ver presentación/Acerca de/Apóyanos), «Ver presentación» abre la Landing grande; en **onboarding**
   el logo (antes muerto) **ya es clicable**, el dropdown funciona y «Ver presentación» abre la Landing grande durante
   el onboarding; consola limpia; baseline intacto.
+
+## Rebalanceo: movido a Plan (fase Inversión) + final de Proyección; fuera de Datos (2026-06-19)
+- **Causa raíz**: el dueño quiere el rebalanceo donde encaja (la fase de inversión) y siempre visible en Proyección,
+  no en Datos.
+- **Cambio** (`screens/index.jsx`): se **quita** `<RebalanceCard />` de Datos. Se renderiza la versión **completa**
+  (con detalle por clase + aplicar) **bajo la fase «Inversión sistemática»** (`selPhase.num === 4`) en
+  `RutaCincoFases` — solo al clicar esa fase. La versión **compacta** se mueve del spread Diagnóstico al **final de
+  Proyección** (justo antes del cierre), siempre visible.
+- **No tocado**: motor, claves, baseline, etc. (solo se reubica el render).
+- **Verificación**: `npm run build` OK; `verify-content`/`verify-state` PASS; navegador: Datos ya no muestra
+  rebalanceo; en Plan la tarjeta aparece al clicar «Inversión sistemática» (fase 4) y **desaparece** en otras fases;
+  en Proyección la compacta está al final, antes de «Ahora, mes a mes»; consola limpia; baseline intacto.

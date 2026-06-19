@@ -1136,6 +1136,8 @@ export function RutaCincoFases({ state, d, mobile }) {
             <div style={{ marginTop: 10, padding: '10px 12px', background: 'transparent', border: '1px solid ' + T.lineSoft, borderRadius: 8, fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: T.muted, lineHeight: T.lh.normal }}>{selPhase.editorialInline}</div>
           )}
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: T.accent, marginTop: 14, letterSpacing: 0 }}>{phaseEstimate(selPhase.num)}</div>
+          {/* Rebalanceo · su sitio natural es la fase de INVERSIÓN (allocation/rebalanceo). Solo al clicar la fase 4. */}
+          {selPhase.num === 4 && <div style={{ marginTop: 16 }}><RebalanceCard /></div>}
         </div>
 
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: T.faint, marginTop: 14 }}>Toca cualquier fase para ver sus pasos.</div>
@@ -2440,9 +2442,10 @@ export function ScreenProyeccion() {
             </div>
           </Reveal>
           <Reveal delay={120}><p style={note}>{d.verdictCopy}</p></Reveal>
-          {/* Rebalanceo compacto · surfacea junto al Diagnóstico (la versión completa + aplicar vive en Datos). */}
-          <RebalanceCard compact />
         </Spread>
+
+        {/* Rebalanceo · SIEMPRE visible al final de Proyección (la versión completa + aplicar vive en Plan, bajo la fase de Inversión). Se autocculta si no hay allocation declarada. */}
+        <div style={{ padding: '8px 0 8px' }}><RebalanceCard compact /></div>
 
         {/* 9 · CIERRE · ir a Mes a mes */}
         <Spread short style={{ minHeight: '60vh' }}>
@@ -3211,9 +3214,6 @@ export function ScreenAjustes() {
           <Btn variant="ghost" size="sm" onClick={() => setShowEditLife(true)}>Editar gastos y asignación →</Btn>
         </div>
       </Card></Reveal>
-
-      {/* REBALANCEO · cartera actual vs recomendada por horizonte (solo si hay allocation declarada) */}
-      <RebalanceCard />
 
       {/* DATOS */}
       <Reveal><Card>
