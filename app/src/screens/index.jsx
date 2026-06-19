@@ -11,7 +11,7 @@ import {
   readableMonth, projectV2, sumExpenses, sumAllocation,
   buildMortgageSchedule, currentMonthlyAporte, computePlannedFor,
   computeIncomeFor, toRealEur, estimateSpanishPension, computeEffectiveCapitalReturn,
-  computeRebalance, recommendedWithdrawalRate, effectiveWithdrawalRate, compareHousingPaths,
+  computeRebalance, recommendedWithdrawalRate, effectiveWithdrawalRate, compareHousingPaths, homeEquityAt,
   runMonteCarlo,
   getSavingsTier, seedMonths, defaultGoals, computeUserProfile, projectStandardPlan, computeActivePhase,
   computeSinPlanKPIs, fmtEur, parseMonthsCSV,
@@ -4938,7 +4938,8 @@ export function ScreenHogar() {
     const al = plan.actualLife;
     const totA = al ? sumAllocation(al) : 0;
     if (al && al.completed && totA > 0) rvPct = (((al.allocation.fundsEtfs || 0) + (al.allocation.pensionPlan || 0)) / totA);
-    return { id: a.id, label: a.label, color: PALETTE[i % PALETTE.length], yfn, portfolioNow, aporte, edad, rvPct };
+    const homeEquityNow = homeEquityAt(plan, 0);
+    return { id: a.id, label: a.label, color: PALETTE[i % PALETTE.length], yfn, portfolioNow, aporte, edad, rvPct, homeEquityNow };
   }), [list]);
 
   // Curva combinada del hogar: suma de carteras por mes-desde-hoy (mismo grid en todas).
@@ -4949,6 +4950,7 @@ export function ScreenHogar() {
   }, [people]);
 
   const totalNow = people.reduce((s, p) => s + p.portfolioNow, 0);
+  const totalHomeEquity = people.reduce((s, p) => s + (p.homeEquityNow || 0), 0);
   const totalAporte = people.reduce((s, p) => s + p.aporte, 0);
   // Rebalanceo del hogar · RV conjunta ponderada por patrimonio.
   const hhRV = (() => {
@@ -4973,6 +4975,13 @@ export function ScreenHogar() {
           Entre {list.length === 2 ? 'los dos' : 'todos'} tenéis <em style={{ color: T.accent }}>{fmtEur(totalNow)}</em> hoy.
           <span style={{ color: T.muted }}> Y cada mes sumáis {fmtEur(totalAporte)} a vuestro futuro.</span>
         </div>
+        {/* «Con casa» (figura aparte): la cifra de arriba es la cartera líquida; esto suma el valor de la
+            vivienda − la hipoteca. El ★ de cada uno sigue contando solo su cartera. */}
+        {totalHomeEquity > 0 && (
+          <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, marginTop: 12, lineHeight: T.lh.normal, maxWidth: 620 }}>
+            Con vuestra vivienda incluida, el patrimonio total es <b style={{ fontStyle: 'normal' }}>{fmtEur(totalNow + totalHomeEquity)}</b>. <span style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.faint, fontSize: T.size.caption }}>Cartera + casa − hipoteca; el ★ sigue contando solo la cartera.</span>
+          </div>
+        )}
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 10, lineHeight: T.lh.normal, maxWidth: 620 }}>
           Aquí cuenta lo de cada uno y lo de todos juntos. El plan de cada persona se afina en su pestaña; aquí veis cómo suma.
         </div>

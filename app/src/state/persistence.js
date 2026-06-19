@@ -270,6 +270,9 @@ export function seedAlex(stage) {
         allocation: joven
           ? { cash: 25, deposits: 30, fundsEtfs: 35, pensionPlan: 10, other: 0, customReturns: { deposits: 2.0, fundsEtfs: null, pensionPlan: null, other: 0 } }
           : { cash: 5, deposits: 10, fundsEtfs: 55, pensionPlan: 30, other: 0, customReturns: { deposits: 2.0, fundsEtfs: null, pensionPlan: null, other: 0 } },
+        // Marta ya tiene casa (compró hace 5 años, coherente con su hipoteca) → showcase de
+        // «patrimonio total · con tu casa» en Proyección y Hogar. Alex aún no (su meta es futura).
+        ...(joven ? {} : { home: { value: 220000, purchaseKey: addMonthsKey(todayKey(), -60), appreciation: 2.5 } }),
       },
       // Demo con algunas lecciones ya leídas (la demo enseña el producto: Aprende «vivido»).
       // Alex empieza con lo básico; Marta, más veterana, lleva más leído.

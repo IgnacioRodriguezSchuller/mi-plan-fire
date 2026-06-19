@@ -1864,3 +1864,34 @@ de FIRE el motor necesitaba Fat, que no existía.
   hook, no está en su set); baseline intacto; navegador: «vas tarde» normal (cruce entre retireAge y 90) sigue
   mostrando KpiPill `★ N` + «Libre, pero tarde»/«Tu libertad llega tras los {retireAge}»; consola limpia. Cierra el
   ítem 3 del backlog (lo demás ya estaba implementado en una sesión previa).
+
+## ───────────── Sprint · Patrimonio «con tu casa» en Proyección y Hogar (2026-06-19) · 3 commits ─────────────
+> Continuación del sprint de vivienda. El patrimonio neto con casa vivía solo dentro de la comparación
+> (`HousingPathsCard`); ahora Proyección y Hogar muestran también el patrimonio **con la casa**. Decisión del
+> dueño: **figura aparte** (el headline de patrimonio y el ★ siguen contando solo la cartera líquida).
+
+### N1 · Motor + datos · `homeEquityAt` + `actualLife.home` (2026-06-19)
+- **Cambio** (`lib/index.js`, `state/index.jsx`, `screens/index.jsx`): nuevo helper PURO `homeEquityAt(plan, monthsFromNow)`
+  → equity nominal de la vivienda (valor revalorizado desde la compra − saldo hipoteca francés; 0 si no hay
+  `actualLife.home` o aún no se ha comprado en ese punto). `useDerived` expone `d.homeEquityNow`/`d.homeEquityAtRetire`.
+  `HousingPathsCard.doApply` guarda ahora `actualLife.home = {value, purchaseKey, appreciation}` (aditivo) en ambas vías.
+- **No tocado**: firmas de `projectV2`/`runMonteCarlo`, `migrateToV2`; el **★/fiTarget/Monte Carlo NO cambian** (solo cartera).
+- **Verificación**: Node (equity 0 antes de comprar; crece con revalorización, baja con el saldo, ≈ valor pleno al
+  saldar); `verify-lib` sin diffs nuevos.
+
+### N2 · Proyección · figura «patrimonio total · con tu casa» (2026-06-19)
+- **Cambio** (`ScreenProyeccion`): figura secundaria etiquetada bajo el hero (sin tocar el hero líquido) =
+  cartera (`finalNominal`/`finalReal`) + `d.homeEquityAtRetire`, respetando el toggle Nominal/€-de-hoy. Solo si
+  `homeEquityAtRetire > 0`. Nota: «el ★ sigue contando solo la cartera (no vives de tu casa)». Cifra en `T.ink`.
+- **Verificación**: navegador (demo Marta con casa) — aparece «Patrimonio total · con tu casa» (~611 k€) > cartera;
+  el hero líquido y el ★ no cambian; sin casa no aparece.
+
+### N3 · Hogar · patrimonio conjunto «con casa» + demo + docs (2026-06-19)
+- **Cambio** (`ScreenHogar`, `state/persistence.js`): el hogar gana una línea «Con vuestra vivienda incluida, el
+  patrimonio total es {Σ cartera + Σ homeEquity}» (las curvas siguen líquidas; solo la cifra suma la casa, etiquetada,
+  con el caveat del ★). **Demo**: Marta (madura, ya con hipoteca de hace 5 años) gana `actualLife.home`
+  (valor 220 k, compra 2021, revaloriz 2,5 %) → showcase real.
+- **No tocado**: motor, `migrateToV2`, claves; `actualLife.home` es aditivo. **Docs**: `DOCTRINA §6 1.22`.
+- **Verificación**: navegador (demo pareja) — Hogar: «tenéis 46 k€ hoy» (líquido) + «con vuestra vivienda incluida …
+  152 k€» (46 k + 106 k equity de Marta); las curvas siguen líquidas. Build OK; content/state PASS; `verify-lib` sin
+  diffs nuevos; baseline intacto; consola limpia. Cierra el sprint (N3/3).
