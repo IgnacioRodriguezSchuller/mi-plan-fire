@@ -1895,3 +1895,36 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: navegador (demo pareja) — Hogar: «tenéis 46 k€ hoy» (líquido) + «con vuestra vivienda incluida …
   152 k€» (46 k + 106 k equity de Marta); las curvas siguen líquidas. Build OK; content/state PASS; `verify-lib` sin
   diffs nuevos; baseline intacto; consola limpia. Cierra el sprint (N3/3).
+
+## ───────────── Lote pulido pre-lanzamiento (2026-06-19) · 5 commits ─────────────
+> Retoques de chrome/UX del dueño tras revisar la beta en vivo. Todo UI/copy; motor/claves/esquema/baseline intactos.
+
+### PU1 · Modales overlay vía createPortal — arregla el recorte de «Activar pensión pública» (2026-06-19)
+- **Causa raíz**: los overlays `position:fixed` se recortaban dentro del bloque cuando el trigger vive bajo un
+  ancestro con `transform`/`will-change` (el `Reveal` anima con transform → crea *containing block* y el fixed se
+  ancla a él, no al viewport). **Cambio** (`modals/index.jsx`): helper `Portal` (`createPortal` a `document.body`,
+  SSR-safe) envuelve los overlays de `PublicPensionDisclaimerModal` (el reportado), `ConfirmModal`, `ProgressionWizard`,
+  `MonthlyCalendarModal`, `ConceptModal`. AboutModal/WhyDifferentModal se abren desde el header sticky (no transformado)
+  → no se portalean. **Verificación**: «Activar pensión pública» ahora es hijo de `document.body` y cubre el viewport.
+
+### PU2 · Quitar menciones de versión + redirect a la web (2026-06-19)
+- **Cambio**: footer del Shell «Mi Plan v1.5.0a3» → «Datos guardados en local»; `AboutModal` «Versión v1.5.0a · …» →
+  «Planificador FIRE honesto, libre y local»; `WhyDifferentModal` pierde el bloque «hay una versión web» y el enlace
+  «Versión web →» (`WEB_URL`); imports de `WEB_URL` retirados (sin uso). Const `WEB_URL` en tokens queda inerte.
+
+### PU3 · Editores de hito a ancho completo (2026-06-19)
+- **Cambio** (`GoalRow`): el `<Card>` de edición usa `gridColumn:'1/-1'` siempre (antes solo `vivienda`) → todos los
+  editores de hito se abren enteros y limpios, no en una columna estrecha de ~180px.
+
+### PU4 · Logo abre la presentación directa + presentación fija sin scroll (2026-06-19)
+- **Cambio**: `LogoMenu` pierde el desplegable → el logo «Mi Plan» abre directamente la presentación
+  (`window.__openLanding`); «Acerca de» sigue en el menú de la cuenta. `Landing`: `minHeight:100vh` → `height:100vh` +
+  `overflow:hidden` + `box-sizing:border-box`, márgenes/tipos compactados (vh-aware) → encaja sin scroll.
+  **Verificación**: desktop 1280×820 y móvil 375×812 → `scrollHeight = viewport` (sin scroll).
+
+### PU5 · Círculo de cuenta (color + inicial) + KpiPill edad realzada (2026-06-19)
+- **Cambio**: el círculo de cuenta (Shell desktop+móvil) pasa de gris a **color por cuenta** (misma paleta/orden que
+  las personas en Hogar) + la **inicial** del nombre. `KpiPill`: la **edad ★** pasa de mono 9/11px tenue a mono 15/18px
+  cream pleno con el ★ en `T.green` (más grande y visible). **Docs**: `DOCTRINA §6 1.23`.
+- **Verificación**: navegador — círculo «A» sobre naranja (Alex); ★ 56 a 15/18px con estrella verde. Build OK;
+  content/state PASS; tokens/lib sin diffs nuevos; baseline intacto. Cierra el lote (PU5/5).

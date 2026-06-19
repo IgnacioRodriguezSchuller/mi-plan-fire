@@ -4792,9 +4792,11 @@ export function KpiPill({ onClick }) {
       opacity: hover ? 0.88 : 1, transition: 'opacity .15s ease',
       fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto',
     }}>
-      {/* Prefijo = edad de libertad (verdictAge), coherente con el hero (antes mostraba retireAge). */}
-      <span style={{ fontFamily: T.mono, fontSize: mobile ? 9 : 11, letterSpacing: '0.12em', color: 'rgba(245,240,230,0.6)' }}>
-        {d.verdictAge != null ? `★ ${Math.ceil(d.verdictAge)}` : `${state.profile.retireAge}→`}
+      {/* Edad de libertad (verdictAge) — protagonista del pill, grande y visible. ★ en verde (doctrina). */}
+      <span style={{ fontFamily: T.mono, fontWeight: 500, fontSize: mobile ? 15 : 18, letterSpacing: '0.02em', color: T.bg, display: 'inline-flex', alignItems: 'baseline', gap: 3 }}>
+        {d.verdictAge != null
+          ? <><span style={{ color: T.green }}>★</span>{Math.ceil(d.verdictAge)}</>
+          : `${state.profile.retireAge}→`}
       </span>
       <span style={{ fontStyle: 'italic', fontSize: mobile ? T.size.body : 20 }}>
         {/* Coherencia de cifras · patrimonio final en NOMINAL (sin deflactar): la app
@@ -5010,10 +5012,17 @@ export function ScreenHogar() {
 }
 
 export function Shell() {
-  const { state, update, seedDemo, accounts } = useStore();
+  const { state, update, seedDemo, accounts, activeAccountId } = useStore();
   const mobile = useIsMobile();
   // Tab «Hogar» solo con 2+ cuentas (un hogar son varias personas).
   const isHousehold = Object.keys(accounts || {}).length > 1;
+  // Círculo de cuenta: color por cuenta (misma paleta/orden que las personas en Hogar) + inicial.
+  const ACCOUNT_PALETTE = [T.accent, T.green, T.amber, T.muted, T.faint];
+  const accIds = Object.keys(accounts || {});
+  const accIdx = Math.max(0, accIds.indexOf(activeAccountId));
+  const accColor = ACCOUNT_PALETTE[accIdx % ACCOUNT_PALETTE.length];
+  const accLabel = (accounts && accounts[activeAccountId] && accounts[activeAccountId].label) || '';
+  const accInitial = (accLabel.trim()[0] || '·').toUpperCase();
   const [showLanding, setShowLanding] = useState(false);
   // v5.8 · Manifesto modal triggered by the secondary CTA of LandingPreOnboarding.
   const [showManifesto, setShowManifesto] = useState(false);
@@ -5164,10 +5173,12 @@ export function Shell() {
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <KpiPill onClick={() => setTab('proy')} />
           <div style={{ position: 'relative' }} ref={accountAnchorRef}>
-            <button onClick={() => setShowAccountMenu(v => !v)} aria-label="Menú de cuenta" style={{
-              width: 24, height: 24, borderRadius: '50%', background: T.line,
+            <button onClick={() => setShowAccountMenu(v => !v)} aria-label={`Menú de cuenta · ${accLabel}`} style={{
+              width: 24, height: 24, borderRadius: '50%', background: accColor, color: T.bg,
               border: 'none', cursor: 'pointer', padding: 0,
-            }} />
+              fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 11, lineHeight: 1,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            }}>{accInitial}</button>
             <AccountMenu open={showAccountMenu} anchor={accountAnchorRef.current} onClose={() => setShowAccountMenu(false)} onGoToAjustes={() => setTab('ajustes')} onShowAbout={() => setShowAbout(true)} />
           </div>
         </div>
@@ -5233,10 +5244,12 @@ export function Shell() {
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
           <KpiPill onClick={() => setTab('proy')} />
           <div style={{ position: 'relative' }} ref={accountAnchorRef}>
-            <button onClick={() => setShowAccountMenu(v => !v)} aria-label="Menú de cuenta" style={{
-              width: 28, height: 28, borderRadius: '50%', background: T.line,
+            <button onClick={() => setShowAccountMenu(v => !v)} aria-label={`Menú de cuenta · ${accLabel}`} style={{
+              width: 28, height: 28, borderRadius: '50%', background: accColor, color: T.bg,
               border: 'none', cursor: 'pointer', padding: 0,
-            }} />
+              fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 13, lineHeight: 1,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            }}>{accInitial}</button>
             <AccountMenu open={showAccountMenu} anchor={accountAnchorRef.current} onClose={() => setShowAccountMenu(false)} onGoToAjustes={() => setTab('ajustes')} onShowAbout={() => setShowAbout(true)} />
           </div>
         </div>
