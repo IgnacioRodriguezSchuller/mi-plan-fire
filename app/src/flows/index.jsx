@@ -131,10 +131,10 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
   const donations = [{ url: DONATE_KOFI_URL, label: 'Invítame a un café' }, { url: DONATE_GITHUB_URL, label: 'Patrocina en GitHub' }];
   return (
     <div style={{
-      width: '100vw', minHeight: '100vh', background: T.bg, color: T.ink,
+      width: '100vw', height: '100vh', background: T.bg, color: T.ink,
       fontFamily: T.serif, display: 'flex', flexDirection: 'column',
-      padding: mobile ? '32px 22px 28px' : '60px 80px',
-      overflowX: 'hidden', position: 'relative',
+      padding: mobile ? '24px 22px' : '44px 72px',
+      overflow: 'hidden', boxSizing: 'border-box', position: 'relative',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: mobile ? 24 : 40 }}>
@@ -179,9 +179,9 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
       </div>
 
       {/* Hero */}
-      <div style={{ marginBottom: mobile ? 28 : 50, maxWidth: 760 }}>
+      <div style={{ marginBottom: mobile ? 'clamp(14px, 3vh, 24px)' : 'clamp(26px, 5vh, 48px)', maxWidth: 760 }}>
         <div style={{
-          fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 'clamp(38px, 11vw, 56px)' : 'clamp(54px, 5.5vw, 88px)',
+          fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 'clamp(33px, 9.5vw, 50px)' : 'clamp(44px, 5vw, 76px)',
           lineHeight: T.lh.tight, letterSpacing: T.tracking.display, textWrap: 'balance',
         }}>
           Tu dinero,<br />
@@ -190,7 +190,7 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
         </div>
         <div style={{
           fontFamily: T.serif, fontStyle: 'italic', color: T.muted,
-          fontSize: mobile ? 16 : 19, marginTop: mobile ? 16 : 22, lineHeight: T.lh.normal, maxWidth: 560,
+          fontSize: mobile ? 15 : 18, marginTop: mobile ? 12 : 18, lineHeight: T.lh.normal, maxWidth: 560,
         }}>
           Una herramienta honesta para ver hacia dónde te lleva lo que ahorras hoy.
           Sin promesas. Sin asesoramiento. Solo matemáticas, las tuyas, en tu dispositivo.
@@ -201,19 +201,19 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
       <div style={{
         display: 'grid',
         gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)',
-        gap: mobile ? 16 : 24,
-        marginBottom: mobile ? 32 : 50,
+        gap: mobile ? 'clamp(10px, 2vh, 16px)' : 22,
+        marginBottom: mobile ? 'clamp(14px, 3vh, 24px)' : 'clamp(20px, 4vh, 40px)',
       }}>
         {[
           { n: '01', t: 'Tu vida real', d: 'Modelas tu salario por tramos, los pluses, las pausas. No un sueldo plano de fantasía.' },
           { n: '02', t: 'Escenarios sin miedo', d: 'Prueba qué pasa si compras un piso o cambias de trabajo. Sin tocar tu plan real.' },
           { n: '03', t: 'Tuyo', d: 'Todo en local. Sin cuenta, sin nube, sin perfilado. Cuando borras, se borra.' },
         ].map((p) => (
-          <div key={p.n} style={{ borderTop: '1px solid ' + T.line, paddingTop: 14 }}>
-            <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, marginBottom: 6 }}>
+          <div key={p.n} style={{ borderTop: '1px solid ' + T.line, paddingTop: mobile ? 10 : 14 }}>
+            <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, marginBottom: mobile ? 4 : 6 }}>
               {p.n}
             </div>
-            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 22 : 26, letterSpacing: T.tracking.tight, marginBottom: 8 }}>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 19 : 24, letterSpacing: T.tracking.tight, marginBottom: mobile ? 5 : 8 }}>
               {p.t}
             </div>
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal }}>
