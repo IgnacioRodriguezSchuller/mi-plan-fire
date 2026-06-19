@@ -2825,7 +2825,9 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
 }
 
 export function GoalContextualBlock({ goal, category, portfolio }) {
-  const [open, setOpen] = useState(false);
+  // #10 · La nota contextual nace ABIERTA (antes colapsada tras «▾ Ver nota contextual», nadie la
+  // veía). Se conserva el toggle para recogerla.
+  const [open, setOpen] = useState(true);
   const target = goal.target || 0;
   const ratio = portfolio > 0 ? target / portfolio : 0;
   const goLearn = (id) => { window.__openLearnConcept && window.__openLearnConcept(id); };
@@ -2839,7 +2841,9 @@ export function GoalContextualBlock({ goal, category, portfolio }) {
   else if (category === 'herencia') blockKind = 'lump-sum';
   else if (category === 'jubilacion') blockKind = 'jubilacion-nota';
 
-  if (!blockKind) return null;
+  // #10 · Fallback: cualquier hito sin nota específica recibe una genérica (ajustar el vehículo al
+  // plazo) → todos los hitos tienen ya su nota, no solo vivienda/liquidez/herencia.
+  if (!blockKind) blockKind = 'horizonte-generico';
 
   const titles = {
     'liquidez': 'Dónde mantener este dinero',
@@ -2847,6 +2851,7 @@ export function GoalContextualBlock({ goal, category, portfolio }) {
     'fiscal-familiar': 'Planificación fiscal de ayudas familiares',
     'lump-sum': 'Lump sum vs DCA al integrar una herencia',
     'jubilacion-nota': 'Nota sobre la jubilación pública',
+    'horizonte-generico': 'Ajusta el vehículo al plazo',
   };
   const bodies = {
     'liquidez': 'Para no perder valor por inflación, considera mantener este dinero en cuenta remunerada o en renta fija de corto plazo (letras del Tesoro, bonos a 1-2 años). No en cuenta corriente sin remunerar.',
@@ -2854,6 +2859,7 @@ export function GoalContextualBlock({ goal, category, portfolio }) {
     'fiscal-familiar': 'Las ayudas económicas a familiares directos (padres, hijos, cónyuge) pueden estar afectadas por el régimen de donaciones intervivos y, llegado el momento, por el impuesto de sucesiones. La fiscalidad depende de la comunidad autónoma y de la relación con el receptor. Antes de mover cantidades grandes, vale la pena consultar con un asesor.',
     'lump-sum': 'Recibir una cantidad grande de golpe no implica invertirla de golpe. Considera DCA durante 6-18 meses para suavizar el efecto del momento de mercado. Mientras esa parte espera para entrar, mantenla en cuenta remunerada o renta fija a corto plazo.',
     'jubilacion-nota': 'La jubilación pública no es un hito en el sentido habitual; está incorporada en tu plan automáticamente según la edad legal de jubilación. Para ajustar la pensión esperada usa Datos → Pensión pública.',
+    'horizonte-generico': 'Ajusta el vehículo al plazo de la meta. Para algo a menos de 3-5 años, prioriza seguridad y liquidez (cuenta remunerada, renta fija a corto plazo): la bolsa puede caer justo cuando necesitas el dinero. Para metas lejanas, el tiempo juega a tu favor y puedes asumir más riesgo.',
   };
 
   return (
