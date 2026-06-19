@@ -195,6 +195,40 @@ export function HouseholdSummaryCard() {
   );
 }
 
+// Teaser de Hogar para la pantalla Plan · sustituye al bloque NEGRO (que chocaba) por una tarjeta
+// CLARA con ilustración (dos círculos solapados = las personas, SVG, cero red) + patrimonio conjunto.
+// Toda la tarjeta clica → pantalla Hogar. El desglose completo vive ya en esa pantalla.
+export function HouseholdTeaserCard({ goTo }) {
+  const { accounts } = useStore();
+  const mobile = useIsMobile();
+  const list = useMemo(() => Object.values(accounts || {}), [accounts]);
+  if (list.length < 2) return null;
+  const totalPortfolio = list.reduce((s, a) => {
+    const st = a.state || {}; const plan = st.plan || {}; const months = st.months || [];
+    return s + (plan.capital || 0) + months.reduce((x, m) => x + (m.actual || 0), 0);
+  }, 0);
+  const names = list.map((a) => a.label).filter(Boolean);
+  return (
+    <button onClick={() => goTo && goTo('hogar')} aria-label="Ver el hogar" style={{
+      width: '100%', textAlign: 'left', cursor: 'pointer', background: T.paper,
+      border: '1px solid ' + T.line, borderRadius: 16, padding: mobile ? 16 : 22,
+      display: 'flex', alignItems: 'center', gap: mobile ? 14 : 20, fontFamily: T.serif,
+      appearance: 'none', WebkitAppearance: 'none',
+    }}>
+      <svg width="58" height="44" viewBox="0 0 58 44" aria-hidden="true" style={{ flexShrink: 0 }}>
+        <circle cx="22" cy="22" r="15.5" fill="none" stroke={T.accent} strokeWidth="2" />
+        <circle cx="36" cy="22" r="15.5" fill="none" stroke={T.green} strokeWidth="2" />
+      </svg>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0 }}>Vuestro hogar · {list.length} personas</div>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 30 : 38, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: 1, marginTop: 4 }}>{fmtEur(totalPortfolio)}</div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>juntos hoy · {names.join(' y ')}</div>
+      </div>
+      <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent, letterSpacing: T.tracking.wide, textTransform: 'uppercase', flexShrink: 0 }}>Ver el hogar →</span>
+    </button>
+  );
+}
+
 export function MonthlyFlowCard({ plan, profile }) {
   const { state } = useStore();
   const tk = todayKey();
@@ -1310,7 +1344,7 @@ export function ScreenHoy({ goTo }) {
       </div>
 
       {/* Household multi-account summary (only renders if list.length > 1) */}
-      <HouseholdSummaryCard />
+      <HouseholdTeaserCard goTo={goTo} />
 
       {/* Empieza aquí · guía de 3 pasos para usuario nuevo (GX5); desaparece al completar datos clave. */}
       {(income <= 0 || !al.completed) && (
@@ -1377,7 +1411,7 @@ export function ScreenHoy({ goTo }) {
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 36, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }}>{fmtEur(invested)}</div>
                   </div>
                 </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>El mismo tiempo. La diferencia la pone el interés compuesto · {planReturn} % anual asumido.</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>El mismo tiempo. La diferencia la pone el <Concept id="interes-compuesto">interés compuesto</Concept> · {planReturn} % anual asumido.</div>
               </div>
               );
             })() : (
@@ -1389,7 +1423,7 @@ export function ScreenHoy({ goTo }) {
             {sinPlanKPIs.hasData && (
               <div>
                 <div style={{ fontFamily: T.serif, color: T.ink, fontSize: T.size.body, lineHeight: T.lh.normal }}>
-                  Este año, la inflación resta <strong style={{ color: T.ink, fontStyle: 'normal' }}>~{fmtEur(sinPlanKPIs.lostFirstYear)}</strong> a tu salario — y más cada año que pasa.
+                  Este año, la <Concept id="inflacion">inflación</Concept> resta <strong style={{ color: T.ink, fontStyle: 'normal' }}>~{fmtEur(sinPlanKPIs.lostFirstYear)}</strong> a tu salario — y más cada año que pasa.
                 </div>
                 <OnboardingHelp title="Supuestos">
                   Pérdida de poder de compra del primer año: un año de inflación ({inflRate}%) sobre tu salario anual.
@@ -1534,6 +1568,30 @@ export function ScreenHoy({ goTo }) {
           Cinco fases que estructuran el camino FIRE.
         </div>
         <RutaCincoFases state={state} d={d} mobile={mobile} />
+      </section></Reveal>
+
+      {/* ─────────────── Empuje a APRENDE ─────────────── */}
+      {/* Gran parte del valor del producto está en ENTENDER. Bloque visible con conceptos clave
+          clicables (abren su lección) + CTA a la sección Aprende. */}
+      <Reveal><section>
+        <SectionTag style={{ marginBottom: BLOCK_GAP }}>Entender es la mitad del plan</SectionTag>
+        <div style={{ fontFamily: T.serif, fontSize: T.size.lead, color: T.muted, lineHeight: T.lh.normal, maxWidth: 640, marginBottom: 16 }}>
+          Un plan no es una cifra: es entender por qué se mueve. Si solo lees tres cosas, que sean estas.
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
+          {[
+            { id: 'interes-compuesto', label: 'Interés compuesto' },
+            { id: 'regla-4', label: 'La regla del 4 %' },
+            { id: 'monte-carlo', label: 'Monte Carlo' },
+          ].map((c) => (
+            <button key={c.id} onClick={() => window.__openLearnConcept && window.__openLearnConcept(c.id)} style={{
+              fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, padding: '8px 16px', borderRadius: 999,
+              background: 'transparent', color: T.accent, border: '1px solid ' + T.accent, cursor: 'pointer',
+              appearance: 'none', WebkitAppearance: 'none', whiteSpace: 'nowrap',
+            }}>{c.label} →</button>
+          ))}
+        </div>
+        <CartelBtn onClick={() => goTo('aprender')}>Ir a Aprende →</CartelBtn>
       </section></Reveal>
 
       {showSinPlanModal && <SinMiPlanModal onClose={() => setShowSinPlanModal(false)} />}

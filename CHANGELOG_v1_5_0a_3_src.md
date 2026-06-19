@@ -1710,3 +1710,27 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: `npm run build` OK; `verify-content`/`verify-state` PASS; navegador: Datos ya no muestra
   rebalanceo; en Plan la tarjeta aparece al clicar «Inversión sistemática» (fase 4) y **desaparece** en otras fases;
   en Proyección la compacta está al final, antes de «Ahora, mes a mes»; consola limpia; baseline intacto.
+
+## Plan · empuje a Aprende + teaser de Hogar (sustituye al bloque negro) (2026-06-19)
+- **Causa raíz**: (P3) gran parte del valor del producto reside en *entender*, y desde Plan no había un empujón claro
+  hacia Aprende; (P4) con varias cuentas (hogar), el resumen **negro** (`HouseholdSummaryCard`) chocaba en Plan — el
+  dueño pidió una ilustración ligera que invite a la pantalla Hogar en vez del bloque oscuro.
+- **Cambio** (`screens/index.jsx`, solo UI):
+  - **P3 · Aprende**: nueva **sección «Entender es la mitad del plan»** tras la ruta (M3), con **tres conceptos
+    clave clicables** (`interes-compuesto`, `regla-4`, `monte-carlo`) que abren su lección vía
+    `window.__openLearnConcept(id)` + **CTA «Ir a Aprende →»** (`goTo('aprender')`). Además se **siembran enlaces
+    `<Concept>` inline** en la prosa de M1 (interés compuesto en el cierre del diagnóstico; inflación en la pérdida
+    de poder adquisitivo) — sutiles pero presentes, reusando el componente y ids ya existentes.
+  - **P4 · Hogar**: nuevo `HouseholdTeaserCard({ goTo })` que **sustituye** a `HouseholdSummaryCard` en `ScreenHoy`
+    (solo con 2+ cuentas, mismo guard `list.length < 2`). Tarjeta **clara** (`T.paper`, no `T.ink`) con
+    **ilustración SVG** sobria (dos círculos solapados, `T.accent`+`T.green`, cero red), «Vuestro hogar · N
+    personas», el **patrimonio conjunto** (mismo agregado capital+meses) y «Ver el hogar →». **Toda la tarjeta
+    clica → `goTo('hogar')`**. `HouseholdSummaryCard` se conserva definida (el desglose vive en la pantalla Hogar).
+- **No tocado**: motor, claves localStorage, campos persistidos, `migrateToV2`, `isPro`, `LEARN_CORPUS`, baseline.
+  Color solo por tokens; la cifra hero del teaser va en `T.ink` (no `T.accent`); SVG inline (cero red); sin emojis
+  nuevos; sin gamificación.
+- **Verificación**: `npm run build` OK; `verify-content`/`verify-state` PASS; `verify-tokens`/`verify-lib` sin diffs
+  nuevos (solo divergencias intencionales conocidas); navegador (demo pareja Alex+Marta): los 3 chips abren su
+  lección (p.ej. Monte Carlo → ConceptModal del shell), el CTA navega a Aprende, el teaser claro aparece (fondo
+  `#fffdf7`, 2 círculos, «46k€ · Alex y Marta») y al clicar va a Hogar; con 1 cuenta no aparece (guard); consola
+  limpia; baseline `b3ea52b1…` intacto. Cierra el lote de 6 ítems (P3/3).
