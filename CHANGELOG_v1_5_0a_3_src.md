@@ -1592,3 +1592,34 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Verificación**: `npm run build` OK (`dist` 1.046 kB); `verify-content`/`verify-state` PASS; navegador
   (revisado por el dueño antes de commitear): 12.000 € en 12 m → de golpe 12.960 / DCA 12.514 (**+446 €, 3 %**);
   caída 20 % → −2,4k€ vs −200 €; recalcula al cambiar cantidad/meses; consola limpia; hash baseline `b3ea52b1…` intacto.
+
+## Demo «Alex en dos etapas» (25 y 34) + feature de Rebalanceo (2026-06-19)
+- **Causa raíz**: la demo modelaba a Alex con un **«Plus de comandancia»** (sabor militar) y **sin `actualLife`
+  declarado** (gastos/casa/allocation a cero) → el Diagnóstico no lucía (diversificación «sin declarar», retorno
+  ponderado `null`). El dueño quiere un **tío normal de 25** con el que reflejarse y, sobre eso, lucir Diagnóstico y
+  un **rebalanceo** (que no existía como feature).
+- **Cambio**:
+  - `state/persistence.js`: `seedState` → **seed parametrizado por etapa** (`seedAlex('joven'|'maduro')`). Quita el
+    «Plus de comandancia» → **«Plus de empresa»** (pequeño). **Declara `actualLife`** (gastos coherentes, casa,
+    allocation) y **activa la pensión pública** (realista; sube la robustez del MC a sana sin bajar el nº FIRE).
+    `seedState()` se conserva como wrapper (etapa joven) por compatibilidad.
+    - **Alex · 25**: alquila, ahorra 20 %, allocation conservadora (RV 45 % <50) → diversificación **ámbar** + un
+      Diagnóstico «bueno con un punto a mejorar».
+    - **Alex · 34** (+9 años): hipoteca, ahorra 22 %, allocation RV 85 % → Diagnóstico **óptimo** (diversificación
+      verde).
+  - `state/index.jsx`: `seedDemo` carga **dos cuentas** (`Alex · 25` activa + `Alex · 34`) en vez de una — luce el
+    **comparador de escenarios** (ya existente) con datos relatables.
+  - `lib/index.js`: helpers **aditivos** `recommendedTargetRV(profile,plan)` (RV objetivo por horizonte, desde
+    `STANDARD_PLAN_REFERENCE`) y `computeRebalance(plan,profile,portfolioTotal)` → `{currentRV,targetRV,gap,aligned,
+    moveEur,cashPct}`. Target **derivado**, no persistido → sin cambio de esquema.
+  - `screens/index.jsx`: nueva tarjeta **`RebalanceCard`** en Datos (cartera actual vs recomendada + barra + el
+    movimiento en € a hacer + recordatorio anual; verde=alineado/ámbar=desviado). Puntero «· rebalancéalo en Datos»
+    en la señal **diversificación** del Diagnóstico cuando va baja.
+- **No tocado**: `migrateToV2` (verificado: solo rellena `actualLife` si falta → el declarado sobrevive), firmas del
+  motor, claves localStorage, `isPro`, `LEARN_CORPUS`, baseline. `verify-state` no testea valores de `seedState`.
+  Helpers nuevos no entran en verify-lib (sin diffs nuevos). Cero red.
+- **Verificación**: `npm run build` OK (`dist` 1.050 kB); `verify-content`/`verify-state` PASS; `verify-lib`/tokens
+  sin diffs nuevos; navegador (demo cargada): **dos cuentas**; **Alex·25** → ahorro verde, robustez 96 % verde,
+  **diversificación ámbar** + «rebalancéalo en Datos», rebalanceo «mueve ~2,9k€ a fondos»; **Alex·34** → ahorro/
+  robustez/**diversificación verde**, rebalanceo «alineada», hipoteca declarada; comparador muestra ambos (★53/★54);
+  sin «comandancia»; consola limpia; hash baseline `b3ea52b1…` intacto.

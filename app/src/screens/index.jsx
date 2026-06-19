@@ -11,6 +11,7 @@ import {
   readableMonth, projectV2, sumExpenses,
   buildMortgageSchedule, currentMonthlyAporte, computePlannedFor,
   computeIncomeFor, toRealEur, estimateSpanishPension, computeEffectiveCapitalReturn,
+  computeRebalance,
   runMonteCarlo,
   getSavingsTier, seedMonths, defaultGoals, computeUserProfile, projectStandardPlan, computeActivePhase,
   computeSinPlanKPIs, fmtEur, parseMonthsCSV,
@@ -2429,7 +2430,7 @@ export function ScreenProyeccion() {
                   const a = plan.actualLife && plan.actualLife.allocation;
                   if (!a) return { k: 'Diversificación', col: T.muted, val: 'Sin declarar — hazlo en Datos' };
                   const rv = Math.round((a.fundsEtfs || 0) + (a.pensionPlan || 0));
-                  return { k: 'Diversificación', col: rv >= 50 ? T.green : T.amber, val: `${rv} % en fondos/planes` };
+                  return { k: 'Diversificación', col: rv >= 50 ? T.green : T.amber, val: `${rv} % en fondos/planes${rv >= 50 ? '' : ' · rebalancéalo en Datos'}` };
                 })(),
               ].map((row, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '14px 0', borderBottom: i < 4 ? '1px solid ' + T.lineSoft : 'none' }}>
@@ -3045,6 +3046,51 @@ export function AccountsCard() {
   );
 }
 
+// Rebalanceo · compara la cartera declarada (allocation) con la recomendable por horizonte
+// (computeRebalance, lib) y sugiere el movimiento en €. Solo se muestra si hay allocation
+// declarada (actualLife.completed). Color por tokens (verde=alineado, ámbar=desviado).
+export function RebalanceCard() {
+  const { state } = useStore();
+  const d = useDerived();
+  const { plan, profile } = state;
+  const reb = computeRebalance(plan, profile, d.currentPortfolio || 0);
+  if (!reb) return null;
+  const { currentRV, targetRV, gap, aligned, moveEur, cashPct, horizonYears } = reb;
+  const col = aligned ? T.green : T.amber;
+  return (
+    <Reveal><Card>
+      <SectionTag style={{ marginBottom: 6 }}>Rebalanceo</SectionTag>
+      <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, fontStyle: 'italic', lineHeight: T.lh.normal, marginBottom: 16 }}>
+        Tu cartera frente a lo recomendable para tu horizonte ({horizonYears} años hasta la jubilación).
+      </div>
+      <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', alignItems: 'baseline' }}>
+        <div>
+          <Label>En renta variable</Label>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: col, letterSpacing: T.tracking.tight, lineHeight: 1 }}>{currentRV} %</div>
+        </div>
+        <div>
+          <Label>Recomendable</Label>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: 1 }}>~{targetRV} %</div>
+        </div>
+      </div>
+      <div style={{ height: 10, marginTop: 16, background: T.panel, borderRadius: 999, border: '1px solid ' + T.lineSoft, overflow: 'hidden', position: 'relative' }}>
+        <div style={{ height: '100%', width: Math.min(100, Math.max(0, currentRV)) + '%', background: col, borderRadius: 999 }} />
+        <div style={{ position: 'absolute', top: -3, bottom: -3, left: Math.min(100, Math.max(0, targetRV)) + '%', width: 2, background: T.ink }} aria-hidden="true" />
+      </div>
+      <div style={{ marginTop: 18, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
+        {aligned
+          ? <>Tu cartera está <strong style={{ fontStyle: 'normal', color: T.green }}>alineada</strong> con tu horizonte. Revísala una vez al año y reajusta si se desvía más de un 5 %.</>
+          : gap > 0
+            ? <>Vas <strong style={{ fontStyle: 'normal', color: T.amber }}>demasiado conservador</strong>: tienes mucho en efectivo y depósitos ({cashPct} %). Mueve unos <strong style={{ fontStyle: 'normal' }}>{fmtEur(moveEur)}</strong> a fondos indexados para acercarte al {targetRV} % recomendado.</>
+            : <>Vas <strong style={{ fontStyle: 'normal', color: T.amber }}>algo cargado de riesgo</strong> para tu horizonte. Mueve unos <strong style={{ fontStyle: 'normal' }}>{fmtEur(moveEur)}</strong> de fondos a algo más estable.</>}
+      </div>
+      <div style={{ marginTop: 12, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, lineHeight: T.lh.normal }}>
+        Cambia tu asignación en «Editar gastos y asignación». El rebalanceo se hace una vez al año, o cuando te desvías mucho — sin tocar tu aporte mensual.
+      </div>
+    </Card></Reveal>
+  );
+}
+
 export function ScreenAjustes() {
   const { state, activePlan,
     resetAll, reonboard, seedDemoConfirm, updatePlan, update, updateProfile } = useStore();
@@ -3110,6 +3156,9 @@ export function ScreenAjustes() {
           <Btn variant="ghost" size="sm" onClick={() => setShowEditLife(true)}>Editar gastos y asignación →</Btn>
         </div>
       </Card></Reveal>
+
+      {/* REBALANCEO · cartera actual vs recomendada por horizonte (solo si hay allocation declarada) */}
+      <RebalanceCard />
 
       {/* DATOS */}
       <Reveal><Card>

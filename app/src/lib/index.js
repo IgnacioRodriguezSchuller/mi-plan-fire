@@ -993,6 +993,47 @@ export const STANDARD_PLAN_REFERENCE = {
   description: 'Plan estándar de referencia: ahorrar 20% del neto, allocation por horizonte, fondo indexado mundial, DCA mensual, rebalanceo anual.',
 };
 
+// Rebalanceo · % de RENTA VARIABLE (fondos+planes) recomendado según el horizonte
+// (años hasta la jubilación), tomado de STANDARD_PLAN_REFERENCE. Puro y aditivo; el
+// objetivo se DERIVA del perfil, no se persiste (sin cambio de esquema). Cero red.
+export function recommendedTargetRV(profile, plan) {
+  const age = (profile && profile.age) || 30;
+  const retire = (profile && profile.retireAge) || 65;
+  const years = Math.max(0, retire - age);
+  const R = STANDARD_PLAN_REFERENCE;
+  const rv = years > 20 ? R.allocationRV_youngHorizon
+    : years > 10 ? R.allocationRV_midHorizon
+      : R.allocationRV_nearHorizon;
+  return Math.round(rv * 100);
+}
+
+// Rebalanceo · compara la cartera ACTUAL (allocation declarada) con la recomendada por
+// horizonte y devuelve la desviación de renta variable + el movimiento sugerido en €.
+// Devuelve null si no hay allocation declarada (actualLife.completed). Puro; reusa
+// sumAllocation. `aligned` = |gap| ≤ 5 puntos. Cero red.
+export function computeRebalance(plan, profile, portfolioTotal) {
+  const al = plan && plan.actualLife;
+  if (!al || !al.completed) return null;
+  const total = sumAllocation(al);
+  if (total <= 0) return null;
+  const a = al.allocation || {};
+  const pct = (x) => ((x || 0) / total) * 100;
+  const currentRV = Math.round(pct(a.fundsEtfs) + pct(a.pensionPlan));
+  const targetRV = recommendedTargetRV(profile, plan);
+  const gap = targetRV - currentRV; // + → falta RV (cartera demasiado conservadora)
+  const aligned = Math.abs(gap) <= 5;
+  const moveEur = Math.round((Math.abs(gap) / 100) * (portfolioTotal || 0));
+  return {
+    currentRV,
+    targetRV,
+    gap,
+    aligned,
+    moveEur,
+    cashPct: Math.round(pct(a.cash) + pct(a.deposits)),
+    horizonYears: Math.max(0, ((profile && profile.retireAge) || 65) - ((profile && profile.age) || 30)),
+  };
+}
+
 // v1.1.1 · Tres perfiles del usuario en función de su saving rate actual.
 // A = no aporta nada. B = aporta pero poco (<15%). C = aporta razonable (>=15%).
 export function computeUserProfile(state) {

@@ -176,25 +176,24 @@ export function initialAccountsData() {
 }
 
 
-export function seedState() {
+// Historial de meses para la demo: 8 pasados (con varianza realista alrededor del aporte)
+// + 6 futuros vacíos. `aporte` escala el plan/varianza según la etapa.
+function buildDemoMonths(aporte) {
   const now = new Date();
   const months = [];
-  // Generate last 8 months of history with realistic variance
+  const variance = [aporte - 20, aporte + 20, aporte + 100, aporte - 20, aporte + 10, aporte + 200, aporte, aporte + 30];
   for (let i = 7; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const planned = 400;
-    const variance = [380, 420, 500, 380, 410, 600, 400, 430][7 - i] || 400;
     months.push({
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
       label: d.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }),
       year: d.getFullYear(),
       monthIndex: d.getMonth(),
-      planned,
-      actual: i === 0 ? null : variance,
-      note: i === 5 ? 'Bonus de empresa 💪' : i === 2 ? 'Mes ajustado, mudanza' : '',
+      planned: aporte,
+      actual: i === 0 ? null : (variance[7 - i] || aporte),
+      note: i === 5 ? 'Bonus de empresa' : i === 2 ? 'Mes ajustado, mudanza' : '',
     });
   }
-  // Next 6 months as empty placeholders
   for (let i = 1; i <= 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
     months.push({
@@ -202,47 +201,98 @@ export function seedState() {
       label: d.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }),
       year: d.getFullYear(),
       monthIndex: d.getMonth(),
-      planned: 400,
+      planned: aporte,
       actual: null,
       note: '',
     });
   }
+  return months;
+}
+
+// Demo · "Alex en dos etapas" (mismo tío, dos momentos de su vida):
+//  - 'joven' (25): alquila, ahorra para el piso, empieza a invertir pero con DEMASIADO
+//    efectivo → renta variable (fondos+planes) <50 % → diversificación a mejorar; ahí luce
+//    el rebalanceo y el diagnóstico marca "un punto a mejorar".
+//  - 'maduro' (34, +9 años): ya tiene piso (hipoteca), cartera madura y bien diversificada
+//    (~85 % RV) → diagnóstico verde, rebalanceo "alineado".
+// Declara actualLife (gastos/casa/allocation) — antes la demo lo dejaba a cero. Cambiar
+// VALORES de demo es seguro: no toca migrateToV2 (que solo rellena lo ausente) ni claves.
+export function seedAlex(stage) {
+  const joven = stage !== 'maduro';
+  const aporte = joven ? 400 : 640;
   return {
     onboardingComplete: true,
     landingSeen: true,
     hasSeenLandingPreOnboarding: true,
     migrationsApplied: { v1_1_0_landing_reset: true },
-    profile: { name: 'Alex', age: 30, retireAge: 60 },
+    profile: { name: 'Alex', age: joven ? 25 : 34, retireAge: 60 },
     plan: {
-      capital: 4500,
+      capital: joven ? 5000 : 82000,
       annualReturn: 8,
       salaryInflationFactor: 1.0,
-      monthlyPlanned: 400,
-      incomeSegments: [
-        { id: uid(), from: todayKey(), to: addMonthsKey(todayKey(), 35), amount: 2400, label: 'Salario base' },
-        { id: uid(), from: addMonthsKey(todayKey(), 36), to: null, amount: 3200, label: 'Salario tras ascenso' },
-      ],
-      bonusSegments: [
-        { id: uid(), from: addMonthsKey(todayKey(), 36), to: null, amount: 500, label: 'Plus de comandancia' },
-      ],
+      monthlyPlanned: aporte,
+      incomeSegments: joven
+        ? [
+            { id: uid(), from: todayKey(), to: addMonthsKey(todayKey(), 35), amount: 2000, label: 'Salario base' },
+            { id: uid(), from: addMonthsKey(todayKey(), 36), to: null, amount: 2500, label: 'Salario tras ascenso' },
+          ]
+        : [
+            { id: uid(), from: todayKey(), to: null, amount: 2900, label: 'Salario' },
+          ],
+      bonusSegments: joven
+        ? [{ id: uid(), from: addMonthsKey(todayKey(), 36), to: null, amount: 150, label: 'Plus de empresa' }]
+        : [{ id: uid(), from: todayKey(), to: null, amount: 250, label: 'Plus de empresa' }],
       savingSegments: [
-        { id: uid(), from: todayKey(), to: null, type: 'percent', value: 18, label: 'Aporte 18% del ingreso' },
+        { id: uid(), from: todayKey(), to: null, type: 'percent', value: joven ? 20 : 22, label: joven ? 'Aporte 20% del ingreso' : 'Aporte 22% del ingreso' },
       ],
-      events: [
-        { id: uid(), date: addMonthsKey(todayKey(), 8), amount: 2500, label: 'Bonus de empresa', status: 'confirmado' },
-        { id: uid(), date: addMonthsKey(todayKey(), 30), amount: 20000, label: 'Posible herencia (escenario)', status: 'hipotetico' },
-      ],
+      events: joven
+        ? [
+            { id: uid(), date: addMonthsKey(todayKey(), 8), amount: 2500, label: 'Bonus de empresa', status: 'confirmado' },
+            { id: uid(), date: addMonthsKey(todayKey(), 30), amount: 20000, label: 'Posible herencia (escenario)', status: 'hipotetico' },
+          ]
+        : [
+            { id: uid(), date: addMonthsKey(todayKey(), 6), amount: 3000, label: 'Bonus de empresa', status: 'confirmado' },
+          ],
+      // Pensión pública activada (realista: un trabajador español cobrará pensión a los 67).
+      // En la decumulación cubre parte del gasto → la cartera no carga todo sola → robustez sana.
+      // No baja el nº FIRE (el modelo la trata como ingreso temporal, no resta del objetivo).
+      publicPension: joven
+        ? { enabled: true, startAge: 67, monthlyAmount: 1050, yearsContributed: 3, autoEstimate: false }
+        : { enabled: true, startAge: 67, monthlyAmount: 1250, yearsContributed: 12, autoEstimate: false },
+      actualLife: {
+        completed: true,
+        expenses: joven
+          ? { housing: 780, food: 260, transport: 110, subscriptions: 30, other: 160 }
+          : { housing: 850, food: 320, transport: 160, subscriptions: 40, other: 220 },
+        mortgage: joven
+          ? { enabled: false, originalAmount: 0, termYears: 30, startYear: new Date().getFullYear(), type: 'fixed', fixedRate: 3.0, spread: 1.0, euriborRef: 3.0 }
+          : { enabled: true, originalAmount: 160000, termYears: 30, startYear: new Date().getFullYear() - 5, type: 'fixed', fixedRate: 3.2, spread: 1.0, euriborRef: 3.0 },
+        allocation: joven
+          ? { cash: 25, deposits: 30, fundsEtfs: 35, pensionPlan: 10, other: 0, customReturns: { deposits: 2.0, fundsEtfs: null, pensionPlan: null, other: 0 } }
+          : { cash: 5, deposits: 10, fundsEtfs: 55, pensionPlan: 30, other: 0, customReturns: { deposits: 2.0, fundsEtfs: null, pensionPlan: null, other: 0 } },
+      },
     },
     sandbox: null,
     schemaVersion: 2,
-    months,
-    goals: [
-      { id: 'g1', name: 'Entrada del piso', target: 30000, targetAge: 35 },
-      { id: 'g2', name: 'Año sabático', target: 60000, targetAge: 42 },
-      { id: 'g3', name: 'Independencia financiera', target: 500000, targetAge: 60 },
-    ],
+    months: buildDemoMonths(aporte),
+    goals: joven
+      ? [
+          { id: 'g1', name: 'Entrada del piso', target: 30000, targetAge: 33 },
+          { id: 'g2', name: 'Fondo de emergencia', target: 12000, targetAge: 27 },
+          { id: 'g3', name: 'Independencia financiera', target: 500000, targetAge: 60 },
+        ]
+      : [
+          { id: 'g1', name: 'Cambiar de coche', target: 18000, targetAge: 38 },
+          { id: 'g2', name: 'Año sabático', target: 60000, targetAge: 45 },
+          { id: 'g3', name: 'Independencia financiera', target: 600000, targetAge: 60 },
+        ],
     activeTab: 'hoy',
   };
+}
+
+// Compat: callers existentes (y la landing) siguen usando seedState() → etapa joven.
+export function seedState() {
+  return seedAlex('joven');
 }
 
 

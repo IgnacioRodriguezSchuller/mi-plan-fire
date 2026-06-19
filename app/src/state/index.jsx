@@ -10,7 +10,7 @@ import {
 } from '../lib/index.js'
 import { ConfirmModal } from '../modals/index.jsx'
 import {
-  loadAccountsData, initialAccountsData, saveAccountsData, emptyState, seedState,
+  loadAccountsData, initialAccountsData, saveAccountsData, emptyState, seedState, seedAlex,
 } from './persistence.js'
 
 export * from './persistence.js'
@@ -144,11 +144,21 @@ export function StateProvider({ children }) {
       },
     });
   }, []);
+  // Demo = "Alex en dos etapas": carga DOS cuentas (25 y 34) sustituyendo el contenedor
+  // entero (coherente con el aviso de seedDemoConfirm: "sustituye tus datos"). Así el
+  // comparador de escenarios y el rebalanceo lucen con datos reales y relatables.
   const seedDemo = useCallback(() => setAccountsData((d) => {
-    const cur = d.accounts[d.activeId];
-    if (!cur) return d;
-    const s = seedState();
-    return { ...d, accounts: { ...d.accounts, [d.activeId]: { ...cur, state: s, label: (s.profile && s.profile.name) || cur.label } } };
+    const id25 = 'demo-alex-25';
+    const id34 = 'demo-alex-34';
+    return {
+      ...d,
+      version: 1,
+      activeId: id25,
+      accounts: {
+        [id25]: { id: id25, label: 'Alex · 25', state: seedAlex('joven') },
+        [id34]: { id: id34, label: 'Alex · 34', state: seedAlex('maduro') },
+      },
+    };
   }), []);
   // Variante con confirmación (H11): cargar la demo SUSTITUYE el estado entero.
   // El botón "Cargar datos demo" de Datos y el "Saltar · usar demo" del onboarding
