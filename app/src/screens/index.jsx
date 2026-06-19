@@ -2302,6 +2302,20 @@ export function ScreenProyeccion() {
             { value: pensionAge, em: 'pensión pública, desde los' },
           ]} /></Reveal>
           {hayPosibles && <Reveal delay={200}><p style={note}>Con los eventos posibles incluidos, a los {retireAge} llegarías a {fmtMoneyBig(finalConPosible)}.</p></Reveal>}
+          {/* Patrimonio total · CON TU CASA (figura aparte): el hero de arriba es la cartera líquida (rima
+              con el ★, que solo cuenta lo líquido); esto suma el valor de tu casa − la hipoteca. Solo si posees/comprarás casa. */}
+          {d.homeEquityAtRetire > 0 && (() => {
+            const total = (realMode ? finalReal : finalNominal) + (realMode ? Math.round(d.homeEquityAtRetire / deflator) : d.homeEquityAtRetire);
+            return (
+              <Reveal delay={220}>
+                <div style={{ marginTop: 24, padding: '14px 18px', border: '1px solid ' + T.line, borderRadius: 12, maxWidth: 460, textAlign: 'left' }}>
+                  <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.muted }}>Patrimonio total · con tu casa</div>
+                  <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight, marginTop: 4 }}>{fmtMoneyBig(total)} <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, letterSpacing: 0 }}>a los {retireAge}</span></div>
+                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, marginTop: 6, lineHeight: T.lh.normal }}>Cartera + el valor de tu casa − la hipoteca. Tu ★ sigue contando solo la cartera (no vives de tu casa).</div>
+                </div>
+              </Reveal>
+            );
+          })()}
           <Reveal delay={240}><p style={{ ...note, marginTop: 30 }}>Los números <span style={{ color: T.accent, borderBottom: '1.5px dashed ' + T.accent, paddingBottom: 1 }}>subrayados</span> los pones tú. El resto los calcula tu plan.</p></Reveal>
         </Spread>
 
