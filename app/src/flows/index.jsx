@@ -6,9 +6,11 @@
 // NO movidos (importan useStore directamente; pendientes para la tanda de state):
 //   Onboarding (L4122) -> useStore() update/seedDemo
 //   ActualLifeOnboarding (L7680) -> useStore() state/mutatePlan
+import { useState, useEffect, useRef } from 'react'
 import { T } from '../tokens/index.js'
 import { Btn } from '../ui/index.jsx'
 import { useIsMobile } from '../hooks/useIsMobile.js'
+import { DONATE_KOFI_URL, DONATE_GITHUB_URL } from '../modals/index.jsx'
 
 // Iconos de línea propios para los 3 principios — mismo trazo que LearnIcon
 // (viewBox 0 0 36 36, stroke 1.6, fill none, caps redondos). Sin librería de
@@ -114,6 +116,19 @@ export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro',
 export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
   const mobile = useIsMobile();
   const isView = mode === 'view';
+  // Donaciones · viven DENTRO de la presentación, tras un icono de café (cero red: SVG inline +
+  // enlaces <a href>). Así el onboarding no expone donaciones «directo» (ítem 2 del feedback).
+  const [showCafe, setShowCafe] = useState(false);
+  const cafeRef = useRef(null);
+  useEffect(() => {
+    if (!showCafe) return;
+    const onKey = (e) => { if (e.key === 'Escape') setShowCafe(false); };
+    const onClick = (e) => { if (cafeRef.current && !cafeRef.current.contains(e.target)) setShowCafe(false); };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onClick);
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onClick); };
+  }, [showCafe]);
+  const donations = [{ url: DONATE_KOFI_URL, label: 'Invítame a un café' }, { url: DONATE_GITHUB_URL, label: 'Patrocina en GitHub' }];
   return (
     <div style={{
       width: '100vw', minHeight: '100vh', background: T.bg, color: T.ink,
@@ -126,18 +141,41 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 26 : 30, letterSpacing: T.tracking.tight }}>
           Mi <em style={{ color: T.accent }}>Plan</em>
         </div>
-        {isView ? (
-          <button onClick={onClose} aria-label="Cerrar" style={{
-            background: T.ink, color: T.bg, border: 'none', width: 38, height: 38, borderRadius: 999,
-            fontSize: T.size.subtitle, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
-          }}>×</button>
-        ) : (
-          <button onClick={onLoadDemo} style={{
-            fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, background: 'transparent',
-            border: 'none', cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase',
-            padding: 8,
-          }}>Saltar · demo</button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: mobile ? 8 : 14 }}>
+          <div ref={cafeRef} style={{ position: 'relative', display: 'flex' }}>
+            <button onClick={() => setShowCafe((v) => !v)} aria-label="Apoyar Mi Plan" aria-expanded={showCafe} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.muted, padding: 4, display: 'flex', alignItems: 'center', lineHeight: 0 }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 9h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z" />
+                <path d="M17 10h2.2a2.3 2.3 0 0 1 0 4.6H17" />
+                <path d="M7.5 3.4c-.5.7-.5 1.3 0 2M11 3.4c-.5.7-.5 1.3 0 2" />
+              </svg>
+            </button>
+            {showCafe && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 50, width: 250, background: T.paper, border: '1px solid ' + T.line, borderRadius: 10, padding: 16, boxShadow: '0 8px 24px rgba(26,22,18,0.16)', textAlign: 'left' }}>
+                <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal, marginBottom: 12 }}>Mi Plan es gratis y sin anuncios. Si te resulta útil, échame una mano:</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {donations.map((dn) => dn.url ? (
+                    <a key={dn.label} href={dn.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.accent, textDecoration: 'none', padding: '8px 12px', border: '1px solid ' + T.accent, borderRadius: 999, textAlign: 'center' }}>{dn.label} →</a>
+                  ) : (
+                    <div key={dn.label} style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint, padding: '8px 12px', border: '1px solid ' + T.lineSoft, borderRadius: 999, textAlign: 'center' }}>{dn.label} · próximamente</div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          {isView ? (
+            <button onClick={onClose} aria-label="Cerrar" style={{
+              background: T.ink, color: T.bg, border: 'none', width: 38, height: 38, borderRadius: 999,
+              fontSize: T.size.subtitle, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
+            }}>×</button>
+          ) : (
+            <button onClick={onLoadDemo} style={{
+              fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, background: 'transparent',
+              border: 'none', cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase',
+              padding: 8,
+            }}>Saltar · demo</button>
+          )}
+        </div>
       </div>
 
       {/* Hero */}

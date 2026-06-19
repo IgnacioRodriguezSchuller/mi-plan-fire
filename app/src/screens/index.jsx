@@ -898,7 +898,7 @@ export function Onboarding() {
       {/* Conversación · una sola columna (panel de preview en vivo eliminado) */}
       <div style={{ padding: mobile ? '32px 24px' : '64px 80px', display: 'flex', flexDirection: 'column', gap: 28, overflowY: 'auto', width: '100%', maxWidth: mobile ? '100%' : 720, margin: '0 auto', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <LogoMenu fontSize={22} />
+          <LogoMenu fontSize={22} presentationOnly />
           <button onClick={() => seedDemoConfirm()}
             style={{
               fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, background: 'transparent',
@@ -4674,7 +4674,7 @@ export function KpiPill({ onClick }) {
 // Logo «Mi Plan» con DESPLEGABLE asociado · funciona en cualquier pantalla (dashboard,
 // onboarding). Autocontenido: gestiona su propio popover + AboutModal. «Ver presentación» usa
 // el global window.__openLanding (el Shell renderiza la Landing en modo view). Cero red.
-export function LogoMenu({ fontSize = 28 }) {
+export function LogoMenu({ fontSize = 28, presentationOnly = false }) {
   const [open, setOpen] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const anchorRef = useRef(null);
@@ -4686,6 +4686,16 @@ export function LogoMenu({ fontSize = 28 }) {
     document.addEventListener('mousedown', onClick);
     return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onClick); };
   }, [open]);
+  const wordStyle = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontStyle: 'italic', fontSize, color: T.accent, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 1 };
+  // En ONBOARDING (presentationOnly): el logo abre SOLO la presentación, sin desplegable ni
+  // «Acerca de»/«Apóyanos» directos. Las donaciones viven DENTRO de la presentación (icono de café).
+  if (presentationOnly) {
+    return (
+      <button onClick={() => window.__openLanding && window.__openLanding()} aria-label="Ver la presentación de Mi Plan" style={wordStyle}>
+        Mi Plan
+      </button>
+    );
+  }
   const Item = ({ children, onClick: handle }) => (
     <button onClick={() => { setOpen(false); handle && handle(); }} style={{
       display: 'block', width: '100%', textAlign: 'left', padding: '9px 16px',
@@ -4695,15 +4705,13 @@ export function LogoMenu({ fontSize = 28 }) {
   );
   return (
     <div ref={anchorRef} style={{ position: 'relative', display: 'inline-block' }}>
-      <button onClick={() => setOpen((o) => !o)} aria-label="Menú de Mi Plan" aria-expanded={open}
-        style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontStyle: 'italic', fontSize, color: T.accent, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 1 }}>
+      <button onClick={() => setOpen((o) => !o)} aria-label="Menú de Mi Plan" aria-expanded={open} style={wordStyle}>
         Mi Plan
       </button>
       {open && (
         <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 300, minWidth: 184, background: T.paper, border: '1px solid ' + T.line, borderRadius: 8, padding: '6px 0', boxShadow: '0 6px 16px rgba(26,22,18,0.18)' }}>
           <Item onClick={() => window.__openLanding && window.__openLanding()}>Ver presentación</Item>
           <Item onClick={() => setShowAbout(true)}>Acerca de</Item>
-          <Item onClick={() => setShowAbout(true)}>Apóyanos</Item>
         </div>
       )}
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
