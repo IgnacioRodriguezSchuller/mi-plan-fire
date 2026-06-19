@@ -864,9 +864,7 @@ export function Onboarding() {
       {/* Conversación · una sola columna (panel de preview en vivo eliminado) */}
       <div style={{ padding: mobile ? '32px 24px' : '64px 80px', display: 'flex', flexDirection: 'column', gap: 28, overflowY: 'auto', width: '100%', maxWidth: mobile ? '100%' : 720, margin: '0 auto', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight }}>
-            Mi <em style={{ color: T.accent }}>Plan</em>
-          </div>
+          <LogoMenu fontSize={22} />
           <button onClick={() => seedDemoConfirm()}
             style={{
               fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, background: 'transparent',
@@ -4586,6 +4584,46 @@ export function KpiPill({ onClick }) {
   );
 }
 
+// Logo «Mi Plan» con DESPLEGABLE asociado · funciona en cualquier pantalla (dashboard,
+// onboarding). Autocontenido: gestiona su propio popover + AboutModal. «Ver presentación» usa
+// el global window.__openLanding (el Shell renderiza la Landing en modo view). Cero red.
+export function LogoMenu({ fontSize = 28 }) {
+  const [open, setOpen] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const anchorRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    const onClick = (e) => { if (anchorRef.current && anchorRef.current.contains(e.target)) return; setOpen(false); };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onClick);
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onClick); };
+  }, [open]);
+  const Item = ({ children, onClick: handle }) => (
+    <button onClick={() => { setOpen(false); handle && handle(); }} style={{
+      display: 'block', width: '100%', textAlign: 'left', padding: '9px 16px',
+      background: 'transparent', border: 'none', cursor: 'pointer',
+      fontFamily: T.serif, fontSize: T.size.body, color: T.ink, whiteSpace: 'nowrap',
+    }}>{children}</button>
+  );
+  return (
+    <div ref={anchorRef} style={{ position: 'relative', display: 'inline-block' }}>
+      <button onClick={() => setOpen((o) => !o)} aria-label="Menú de Mi Plan" aria-expanded={open}
+        style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontStyle: 'italic', fontSize, color: T.accent, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 1 }}>
+        Mi Plan
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 300, minWidth: 184, background: T.paper, border: '1px solid ' + T.line, borderRadius: 8, padding: '6px 0', boxShadow: '0 6px 16px rgba(26,22,18,0.18)' }}>
+          <Item onClick={() => window.__openLanding && window.__openLanding()}>Ver presentación</Item>
+          <Item onClick={() => setShowAbout(true)}>Acerca de</Item>
+          <Item onClick={() => setShowAbout(true)}>Apóyanos</Item>
+        </div>
+      )}
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+    </div>
+  );
+}
+
 export function AccountMenu({ open, anchor, onClose, onGoToAjustes, onShowAbout }) {
   useEffect(() => {
     if (!open) return;
@@ -4806,6 +4844,9 @@ export function Shell() {
   // grande («Tu dinero a treinta años vista») deja de ser pantalla obligatoria y pasa a ser
   // «la presentación» (botón en Datos → window.__openLanding). landingSeen se conserva como
   // campo (se marca aquí) pero ya NO gatea el arranque.
+  // La presentación (Landing en modo view) se comprueba ANTES de los guards de bienvenida/
+  // onboarding → el logo-menú «Ver presentación» funciona en CUALQUIER estado, incl. onboarding.
+  if (showLanding) return <Landing mode="view" onClose={() => setShowLanding(false)} />;
   if (!state.hasSeenLandingPreOnboarding) {
     return (
       <>
@@ -4820,7 +4861,6 @@ export function Shell() {
     );
   }
   if (!state.onboardingComplete) return <Onboarding />;
-  if (showLanding) return <Landing mode="view" onClose={() => setShowLanding(false)} />;
   // B8 · Revisit mode: header logo or Ajustes button → landing without flag side-effects.
   if (showRevisitLanding) {
     return (
@@ -4849,9 +4889,7 @@ export function Shell() {
     <>
     <div style={{ width: '100vw', minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: T.serif, display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: '10px 14px', background: T.panel, borderBottom: '1px solid ' + T.line, display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50 }}>
-        <button onClick={() => setShowLanding(true)} aria-label="Ver presentación de Mi Plan FIRE" style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontStyle: 'italic', fontSize: 22, color: T.accent, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 1 }}>
-          Mi Plan
-        </button>
+        <LogoMenu fontSize={22} />
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <KpiPill onClick={() => setTab('proy')} />
           <div style={{ position: 'relative' }} ref={accountAnchorRef}>
@@ -4908,9 +4946,7 @@ export function Shell() {
     <>
     <div style={{ width: '100vw', minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: T.serif, display: 'flex', flexDirection: 'column' }}>
       <header style={{ position: 'sticky', top: 0, zIndex: 50, background: T.panel, borderBottom: '1px solid ' + T.line, padding: '14px clamp(24px, 3vw, 48px)', display: 'flex', alignItems: 'center', gap: 28 }}>
-        <button onClick={() => setShowLanding(true)} aria-label="Ver presentación de Mi Plan FIRE" style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontStyle: 'italic', fontSize: 28, color: T.accent, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 1 }}>
-          Mi Plan
-        </button>
+        <LogoMenu fontSize={28} />
         <nav style={{ display: 'flex', gap: 24, flex: 1 }}>
           {tabs.map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{

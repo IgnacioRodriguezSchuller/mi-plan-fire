@@ -1684,3 +1684,17 @@ de FIRE el motor necesitaba Fat, que no existía.
   navegador: demo = **Alex (28) + Marta (30)**; aparece la **tab Hogar**; «Vuestro hogar · tenéis 46k€» (= 8k+30k+
   meses); toggle **Todos → Alex+Marta+Juntos**, **Marta → solo Marta** (el diagrama filtra); «Cada uno» con 2 edades
   de libertad; rebalanceo del hogar; consola limpia. Con 1 cuenta la tab NO aparece (guard `isHousehold`).
+
+## Logo «Mi Plan» con desplegable, funcional en todas las pantallas (2026-06-19)
+- **Causa raíz**: el logo abría la presentación a pantalla completa pero estaba **muerto en el onboarding**, y el
+  dueño quiere un **desplegable** consistente asociado al logo.
+- **Cambio** (`screens/index.jsx`): nuevo **`LogoMenu`** autocontenido (wordmark «Mi Plan» + dropdown: **Ver
+  presentación** → `window.__openLanding`, **Acerca de** y **Apóyanos** → su propio `AboutModal`; cierre por click
+  fuera/Escape, patrón de `AccountMenu`). Sustituye los logos del header (desktop+móvil) y el `<div>` muerto del
+  `Onboarding`. **Shell reordenado**: `if (showLanding) return <Landing view>` pasa ANTES de los guards de
+  bienvenida/onboarding → «Ver presentación» funciona en **cualquier** estado, incl. onboarding.
+- **No tocado**: `migrateToV2`, claves, campos persistidos, motor, baseline. Cero red.
+- **Verificación**: `npm run build` OK; `verify-content`/`verify-state` PASS; navegador: en **dashboard** el logo
+  abre el dropdown (Ver presentación/Acerca de/Apóyanos), «Ver presentación» abre la Landing grande; en **onboarding**
+  el logo (antes muerto) **ya es clicable**, el dropdown funciona y «Ver presentación» abre la Landing grande durante
+  el onboarding; consola limpia; baseline intacto.
