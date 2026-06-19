@@ -271,6 +271,11 @@ export function seedAlex(stage) {
           ? { cash: 25, deposits: 30, fundsEtfs: 35, pensionPlan: 10, other: 0, customReturns: { deposits: 2.0, fundsEtfs: null, pensionPlan: null, other: 0 } }
           : { cash: 5, deposits: 10, fundsEtfs: 55, pensionPlan: 30, other: 0, customReturns: { deposits: 2.0, fundsEtfs: null, pensionPlan: null, other: 0 } },
       },
+      // Demo con algunas lecciones ya leídas (la demo enseña el producto: Aprende «vivido»).
+      // Alex empieza con lo básico; Marta, más veterana, lleva más leído.
+      readLessons: joven
+        ? { 'interes-compuesto': true, 'inflacion': true }
+        : { 'interes-compuesto': true, 'inflacion': true, 'retorno-anual': true, 'regla-4': true, 'monte-carlo': true },
     },
     sandbox: null,
     schemaVersion: 2,

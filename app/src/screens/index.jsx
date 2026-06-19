@@ -4903,6 +4903,8 @@ export function Shell() {
   const accountAnchorRef = useRef(null);
   // v1.5.0a · About modal triggered from AccountMenu.
   const [showAbout, setShowAbout] = useState(false);
+  // Lote 2 · pista de scroll: hay más contenido abajo y aún no se ha llegado al final.
+  const [showScrollHint, setShowScrollHint] = useState(false);
   useEffect(() => {
     window.__openLanding = () => setShowLanding(true);
     window.__openRevisitLanding = () => setShowRevisitLanding(true);
@@ -4920,6 +4922,27 @@ export function Shell() {
       catch (e) { window.scrollTo(0, 0); }
     });
   };
+
+  // Lote 2 · pista de scroll (ítem 8): muestra una afordancia al pie cuando hay contenido por
+  // debajo y aún no se ha llegado al final; se oculta al acercarse al fondo. Re-chequea al cambiar
+  // de tab (otra altura) y en scroll/resize. Una sola pieza en el Shell → aplica a todas las secciones.
+  useEffect(() => {
+    const check = () => {
+      const doc = document.documentElement;
+      const more = (window.innerHeight + window.scrollY) < (doc.scrollHeight - 96);
+      setShowScrollHint(more);
+    };
+    check();
+    const raf = requestAnimationFrame(check);
+    const t = setTimeout(check, 280);
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+    // El contenido toma altura tras el primer paint (Reveal, etc.): un ResizeObserver sobre el
+    // body re-chequea cuando cambia, para que la pista aparezca SIN que el usuario tenga que scrollear.
+    let ro;
+    if (typeof ResizeObserver !== 'undefined') { ro = new ResizeObserver(check); ro.observe(document.body); }
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); window.removeEventListener('scroll', check); window.removeEventListener('resize', check); if (ro) ro.disconnect(); };
+  }, [tab]);
 
   // v5.7 · Normalise legacy persisted activeTab values to the new nav.
   // Old: 'plan' (now in Ajustes), 'mes' (now in Seguimiento).
@@ -4980,6 +5003,34 @@ export function Shell() {
     { id: 'ajustes', label: 'Datos', symbol: '◌' },
   ];
 
+  // Lote 2 · navegación por los laterales (ítem 4, solo desktop): clic en los márgenes → tab
+  // anterior/siguiente del array (respeta el «Hogar» condicional); zonas inertes en los extremos.
+  const tabIdx = Math.max(0, tabs.findIndex((t) => t.id === tab));
+  const prevTab = tabIdx > 0 ? tabs[tabIdx - 1] : null;
+  const nextTab = tabIdx < tabs.length - 1 ? tabs[tabIdx + 1] : null;
+  const sideZone = (side, t) => t ? (
+    <button key={side} onClick={() => setTab(t.id)} aria-label={`Ir a ${t.label}`} className="side-nav-zone" style={{
+      position: 'fixed', top: 62, bottom: 0, [side]: 0, width: 'clamp(36px, 5vw, 88px)', zIndex: 40,
+      background: 'transparent', border: 'none', cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: side === 'left' ? 'flex-start' : 'flex-end', padding: '0 10px',
+    }}>
+      <svg className="side-nav-chevron" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={T.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d={side === 'left' ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'} />
+      </svg>
+    </button>
+  ) : null;
+  // Pista de scroll (ítem 8): degradado a T.bg + chevron al pie cuando hay más abajo. En móvil sube
+  // sobre la barra de navegación inferior.
+  const scrollHint = showScrollHint ? (
+    <div aria-hidden="true" style={{
+      position: 'fixed', left: 0, right: 0, bottom: mobile ? 58 : 0, height: 60, zIndex: 30, pointerEvents: 'none',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 8,
+      background: `linear-gradient(to bottom, transparent, ${T.bg})`,
+    }}>
+      <svg className="scroll-hint-chevron" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.faint} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+    </div>
+  ) : null;
+
   if (mobile) return (
     <>
     <div style={{ width: '100vw', minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: T.serif, display: 'flex', flexDirection: 'column' }}>
@@ -5031,6 +5082,7 @@ export function Shell() {
           </button>
         ))}
       </nav>
+      {scrollHint}
     </div>
     {globalConceptId && <ConceptModal id={globalConceptId} onClose={() => setGlobalConceptId(null)} />}
     {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
@@ -5081,6 +5133,9 @@ export function Shell() {
           Herramienta de proyección, no de asesoramiento financiero. No garantiza rentabilidades.
         </div>
       </footer>
+      {sideZone('left', prevTab)}
+      {sideZone('right', nextTab)}
+      {scrollHint}
     </div>
     {globalConceptId && <ConceptModal id={globalConceptId} onClose={() => setGlobalConceptId(null)} />}
     {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
