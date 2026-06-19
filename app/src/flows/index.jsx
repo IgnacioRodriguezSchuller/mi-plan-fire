@@ -93,9 +93,6 @@ export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro',
           ) : (
             <>
               <Btn variant="accent" size="lg" onClick={onStart}>Empezar →</Btn>
-              {onOpenManifesto && (
-                <Btn variant="ghost" size="lg" onClick={onOpenManifesto}>Antes, quiero saber más →</Btn>
-              )}
             </>
           )}
         </div>
@@ -116,18 +113,8 @@ export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro',
 export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
   const mobile = useIsMobile();
   const isView = mode === 'view';
-  // Donaciones · viven DENTRO de la presentación, tras un icono de café (cero red: SVG inline +
-  // enlaces <a href>). Así el onboarding no expone donaciones «directo» (ítem 2 del feedback).
-  const [showCafe, setShowCafe] = useState(false);
-  const cafeRef = useRef(null);
-  useEffect(() => {
-    if (!showCafe) return;
-    const onKey = (e) => { if (e.key === 'Escape') setShowCafe(false); };
-    const onClick = (e) => { if (cafeRef.current && !cafeRef.current.contains(e.target)) setShowCafe(false); };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('mousedown', onClick);
-    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onClick); };
-  }, [showCafe]);
+  // Donaciones · viven DENTRO de la presentación, en una tarjeta dedicada (#13). Cero red: SVG
+  // inline + enlaces <a href>. Así el onboarding no expone donaciones «directo» (ítem 2 anterior).
   const donations = [{ url: DONATE_KOFI_URL, label: 'Invítame a un café' }, { url: DONATE_GITHUB_URL, label: 'Patrocina en GitHub' }];
   return (
     <div style={{
@@ -142,27 +129,6 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
           Mi <em style={{ color: T.accent }}>Plan</em>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: mobile ? 8 : 14 }}>
-          <div ref={cafeRef} style={{ position: 'relative', display: 'flex' }}>
-            <button onClick={() => setShowCafe((v) => !v)} aria-label="Apoyar Mi Plan" aria-expanded={showCafe} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.muted, padding: 4, display: 'flex', alignItems: 'center', lineHeight: 0 }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M4 9h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z" />
-                <path d="M17 10h2.2a2.3 2.3 0 0 1 0 4.6H17" />
-                <path d="M7.5 3.4c-.5.7-.5 1.3 0 2M11 3.4c-.5.7-.5 1.3 0 2" />
-              </svg>
-            </button>
-            {showCafe && (
-              <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 50, width: 250, background: T.paper, border: '1px solid ' + T.line, borderRadius: 10, padding: 16, boxShadow: '0 8px 24px rgba(26,22,18,0.16)', textAlign: 'left' }}>
-                <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal, marginBottom: 12 }}>Mi Plan es gratis y sin anuncios. Si te resulta útil, échame una mano:</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {donations.map((dn) => dn.url ? (
-                    <a key={dn.label} href={dn.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.accent, textDecoration: 'none', padding: '8px 12px', border: '1px solid ' + T.accent, borderRadius: 999, textAlign: 'center' }}>{dn.label} →</a>
-                  ) : (
-                    <div key={dn.label} style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint, padding: '8px 12px', border: '1px solid ' + T.lineSoft, borderRadius: 999, textAlign: 'center' }}>{dn.label} · próximamente</div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
           {isView ? (
             <button onClick={onClose} aria-label="Cerrar" style={{
               background: T.ink, color: T.bg, border: 'none', width: 38, height: 38, borderRadius: 999,
@@ -251,6 +217,31 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
             </div>
           </>
         )}
+      </div>
+
+      {/* #13 · Café · tarjeta dedicada (antes un icono diminuto en el header). Cero red: <a href> + SVG. */}
+      <div style={{
+        marginTop: mobile ? 'clamp(12px, 2.5vh, 20px)' : 'clamp(14px, 2.5vh, 24px)',
+        display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+        padding: mobile ? '12px 14px' : '13px 18px', background: T.paper,
+        border: '1px solid ' + T.line, borderRadius: 12, maxWidth: 560,
+      }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+          <path d="M4 9h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z" />
+          <path d="M17 10h2.2a2.3 2.3 0 0 1 0 4.6H17" />
+          <path d="M7.5 3.4c-.5.7-.5 1.3 0 2M11 3.4c-.5.7-.5 1.3 0 2" />
+        </svg>
+        <div style={{ flex: '1 1 170px', minWidth: 0 }}>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 15 : 16, color: T.ink, letterSpacing: T.tracking.tight }}>Gratis y sin anuncios</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.snug }}>Si te resulta útil, invítame a un café.</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {donations.map((dn) => dn.url ? (
+            <a key={dn.label} href={dn.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.accent, textDecoration: 'none', padding: '8px 12px', border: '1px solid ' + T.accent, borderRadius: 999, whiteSpace: 'nowrap' }}>{dn.label} →</a>
+          ) : (
+            <span key={dn.label} style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint, padding: '8px 12px', border: '1px solid ' + T.lineSoft, borderRadius: 999, whiteSpace: 'nowrap' }}>{dn.label} · pronto</span>
+          ))}
+        </div>
       </div>
     </div>
   );

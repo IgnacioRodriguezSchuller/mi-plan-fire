@@ -34,7 +34,7 @@ import {
   LEARN_LEVELS, LEARN_LEVEL_LABELS, LEARN_LEVEL_SUB, LEARN_LEVEL_BY_ID, GLOSSARY_ALIASES,
 } from '../content/index.js'
 import {
-  ConfirmModal, WhyDifferentModal, MonthlyCalendarModal, PublicPensionDisclaimerModal,
+  ConfirmModal, MonthlyCalendarModal, PublicPensionDisclaimerModal,
   Concept, ConceptModal, AboutModal,
 } from '../modals/index.jsx'
 import { StateProvider, useStore, useDerived, usePlanMutators } from '../state/index.jsx'
@@ -4849,7 +4849,7 @@ export function KpiPill({ onClick }) {
       fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto',
     }}>
       {/* Edad de libertad (verdictAge) — protagonista del pill, grande y visible. ★ en verde (doctrina). */}
-      <span style={{ fontFamily: T.mono, fontWeight: 500, fontSize: mobile ? 15 : 18, letterSpacing: '0.02em', color: T.bg, display: 'inline-flex', alignItems: 'baseline', gap: 3 }}>
+      <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontStyle: 'italic', fontSize: mobile ? 16 : 19, color: T.bg, display: 'inline-flex', alignItems: 'baseline', gap: 3 }}>
         {d.verdictAge != null
           ? <><span style={{ color: T.green }}>★</span>{Math.ceil(d.verdictAge)}</>
           : `${state.profile.retireAge}→`}
@@ -4894,6 +4894,7 @@ export function LogoMenu({ fontSize = 28 }) {
 }
 
 export function AccountMenu({ open, anchor, onClose, onGoToAjustes, onShowAbout }) {
+  const { accounts, activeAccountId, switchAccount, createAccount } = useStore();
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -4916,16 +4917,39 @@ export function AccountMenu({ open, anchor, onClose, onGoToAjustes, onShowAbout 
       fontFamily: T.serif, fontSize: T.size.body, color: T.ink,
     }}>{children}</button>
   );
+  // #12 · El círculo de perfil abre un menú con cambio/creación de cuenta, acceso a Datos, «Acerca
+  // de» y apoyo (café, que vive en la presentación). Mismo color+inicial por cuenta que el círculo.
+  const PALETTE = [T.accent, T.green, T.amber, T.muted, T.faint];
+  const accIds = Object.keys(accounts || {});
   return (
     <div style={{
       position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 200,
-      minWidth: 160, background: T.paper, border: '1px solid ' + T.line,
+      minWidth: 210, background: T.paper, border: '1px solid ' + T.line,
       borderRadius: 8, padding: '6px 0',
       boxShadow: '0 6px 16px rgba(26,22,18,0.18)',
     }}>
-      <Item onClick={onGoToAjustes}>Exportar datos</Item>
-      <Item onClick={onGoToAjustes}>Borrar todo</Item>
+      <div style={{ padding: '4px 14px 6px', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint }}>Perfiles</div>
+      {accIds.map((id, i) => {
+        const a = accounts[id]; const isActive = id === activeAccountId;
+        const color = PALETTE[i % PALETTE.length];
+        const initial = ((a.label || '').trim()[0] || '·').toUpperCase();
+        return (
+          <button key={id} onClick={() => { if (!isActive) switchAccount(id); onClose(); }} style={{
+            display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+            padding: '8px 14px', background: isActive ? T.panel : 'transparent', border: 'none', cursor: 'pointer',
+            fontFamily: T.serif, fontSize: T.size.body, color: T.ink,
+          }}>
+            <span style={{ width: 22, height: 22, borderRadius: '50%', background: color, color: T.bg, fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 11, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{initial}</span>
+            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.label || 'Perfil'}</span>
+            {isActive && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.accent }}>✓</span>}
+          </button>
+        );
+      })}
+      <Item onClick={() => createAccount()}>+ Crear otro perfil</Item>
+      <div style={{ height: 1, background: T.lineSoft, margin: '6px 0' }} />
+      <Item onClick={onGoToAjustes}>Mis datos</Item>
       <Item onClick={onShowAbout}>Acerca de</Item>
+      <Item onClick={() => { window.__openLanding && window.__openLanding(); }}>Apoyar Mi Plan</Item>
     </div>
   );
 }
@@ -5081,7 +5105,6 @@ export function Shell() {
   const accInitial = (accLabel.trim()[0] || '·').toUpperCase();
   const [showLanding, setShowLanding] = useState(false);
   // v5.8 · Manifesto modal triggered by the secondary CTA of LandingPreOnboarding.
-  const [showManifesto, setShowManifesto] = useState(false);
   // B8 · Revisit-mode landing, triggered by header logo or Ajustes button.
   // Does NOT toggle the persisted hasSeenLandingPreOnboarding flag.
   const [showRevisitLanding, setShowRevisitLanding] = useState(false);
@@ -5185,10 +5208,8 @@ export function Shell() {
         <LandingPreOnboarding
           mode="intro"
           onStart={() => update({ hasSeenLandingPreOnboarding: true, landingSeen: true })}
-          onOpenManifesto={() => setShowManifesto(true)}
           onLoadDemo={() => seedDemo()}
         />
-        {showManifesto && <WhyDifferentModal onClose={() => setShowManifesto(false)} />}
       </>
     );
   }
@@ -5200,9 +5221,7 @@ export function Shell() {
         <LandingPreOnboarding
           mode="revisit"
           onBack={() => setShowRevisitLanding(false)}
-          onOpenManifesto={() => setShowManifesto(true)}
         />
-        {showManifesto && <WhyDifferentModal onClose={() => setShowManifesto(false)} />}
       </>
     );
   }
