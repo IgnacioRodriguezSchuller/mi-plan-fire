@@ -1183,39 +1183,58 @@ export function RutaCincoFases({ state, d, mobile }) {
           en 'libre', ámbar 'tarde', sin cifra 'no-llega') + frase de lectura que hila los hitos. */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: mobile ? 12 : 16, marginTop: mobile ? 16 : 20 }}>
         <Card>
-          <Label style={{ color: T.faint }}>Tu destino</Label>
           {(() => {
+            // «Tu destino» · clímax de Plan. El ★ edad de libertad como HÉROE centrado (SIEMPRE en
+            // T.green, invariante de doctrina §6 1.6); el veredicto tiñe la frase. Fuente única:
+            // d.verdict/verdictAge/verdictCopy.
             const v = d.verdict;
-            const kicker = { fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, letterSpacing: T.tracking.wide, marginTop: 18 };
-            const cifra = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, lineHeight: T.lh.tight, letterSpacing: T.tracking.display, marginTop: 2 };
-            const frase = { fontFamily: T.serif, fontSize: T.size.body, color: T.muted, marginTop: 12, lineHeight: T.lh.normal, maxWidth: 600 };
+            const frase = { fontFamily: T.serif, lineHeight: T.lh.normal, maxWidth: 540, margin: '0 auto' };
             const reading = momentumAge != null
               ? <>A los <strong style={{ color: T.ink, fontWeight: 600 }}>{momentumAge}</strong> tu dinero ya te adelanta —el rendimiento anual supera a tu aporte— y la pensión pública entra a los <strong style={{ color: T.ink, fontWeight: 600 }}>{pensionAge}</strong>.</>
               : <>Cuando empieces a aportar, el rendimiento acabará superando a tu aporte; la pensión pública entra a los <strong style={{ color: T.ink, fontWeight: 600 }}>{pensionAge}</strong>.</>;
-            // Fuente única: veredicto vs plan (d.verdict/verdictAge/verdictCopy). El ★ edad de
-            // libertad SIEMPRE en T.green (invariante de doctrina); el veredicto tiñe la frase.
             if (d.verdictAge != null) {
-              return (<><div style={kicker}>libre a los</div><div style={{ ...cifra, color: T.green }}>★ {Math.ceil(d.verdictAge)}</div><div style={{ ...frase, color: VERDICT_COLOR[v] }}>{d.verdictCopy}</div><div style={{ ...frase, marginTop: 8, color: T.faint }}>{reading}</div></>);
+              return (
+                <div style={{ textAlign: 'center', padding: mobile ? '8px 0 4px' : '14px 0 6px' }}>
+                  <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, letterSpacing: 0 }}>Tu destino · libre a los</div>
+                  <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 'clamp(52px, 11vw, 84px)', lineHeight: 1, letterSpacing: T.tracking.display, color: T.green, margin: mobile ? '4px 0 0' : '6px 0 0' }}>★ {Math.ceil(d.verdictAge)}</div>
+                  <div style={{ ...frase, color: VERDICT_COLOR[v], fontStyle: 'italic', fontSize: T.size.lead, marginTop: 14 }}>{d.verdictCopy}</div>
+                  <div style={{ ...frase, color: T.faint, fontSize: T.size.caption, marginTop: 10 }}>{reading}</div>
+                </div>
+              );
             }
-            return (<><div style={kicker}>{v === 'no-llega' ? 'todavía sin edad de libertad' : 'aún sin veredicto'}</div><div style={{ ...frase, marginTop: 14, color: VERDICT_COLOR[v] }}>{d.verdictCopy}</div><div style={{ ...frase, marginTop: 8, color: T.faint }}>{reading}</div></>);
+            return (
+              <div style={{ textAlign: 'center', padding: mobile ? '8px 0 4px' : '14px 0 6px' }}>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, letterSpacing: 0 }}>Tu destino</div>
+                <div style={{ ...frase, color: VERDICT_COLOR[v], fontStyle: 'italic', fontSize: T.size.lead, marginTop: 12 }}>{v === 'no-llega' ? 'Todavía sin edad de libertad. ' : ''}{d.verdictCopy}</div>
+                <div style={{ ...frase, color: T.faint, fontSize: T.size.caption, marginTop: 10 }}>{reading}</div>
+              </div>
+            );
           })()}
         </Card>
         {(() => {
-          // Cierre estilo CARTEL (rima con el de Proyección: eyebrow + serif grande + sub itálica
-          // + CartelBtn, sin caja). Mantiene la lógica de veredicto/destino del NextStep anterior.
+          // Cierre de Plan · EMPUJE A APRENDE (hero). Gran parte del valor del producto está en
+          // ENTENDER; el siguiente paso desde Plan es Aprende (ya no "mes a mes"). Estilo cartel
+          // (eyebrow + serif grande + sub + chips de concepto + CartelBtn). Enlace SECUNDARIO a
+          // Proyección para ajustar (no es "mes a mes"; copy adaptada al veredicto).
           const v = d.verdict;
-          const noMeses = !(d.filledMonths && d.filledMonths.length);
-          let frase, label, dest, head;
-          if (v === 'sin-datos' && noMeses) { frase = 'Registra tu primer mes para que el plan empiece a seguir tu avance real.'; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; head = 'Ahora, mes a mes.'; }
-          else if (v === 'atrasado' || v === 'no-llega') { frase = `${d.verdictCopy} Sube tu aporte o baja tu objetivo para acercar la fecha.`; label = 'Ir a Proyección →'; dest = 'proy'; head = 'Ajústalo en Proyección.'; }
-          else if (v === 'sin-datos') { frase = d.verdictCopy; label = 'Ir a Proyección →'; dest = 'proy'; head = 'Afínalo en Proyección.'; }
-          else { frase = `${d.verdictCopy} El siguiente paso es seguirlo mes a mes.`; label = 'Ir a Mes a mes →'; dest = 'seguimiento'; head = 'Ahora, mes a mes.'; }
+          const ajusta = v === 'atrasado' || v === 'no-llega' || v === 'sin-datos';
+          const chips = [
+            { id: 'interes-compuesto', label: 'Interés compuesto' },
+            { id: 'regla-4', label: 'La regla del 4 %' },
+            { id: 'monte-carlo', label: 'Monte Carlo' },
+          ];
           return (
             <div style={{ textAlign: 'center', padding: mobile ? '36px 8px 12px' : '52px 8px 20px' }}>
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.accent }}>El siguiente paso</div>
-              <h2 style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(34px, 6.5vw, 72px)', lineHeight: 0.98, letterSpacing: '-.03em', margin: '8px 0 0', color: T.ink }}>{head}</h2>
-              <p style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(16px, 2vw, 21px)', color: T.muted, maxWidth: '40ch', margin: '18px auto 0', lineHeight: 1.45 }}>{frase}</p>
-              <div style={{ marginTop: 22 }}><CartelBtn onClick={() => update({ activeTab: dest })}>{label}</CartelBtn></div>
+              <h2 style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(34px, 6.5vw, 72px)', lineHeight: 0.98, letterSpacing: '-.03em', margin: '8px 0 0', color: T.ink }}>Entender es la mitad del plan.</h2>
+              <p style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(16px, 2vw, 21px)', color: T.muted, maxWidth: '46ch', margin: '18px auto 0', lineHeight: 1.45 }}>Un plan no es una cifra: es entender por qué se mueve. Si solo lees tres cosas, que sean estas.</p>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', margin: '22px auto 0', maxWidth: 560 }}>
+                {chips.map((c) => (
+                  <button key={c.id} onClick={() => window.__openLearnConcept && window.__openLearnConcept(c.id)} style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, padding: '8px 16px', borderRadius: 999, background: 'transparent', color: T.accent, border: '1px solid ' + T.accent, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', whiteSpace: 'nowrap' }}>{c.label} →</button>
+                ))}
+              </div>
+              <div style={{ marginTop: 24 }}><CartelBtn onClick={() => update({ activeTab: 'aprender' })}>Ir a Aprende →</CartelBtn></div>
+              <div style={{ marginTop: 14 }}><CartelBtn variant="text" onClick={() => update({ activeTab: 'proy' })}>{ajusta ? 'O ajusta tu plan en Proyección →' : 'Afina los números en Proyección →'}</CartelBtn></div>
             </div>
           );
         })()}
@@ -1411,7 +1430,7 @@ export function ScreenHoy({ goTo }) {
                     <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 36, color: T.green, letterSpacing: T.tracking.display, lineHeight: 1, marginTop: 6 }}>{fmtEur(invested)}</div>
                   </div>
                 </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>El mismo tiempo. La diferencia la pone el <Concept id="interes-compuesto">interés compuesto</Concept> · {planReturn} % anual asumido.</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>El mismo tiempo. La diferencia la pone el <Concept id="interes-compuesto">interés compuesto</Concept> · <Concept id="retorno-anual">{planReturn} % anual</Concept> asumido.</div>
               </div>
               );
             })() : (
@@ -1568,30 +1587,6 @@ export function ScreenHoy({ goTo }) {
           Cinco fases que estructuran el camino FIRE.
         </div>
         <RutaCincoFases state={state} d={d} mobile={mobile} />
-      </section></Reveal>
-
-      {/* ─────────────── Empuje a APRENDE ─────────────── */}
-      {/* Gran parte del valor del producto está en ENTENDER. Bloque visible con conceptos clave
-          clicables (abren su lección) + CTA a la sección Aprende. */}
-      <Reveal><section>
-        <SectionTag style={{ marginBottom: BLOCK_GAP }}>Entender es la mitad del plan</SectionTag>
-        <div style={{ fontFamily: T.serif, fontSize: T.size.lead, color: T.muted, lineHeight: T.lh.normal, maxWidth: 640, marginBottom: 16 }}>
-          Un plan no es una cifra: es entender por qué se mueve. Si solo lees tres cosas, que sean estas.
-        </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
-          {[
-            { id: 'interes-compuesto', label: 'Interés compuesto' },
-            { id: 'regla-4', label: 'La regla del 4 %' },
-            { id: 'monte-carlo', label: 'Monte Carlo' },
-          ].map((c) => (
-            <button key={c.id} onClick={() => window.__openLearnConcept && window.__openLearnConcept(c.id)} style={{
-              fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, padding: '8px 16px', borderRadius: 999,
-              background: 'transparent', color: T.accent, border: '1px solid ' + T.accent, cursor: 'pointer',
-              appearance: 'none', WebkitAppearance: 'none', whiteSpace: 'nowrap',
-            }}>{c.label} →</button>
-          ))}
-        </div>
-        <CartelBtn onClick={() => goTo('aprender')}>Ir a Aprende →</CartelBtn>
       </section></Reveal>
 
       {showSinPlanModal && <SinMiPlanModal onClose={() => setShowSinPlanModal(false)} />}
