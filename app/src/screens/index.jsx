@@ -402,7 +402,7 @@ export function Onboarding() {
           <input type="range" min="18" max="70" value={data.age} onChange={(e) => set('age', +e.target.value)}
             style={{ width: '100%', accentColor: T.accent, marginTop: 20 }} />
           <OnboardingHelp>
-            Porque el tiempo es la variable más poderosa de tu plan financiero. Más que el sueldo, más que la rentabilidad, más que la disciplina. El interés compuesto crece de forma exponencial sobre los años: 10 años de adelanto pesan más que doblar la aportación durante los últimos 10. Con tu edad, Mi Plan FIRE calcula tu horizonte temporal y proyecta cómo se comporta tu dinero a lo largo de las próximas décadas.
+            El tiempo es la variable más poderosa de tu plan — más que el sueldo o la rentabilidad. Con el interés compuesto, 10 años de adelanto pesan más que doblar la aportación en los últimos 10. Tu edad fija el horizonte que proyectamos.
           </OnboardingHelp>
         </div>
       ),
@@ -430,7 +430,7 @@ export function Onboarding() {
             ))}
           </div>
           <OnboardingHelp title="¿Por qué importa el capital inicial?">
-            Porque el dinero que ya tienes empieza a trabajar desde el día uno. Cualquier euro que aportes en el futuro pierde ese tiempo de adelanto. 1.000€ invertidos hoy al 7% se convierten en ~7.612€ a los 30 años. Los próximos 1.000€ que aportes dentro de un año solo tendrán 29 años de margen: llegarán a ~7.114€. Si no tienes nada todavía, no pasa nada — pon 0. La magia está en lo que empieces a aportar a partir de ahora.
+            El dinero que ya tienes empieza a trabajar desde el día uno; lo que aportes después pierde ese adelanto. 1.000 € hoy al 7 % son ~7.600 € en 30 años; los mismos 1.000 € dentro de un año, ~7.100 €. Si no tienes nada, pon 0 — lo que cuenta es lo que empieces a aportar ahora.
           </OnboardingHelp>
         </div>
       ),
@@ -520,11 +520,9 @@ export function Onboarding() {
             {/* 2ª pasada · aclaración IPC movida al "+¿por qué?" (limpieza). */}
           </div>
           <OnboardingHelp title="¿Por qué necesito tu salario?">
-            Porque es la base sobre la que se construye tu capacidad de ahorro y, por tanto, de inversión. No te lo pedimos para juzgar nada. Lo usamos para estimar cuánto puedes aportar de forma realista, y para proyectar tu pensión pública futura (la fórmula española se basa en las bases de cotización de tu carrera laboral). Si tu sueldo cambia con frecuencia, puedes definir distintos tramos más adelante. Una cifra aproximada al mes es suficiente al principio.
+            Es la base de tu capacidad de ahorro y nos permite estimar tu pensión pública futura (se calcula con tus bases de cotización). Una cifra aproximada al mes basta; si tu sueldo varía, defines tramos más adelante.
             <br /><br />
-            Introduce tu salario neto (lo que efectivamente recibes en cuenta cada mes después de IRPF y Seguridad Social), no el bruto. Si pones bruto, el plan estará distorsionado. Ejemplo: si tu bruto es 35.000 €/año y el neto que ingresas son 24.000 €/año, divide 24.000/12 = 2.000 € mensuales netos.
-            <br /><br />
-            En España la mayoría de convenios actualizan parcialmente con IPC. Si tu empresa no lo hace, marca "No"; el plan será más realista.
+            Pon tu salario <strong style={{ color: T.ink, fontStyle: 'normal' }}>neto</strong> —lo que ingresas en cuenta tras IRPF y Seguridad Social—, no el bruto: con el bruto el plan se distorsiona. Si tu bruto son 35.000 €/año y el neto 24.000 €, son 2.000 €/mes netos.
           </OnboardingHelp>
         </div>
       ),
@@ -635,9 +633,9 @@ export function Onboarding() {
             );
           })()}
           <OnboardingHelp title="¿Por qué importa cuánto puedes ahorrar?">
-            Porque es la única variable que controlas con certeza completa. La rentabilidad la decide el mercado. La inflación la decide la economía. Las comisiones dependen del producto. Pero cuánto ahorras es decisión tuya, mes a mes. No te pedimos un compromiso: te pedimos una estimación realista. Si dudas, piensa qué te queda al final del mes habitualmente. Empezar con 50€/mes y subir progresivamente es mucho mejor que empezar con 300€ inalcanzables y abandonar a los tres meses.
+            Es la única palanca que controlas del todo: la rentabilidad la decide el mercado; cuánto ahorras, tú. No buscamos un compromiso, sino una estimación realista —piensa qué te suele quedar a fin de mes. Mejor 50 €/mes y subir que 300 € que abandonas en tres meses.
             <br /><br />
-            <strong style={{ color: T.ink, fontStyle: 'normal' }}>Porcentual</strong>: aportas un % de tu salario neto cada mes (ej. 20% del neto). Si subes de sueldo, el aporte sube; si baja, baja. <strong style={{ color: T.ink, fontStyle: 'normal' }}>Fijo</strong>: aportas siempre la misma cantidad cada mes (ej. 700 €/mes) independientemente de tu salario.
+            <strong style={{ color: T.ink, fontStyle: 'normal' }}>Porcentual</strong>: un % de tu salario neto cada mes; sube y baja con el sueldo. <strong style={{ color: T.ink, fontStyle: 'normal' }}>Fijo</strong>: la misma cantidad siempre, llueva o truene.
           </OnboardingHelp>
         </div>
       ),
@@ -771,7 +769,7 @@ export function Onboarding() {
             </div>
           )}
           <OnboardingHelp title="¿Por qué pregunto cómo crees que evolucionará tu sueldo?">
-            Porque casi nadie gana lo mismo a los 30 que a los 50. La gente cambia de trabajo, sube de puesto, cambia de sector, se hace autónoma. Si Mi Plan FIRE asumiera tu sueldo actual durante 30 años, te subestimaría: probablemente puedas aportar más en el futuro que ahora. Pero también puede sobreestimarte: hay carreras que se estancan o ingresos que bajan en cierta etapa. Tu estimación honesta sobre cómo crees que será tu trayectoria nos permite proyectar de forma realista, no idealista.
+            Casi nadie gana lo mismo a los 30 que a los 50. Si asumiéramos tu sueldo actual durante 30 años, casi seguro te subestimaríamos (o, en carreras que se estancan, lo contrario). Tu estimación honesta nos deja proyectar realista, no idealista.
           </OnboardingHelp>
         </div>
       ),
@@ -793,7 +791,7 @@ export function Onboarding() {
             Eso te da <strong style={{ color: T.accent, fontStyle: 'normal' }}>{data.retireAge - data.age} años</strong> para que el interés compuesto trabaje a tu favor.
           </div>
           <OnboardingHelp title="¿Por qué te pregunto cuándo quieres retirarte?">
-            Porque define la meta. No es solo cuándo dejas de trabajar formalmente: es cuándo quieres ser financieramente independiente, es decir, cuándo tu patrimonio invertido debería poder sostenerte sin necesidad de un sueldo. No tienes que clavarlo: pon una primera referencia. Mucha gente apunta a los 65 (jubilación tradicional), otros a los 55-60 (libertad temprana), algunos al objetivo FIRE clásico de los 45-50. Mi Plan FIRE calcula cuánto patrimonio necesitarías acumular para llegar a esa meta. Puedes cambiarla cuando quieras.
+            Define la meta: cuándo quieres que tu patrimonio invertido pueda sostenerte sin sueldo. No hace falta clavarlo —65 es la jubilación tradicional; 55-60, libertad temprana; 45-50, FIRE clásico—. Calculamos cuánto necesitas para llegar, y puedes cambiarla cuando quieras.
           </OnboardingHelp>
         </div>
       ),

@@ -1954,3 +1954,7 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **#2**: en la spread «Ingresos» se recalca **neto** («Lo que entra cada mes, **neto** — lo que recibes en cuenta», «Salario base **neto**») y se recortan las líneas (intro + nota IPC) diciendo lo mismo con menos.
 - **#9**: «estudio Trinity» (nota de asunciones) se envuelve en `<Concept id="regla-4">` → abre la lección «La regla del 4 %» en Aprende.
 - **No tocado**: motor, `LEARN_CORPUS`, claves. **Verificación**: navegador — 4 tarjetas (Lean 57 · Coast — · FIRE pleno ★63 · Fat 71) en grid; «neto» visible; clic en «estudio Trinity» abre el concepto regla-4. Build OK; content/state PASS; lib 13 / tokens 2 (sin diffs nuevos).
+
+### S5 · Onboarding más conciso (ítems 3, 2)
+- **Cambio** (`Onboarding`, `screens`): se recortan los 6 bloques `OnboardingHelp` (pasos 2–7) diciendo lo vital con menos palabras, preservando títulos, significado y voz editorial. Foco en el **5/7** (tipo de ahorro): el «¿por qué?» pasa de un párrafo largo a 2 frases tensas y la explicación Porcentual/Fijo a una línea cada una («sube y baja con el sueldo» / «la misma cantidad siempre, llueva o truene»). El paso 4 mantiene el énfasis en **neto**, más crispado.
+- **No tocado**: estructura del wizard, validaciones (`canNext`), motor, claves. **Verificación**: navegador — recorrido del wizard hasta el paso 5; el wizard avanza bien y el 5/7 muestra la copy nueva (la verbosa ya no está). Build OK (bundle algo menor); content/state PASS; lib 13 / tokens 2.
