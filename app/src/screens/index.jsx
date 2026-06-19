@@ -11,7 +11,7 @@ import {
   readableMonth, projectV2, sumExpenses, sumAllocation,
   buildMortgageSchedule, currentMonthlyAporte, computePlannedFor,
   computeIncomeFor, toRealEur, estimateSpanishPension, computeEffectiveCapitalReturn,
-  computeRebalance, recommendedWithdrawalRate, effectiveWithdrawalRate,
+  computeRebalance, recommendedWithdrawalRate, effectiveWithdrawalRate, compareHousingPaths,
   runMonteCarlo,
   getSavingsTier, seedMonths, defaultGoals, computeUserProfile, projectStandardPlan, computeActivePhase,
   computeSinPlanKPIs, fmtEur, parseMonthsCSV,
@@ -2732,8 +2732,10 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
   }
 
   // ── Edición · campos editables (la función no se pierde, solo se pliega) ───
+  // Una meta de vivienda en edición ocupa todo el ancho del grid: la comparación de dos vías
+  // (dos columnas + gráfico) necesita aire.
   return (
-    <Card>
+    <Card style={{ gridColumn: category === 'vivienda' ? '1 / -1' : undefined }}>
       <button onClick={onRemove} title="Eliminar meta"
         style={{ position: 'absolute', top: 10, right: 12, fontFamily: T.mono, fontSize: T.size.body, color: T.faint, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 6px', lineHeight: 1, borderRadius: 4 }}>×</button>
       <input value={goal.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="Nombre de la meta"
@@ -2752,6 +2754,7 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
         </select>
       </div>
       <GoalContextualBlock goal={goal} category={category} portfolio={d.currentPortfolio} />
+      {category === 'vivienda' && <HousingPathsCard goal={goal} d={d} plan={plan} profile={profile} />}
       <div style={{ marginTop: 16 }}>
         <Btn variant="ghost" size="sm" onClick={() => setEditing(false)}>Hecho</Btn>
       </div>
@@ -2826,6 +2829,84 @@ export function GoalContextualBlock({ goal, category, portfolio }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// Comprar un piso · DOS VÍAS dentro del hito de vivienda. Sandbox honesto: editas entrada, plazo,
+// tipo y revalorización (el precio es la propia meta) y ves al instante el PATRIMONIO NETO + la
+// EDAD DE LIBERTAD ★ por cada vía. Mates en compareHousingPaths (lib): el ★ solo cuenta la cartera
+// líquida (no vives de tu casa); el neto incluye la casa. Cero red; no persiste (hasta «aplicar», H3).
+export function HousingPathsCard({ goal, d, plan, profile, onApply }) {
+  const price = Math.max(0, goal.target || 0);
+  const purchaseAge = goal.targetAge;
+  const [downPaymentPct, setDownPaymentPct] = useState(20);
+  const [mortgageYears, setMortgageYears] = useState(25);
+  const [mortgageRate, setMortgageRate] = useState(3.0);
+  const [appreciation, setAppreciation] = useState(2.5);
+  const rent = (plan.actualLife && plan.actualLife.expenses && plan.actualLife.expenses.housing) || 0;
+  const cmp = useMemo(() => compareHousingPaths({
+    plan, profile, currentPortfolio: d.currentPortfolio || 0, fiTarget: d.fiTarget || 0,
+    price, downPaymentPct, mortgageYears, mortgageRate, appreciation, purchaseAge, currentRent: rent,
+  }), [plan, profile, d.currentPortfolio, d.fiTarget, price, downPaymentPct, mortgageYears, mortgageRate, appreciation, purchaseAge, rent]);
+  const c = cmp.contado, h = cmp.hipoteca;
+
+  const lbl = { fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0, marginBottom: 4 };
+  const valBig = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 'clamp(20px, 3vw, 28px)', letterSpacing: T.tracking.tight, color: T.ink, lineHeight: 1 };
+  const col = { flex: '1 1 150px', minWidth: 150 };
+  const param = { display: 'inline-flex', alignItems: 'baseline', gap: 5, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted };
+  const starTxt = (v) => v != null ? '★ ' + v : 'sin ★';
+  // Si no puedes pagar al contado, su curva es ficción (el clamp esconde el déficit) → fuera del gráfico.
+  const scenarios = [
+    ...(c.affordable ? [{ id: 'contado', label: 'Al contado', series: c.netWorthSeries, color: T.accent, bold: false }] : []),
+    { id: 'hipoteca', label: 'Con hipoteca', series: h.netWorthSeries, color: T.green, bold: true },
+  ];
+
+  return (
+    <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px dashed ' + T.lineSoft }}>
+      <CartelCard tone={T.accent} style={{ textAlign: 'center' }}>
+        <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.accent, marginBottom: 10 }}>Comprar: ¿al contado o con hipoteca?</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 18px', justifyContent: 'center', marginBottom: 18 }}>
+          <span style={param}>precio <b style={{ color: T.ink, fontStyle: 'normal' }}>{fmtEur(price)}</b></span>
+          <span style={param}>entrada <EditableValue value={downPaymentPct} onChange={setDownPaymentPct} min={0} max={100} suffix="%" ariaLabel="Entrada" /></span>
+          <span style={param}>plazo <EditableValue value={mortgageYears} onChange={setMortgageYears} min={5} max={40} suffix=" años" ariaLabel="Plazo hipoteca" /></span>
+          <span style={param}>tipo <EditableValue value={mortgageRate} onChange={setMortgageRate} min={0} max={15} decimals={1} suffix="%" ariaLabel="Tipo hipoteca" /></span>
+          <span style={param}>revaloriz. <EditableValue value={appreciation} onChange={setAppreciation} min={0} max={10} decimals={1} suffix="%" ariaLabel="Revalorización" /></span>
+        </div>
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={col}>
+            <div style={lbl}>Descapitalizar · al contado</div>
+            {c.affordable ? (
+              <>
+                <div style={valBig}>{fmtEur(c.finalNetWorth)}</div>
+                <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: c.freedomAge != null ? T.green : T.muted, marginTop: 6 }}>libre {starTxt(c.freedomAge)}</div>
+              </>
+            ) : (
+              <>
+                <div style={{ ...valBig, fontSize: 'clamp(16px, 2.4vw, 21px)', color: T.amber }}>No llegas</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.amber, marginTop: 6, lineHeight: T.lh.normal }}>tu cartera a los {cmp.buyAge} ({fmtEur(cmp.liquidAtPurchase)}) no cubre {fmtEur(price)}</div>
+              </>
+            )}
+          </div>
+          <div style={col}>
+            <div style={lbl}>Apalancarse · con hipoteca</div>
+            <div style={valBig}>{fmtEur(h.finalNetWorth)}</div>
+            <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: h.freedomAge != null ? T.green : T.muted, marginTop: 6 }}>libre {starTxt(h.freedomAge)}</div>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, marginTop: 4 }}>cuota {fmtEur(cmp.monthlyPayment)}/mes · interés {fmtEur(cmp.totalInterest)}</div>
+          </div>
+        </div>
+        <div style={{ marginTop: 18 }}>
+          <MultiLineChart scenarios={scenarios} height={200} />
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, marginTop: 4 }}>patrimonio neto (cartera + casa − hipoteca), en € de hoy</div>
+        </div>
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid ' + T.lineSoft, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal, textAlign: 'left' }}>
+          El patrimonio neto incluye tu casa, pero tu <b style={{ fontStyle: 'normal' }}>edad de libertad ★ solo cuenta la cartera</b> (no vives de tu casa). Apalancarse mantiene la cartera invertida → libertad antes <i>mientras tu cartera rente más que el tipo de la hipoteca</i>, a cambio de cargar deuda. Pagar al contado te deja sin deuda, pero retrasa tu ★.
+          <div style={{ marginTop: 10, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button onClick={() => window.__openLearnConcept && window.__openLearnConcept('pignoracion')} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, color: T.accent }}>→ Lee «Pignoración: cuándo tiene sentido»</button>
+            {onApply && <button onClick={() => onApply(cmp)} style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider, color: T.accent }}>→ Aplicar una vía a mi plan</button>}
+          </div>
+        </div>
+      </CartelCard>
     </div>
   );
 }
