@@ -1928,3 +1928,12 @@ de FIRE el motor necesitaba Fat, que no existía.
   cream pleno con el ★ en `T.green` (más grande y visible). **Docs**: `DOCTRINA §6 1.23`.
 - **Verificación**: navegador — círculo «A» sobre naranja (Alex); ★ 56 a 15/18px con estrella verde. Build OK;
   content/state PASS; tokens/lib sin diffs nuevos; baseline intacto. Cierra el lote (PU5/5).
+
+## ───────────── Lote pulido+corrección (2026-06-19) · 15 ítems del dueño ─────────────
+> Segundo barrido sobre la beta en vivo. Un commit por bloque (S1–S8). UI/copy/estado-local; motor/claves/esquema/baseline intactos.
+
+### S1 · «Empezar de cero»: borrar TODO limpia el contenedor entero (ítem 15 · bug de datos)
+- **Causa raíz**: `resetAll` («Borrar todo» de Datos) solo hacía `setState(emptyState())` → vaciaba **la cuenta activa**, dejando las demás (Alex/Marta de la demo) colgando. Tras un onboarding nuevo, el usuario seguía viendo las cuentas demo en el selector («como si me forzase la demo»).
+- **Cambio**: nuevo `wipeEverything` en `StateProvider` (`state/index.jsx`) → `setAccountsData(initialAccountsData())` (contenedor entero a UNA cuenta nueva y vacía; `hasSeenLandingPreOnboarding:false` → onboarding desde cero). El botón «Borrar todo» (Datos) pasa a llamarlo; se añade «Borrar solo esta cuenta» (el `resetAll` per-cuenta) **solo cuando hay 2+ cuentas**. Modal de confirmación propio («¿Empezar de cero?»).
+- **No tocado**: `migrateToV2`, claves localStorage (reescribe el VALOR de `ACCOUNTS_KEY`, no renombra), esquema, `resetAll` (se conserva como borrado per-cuenta).
+- **Verificación**: navegador — demo (Alex+Marta) → «Borrar todo» → confirmar → `accounts:['default']` (Alex/Marta fuera), `onboardingComplete:false`, arranque limpio. Build OK; content/state PASS.

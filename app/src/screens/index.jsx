@@ -3386,8 +3386,9 @@ export function RebalanceCard({ compact = false }) {
 }
 
 export function ScreenAjustes() {
-  const { state, activePlan,
-    resetAll, reonboard, seedDemoConfirm, updatePlan, update, updateProfile } = useStore();
+  const { state, activePlan, accounts,
+    resetAll, wipeEverything, reonboard, seedDemoConfirm, updatePlan, update, updateProfile } = useStore();
+  const multiAccount = Object.keys(accounts || {}).length > 1;
   const mobile = useIsMobile();
   const [showEditLife, setShowEditLife] = useState(false);
 
@@ -3518,7 +3519,8 @@ export function ScreenAjustes() {
             input.click();
           }}>Importar meses (CSV)</Btn>
           <Btn variant="ghost" size="sm" onClick={seedDemoConfirm}>Cargar datos demo</Btn>
-          <Btn variant="ghost" size="sm" onClick={resetAll} style={{ color: T.red, borderColor: T.red }}>Borrar todo</Btn>
+          {multiAccount && <Btn variant="ghost" size="sm" onClick={resetAll} style={{ color: T.red, borderColor: T.red }}>Borrar solo esta cuenta</Btn>}
+          <Btn variant="ghost" size="sm" onClick={wipeEverything} style={{ color: T.red, borderColor: T.red }}>Borrar todo</Btn>
         </div>
         <div style={{ marginTop: 14, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <Btn variant="ghost" size="sm" onClick={reonboard}>↻ Volver al onboarding</Btn>

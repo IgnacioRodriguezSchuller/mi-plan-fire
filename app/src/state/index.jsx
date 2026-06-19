@@ -134,6 +134,22 @@ export function StateProvider({ children }) {
       },
     });
   }, []);
+  // «Empezar de cero» (borrar TODO): a diferencia de resetAll (per-cuenta), limpia el
+  // contenedor entero → una sola cuenta nueva y vacía. Así, tras cargar la demo (Alex+Marta)
+  // y querer empezar limpio, NO quedan cuentas demo colgando tras el onboarding. Reescribe el
+  // VALOR de ACCOUNTS_KEY; no renombra claves ni campos (initialAccountsData deja
+  // hasSeenLandingPreOnboarding:false → onboarding desde cero).
+  const wipeEverything = useCallback(() => {
+    setPendingConfirm({
+      title: '¿Empezar de cero?',
+      body: 'Se borran TODAS las cuentas y todos los datos de este navegador (incluida cualquier demo). Volverás al onboarding con una sola cuenta nueva y vacía. Esto no se puede deshacer.',
+      confirmLabel: 'Sí, empezar de cero',
+      destructive: true,
+      action: () => {
+        setAccountsData(initialAccountsData());
+      },
+    });
+  }, []);
   const reonboard = useCallback(() => {
     setPendingConfirm({
       title: '¿Volver al onboarding?',
@@ -179,7 +195,7 @@ export function StateProvider({ children }) {
 
   const value = useMemo(() => ({
     state, update, updateProfile, updatePlan, mutatePlan,
-    setMonth, addGoal, updateGoal, removeGoal, resetAll, reonboard, seedDemo, seedDemoConfirm,
+    setMonth, addGoal, updateGoal, removeGoal, resetAll, wipeEverything, reonboard, seedDemo, seedDemoConfirm,
     activePlan: state.plan,
     // Callbacks declarados arriba para compatibilidad de estado persistido.
     // No exportados actualmente.
