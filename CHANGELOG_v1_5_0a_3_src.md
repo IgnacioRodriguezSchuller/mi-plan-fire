@@ -1575,3 +1575,20 @@ de FIRE el motor necesitaba Fat, que no existía.
   inyectadas): «Comparar escenarios» con 2 filas — **la fila de la cuenta activa coincide exactamente con su KPI**
   (★42 / 7,18 M€), y el patrimonio difiere por cuenta (2,92 M€ con jubilación a 50) → helper fiel y per-cuenta;
   consola limpia; hash baseline `b3ea52b1…` intacto.
+
+## DCA · «¿De golpe o poco a poco?» (Pro fase B, 2026-06-19)
+- **Causa raíz**: faltaba la última feature Pro pendiente — comparar invertir una cantidad **de una vez** (lump-sum)
+  vs **repartirla** en el tiempo (DCA). El reto: hacerlo **honesto** (ni «DCA siempre mejor» ni «de golpe siempre
+  mejor»).
+- **Cambio** (`screens/index.jsx`): `DcaCard` (sandbox Cartel, hermana de `WhatIfCard`) + nueva Spread en Proyección
+  («7 · ¿De golpe o poco a poco?», junto al Monte Carlo: ambos van de riesgo de entrada/secuencia; Diagnóstico→8,
+  Cierre→9). Inputs: cantidad (`EditableValue`) + repartido en 6/12/24 m (segmented). Cálculo de **interés compuesto
+  mensual** (`r = (1+a)^(1/12)−1`): lump = `amount·(1+r)^N`; DCA = `Σ (amount/N)·(1+r)^(N−m)`. Muestra **dos caras**:
+  (1) caso medio al alza → de golpe gana por X € (más tiempo invertido); (2) caída del 20 % al entrar → de golpe
+  pierde el 20 % de todo, repartido solo el 20 % de lo ya invertido (exposición). Cierre: «no hay respuesta única».
+  Título único (la cabecera de sección titula; sin `CartelLabel` duplicado en la tarjeta).
+- **No tocado**: motor (cálculo propio en la vista, no se llama a `projectV2`/`runMonteCarlo`), `migrateToV2`, `T`,
+  `LEARN_CORPUS`, claves localStorage, `isPro`, baseline. Color por tokens (amber=pérdida, green=protegido). Cero red.
+- **Verificación**: `npm run build` OK (`dist` 1.046 kB); `verify-content`/`verify-state` PASS; navegador
+  (revisado por el dueño antes de commitear): 12.000 € en 12 m → de golpe 12.960 / DCA 12.514 (**+446 €, 3 %**);
+  caída 20 % → −2,4k€ vs −200 €; recalcula al cambiar cantidad/meses; consola limpia; hash baseline `b3ea52b1…` intacto.

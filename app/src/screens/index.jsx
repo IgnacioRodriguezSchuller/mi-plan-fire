@@ -1608,6 +1608,54 @@ export function WhatIfCard({ d, plan }) {
   );
 }
 
+// Sandbox «¿De golpe o poco a poco?» (DCA) · compara invertir una cantidad de UNA VEZ vs repartirla
+// en N meses. Honesto y a dos caras: de golpe rinde más DE MEDIA (más tiempo invertido); repartir
+// suaviza el riesgo de entrar justo antes de una caída (menos expuesto al principio). Interés
+// compuesto mensual simple; no toca el motor ni persiste nada. Cero red.
+export function DcaCard({ annualReturn }) {
+  const [amount, setAmount] = useState(12000);
+  const [months, setMonths] = useState(12);
+  const a = (annualReturn != null ? annualReturn : 8);
+  const r = Math.pow(1 + a / 100, 1 / 12) - 1;
+  const lumpEnd = amount * Math.pow(1 + r, months);
+  let dcaEnd = 0;
+  for (let m = 0; m < months; m++) dcaEnd += (amount / months) * Math.pow(1 + r, months - m);
+  const diff = Math.max(0, lumpEnd - dcaEnd);
+  const diffPct = lumpEnd > 0 ? Math.round((diff / lumpEnd) * 100) : 0;
+  const lumpLoss = Math.round(amount * 0.20);
+  const dcaLoss = Math.round((amount / months) * 0.20);
+  const col = { flex: '1 1 130px', minWidth: 120 };
+  const valBig = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 'clamp(22px, 3.2vw, 30px)', letterSpacing: T.tracking.tight, color: T.ink, lineHeight: 1 };
+  const lbl = { fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0, marginBottom: 4 };
+  return (
+    <CartelCard tone={T.accent} style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <EditableValue value={amount} onChange={setAmount} min={0} max={1000000} step={1000} suffix="€" ariaLabel="Cantidad a invertir" />
+        <span style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body }}>repartido en</span>
+        <div role="group" aria-label="Meses para repartir" style={{ display: 'inline-flex', gap: 3, padding: 3, background: T.panel, borderRadius: 999, border: '1px solid ' + T.line }}>
+          {[6, 12, 24].map((v) => {
+            const active = months === v;
+            return <button key={v} onClick={() => setMonths(v)} aria-pressed={active} style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, padding: '5px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', background: active ? T.accent : 'transparent', color: active ? T.bg : T.muted, transition: 'background .15s ease, color .15s ease', appearance: 'none', WebkitAppearance: 'none' }}>{v} m</button>;
+          })}
+        </div>
+      </div>
+      <div style={{ marginTop: 20, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={col}><div style={lbl}>De golpe</div><div style={valBig}>{fmtEur(lumpEnd)}</div></div>
+        <div style={col}><div style={lbl}>Repartido en {months} m</div><div style={valBig}>{fmtEur(dcaEnd)}</div></div>
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, marginTop: 12, lineHeight: T.lh.normal }}>
+        Si el mercado sube de forma constante ({a} % anual), <b style={{ color: T.ink, fontWeight: 600 }}>de golpe</b> termina con <b style={{ color: T.ink, fontWeight: 600 }}>{fmtEur(diff)}</b> más ({diffPct} %): tu dinero pasa más tiempo invertido.
+      </div>
+      <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid ' + T.lineSoft, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
+        Pero si justo al entrar el mercado cae un 20 %, de golpe pierde <b style={{ color: T.amber }}>{fmtEur(lumpLoss)}</b> de una vez; repartido solo <b style={{ color: T.green }}>{fmtEur(dcaLoss)}</b> — el resto aún no está expuesto.
+      </div>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, marginTop: 14, lineHeight: T.lh.normal }}>
+        Repartir cambia algo de rendimiento esperado por no apostarlo todo a un único día de entrada. No hay respuesta única: depende de cuánto te quite el sueño una mala racha al principio.
+      </div>
+    </CartelCard>
+  );
+}
+
 export function ScreenMesAMes() {
   const { state, setMonth, update } = useStore();
   const d = useDerived();
@@ -2342,7 +2390,14 @@ export function ScreenProyeccion() {
           </Reveal>
         </Spread>
 
-        {/* 7 · DIAGNÓSTICO · síntesis de salud del plan en cinco señales (Pro · Diagnóstico FIRE).
+        {/* 7 · DCA · ¿de golpe o poco a poco? Junto al Monte Carlo: ambos van de riesgo de entrada/timing. */}
+        <Spread>
+          <Reveal><SectionTag>¿De golpe o poco a poco?</SectionTag></Reveal>
+          <Reveal delay={40}><p style={cap}>Si te cae una cantidad de una vez —una herencia, un bonus, unos ahorros parados—, ¿la inviertes toda hoy o la repartes en el tiempo?</p></Reveal>
+          <Reveal delay={80} style={{ width: '100%' }}><div style={{ marginTop: 24 }}><DcaCard annualReturn={annualReturn} /></div></Reveal>
+        </Spread>
+
+        {/* 8 · DIAGNÓSTICO · síntesis de salud del plan en cinco señales (Pro · Diagnóstico FIRE).
             Sin score ni nota (sin gamificación): plain rows + color semántico (verde sólido / ámbar
             atención). Lee derivaciones ya existentes (d.verdict, successPct, savingsPct, allocation). */}
         <Spread>
@@ -2388,7 +2443,7 @@ export function ScreenProyeccion() {
           <Reveal delay={120}><p style={note}>{d.verdictCopy}</p></Reveal>
         </Spread>
 
-        {/* 8 · CIERRE · ir a Mes a mes */}
+        {/* 9 · CIERRE · ir a Mes a mes */}
         <Spread short style={{ minHeight: '60vh' }}>
           <Reveal><SectionTag>Hasta aquí, el plan</SectionTag></Reveal>
           <Reveal delay={50}><h2 style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(34px, 6.5vw, 80px)', lineHeight: 0.98, letterSpacing: '-.03em', margin: '8px 0 0', color: T.ink }}>Ahora, mes a mes.</h2></Reveal>
