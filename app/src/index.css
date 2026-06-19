@@ -136,9 +136,10 @@ button:active { transform: scale(0.97); }
   .hero-sun-halo { animation: none; opacity: 0.72; transform: none; }
 }
 
-/* Lote 2 · navegación por los laterales (desktop): el chevron del margen aparece al pasar el ratón. */
-.side-nav-zone .side-nav-chevron { opacity: 0; transition: opacity 0.2s ease; }
-.side-nav-zone:hover .side-nav-chevron { opacity: 0.5; }
+/* Lote 2 · navegación por los laterales (desktop): el chevron del margen es una pista sutil en
+   reposo (antes invisible → nadie lo descubría) y se realza al pasar el ratón. */
+.side-nav-zone .side-nav-chevron { opacity: 0.22; transition: opacity 0.2s ease; }
+.side-nav-zone:hover .side-nav-chevron { opacity: 0.6; }
 
 /* Lote 2 · pista de scroll: el chevron al pie hace un bote muy suave (se detiene en reduced-motion). */
 @keyframes scrollHintBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }

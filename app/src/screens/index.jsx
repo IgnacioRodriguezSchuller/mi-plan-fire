@@ -2,7 +2,7 @@
 // + Shell + App) — extraída byte-a-byte de mi_plan_v1_5_0a_3.html. Etapa 1 ·
 // Paso 3 · Tanda final. Consolidada en un módulo por su acoplamiento (fragmentos
 // compartidos), para evitar imports circulares. Solo se añade imports/export.
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { T } from '../tokens/index.js'
 import {
@@ -5053,10 +5053,34 @@ export function Shell() {
   const setTab = (t) => {
     if (t === state.activeTab) return;
     update({ activeTab: t });
-    requestAnimationFrame(() => {
-      try { window.scrollTo({ top: 0, behavior: 'instant' }); }
-      catch (e) { window.scrollTo(0, 0); }
-    });
+  };
+  // #7 · Scroll al INICIO al cambiar de sección. El scroll en un rAF dentro de setTab era poco
+  // fiable: el contenido (Reveal/transform) se re-maqueta tras el rAF y la posición quedaba a
+  // media página. Un useLayoutEffect keyed en `tab` corre justo tras el commit del DOM de la nueva
+  // pantalla (antes del paint) → siempre cae arriba. (Re-clicar el tab activo no cambia `tab`.)
+  useLayoutEffect(() => {
+    try { window.scrollTo({ top: 0, behavior: 'instant' }); }
+    catch (e) { window.scrollTo(0, 0); }
+  }, [tab]);
+
+  // #8 · Swipe táctil entre secciones adyacentes (móvil): gesto claramente horizontal (>60px y
+  // |dx|>|dy|·1.8, rápido) → tab anterior/siguiente, respetando el «Hogar» condicional. Se ignora
+  // el scroll vertical. El clic en los laterales (sideZone) cubre el desktop.
+  const swipeRef = useRef({ x: 0, y: 0, t: 0 });
+  const onTouchStart = (e) => {
+    const p = e.touches && e.touches[0];
+    if (p) swipeRef.current = { x: p.clientX, y: p.clientY, t: Date.now() };
+  };
+  const onTouchEnd = (e) => {
+    const p = e.changedTouches && e.changedTouches[0];
+    if (!p) return;
+    const dx = p.clientX - swipeRef.current.x;
+    const dy = p.clientY - swipeRef.current.y;
+    const dt = Date.now() - swipeRef.current.t;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.8 && dt < 600) {
+      if (dx < 0 && nextTab) setTab(nextTab.id);
+      else if (dx > 0 && prevTab) setTab(prevTab.id);
+    }
   };
 
   // Lote 2 · pista de scroll (ítem 8): muestra una afordancia al pie cuando hay contenido por
@@ -5185,7 +5209,7 @@ export function Shell() {
           </div>
         </div>
       </header>
-      <main style={{ flex: 1, padding: '20px 12px 100px', overflowX: 'hidden', minWidth: 0, maxWidth: '100vw' }}>
+      <main onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ flex: 1, padding: '20px 12px 100px', overflowX: 'hidden', minWidth: 0, maxWidth: '100vw' }}>
         <div key={tab} className="tab-enter" style={{ minWidth: 0 }}>
           {tab === 'hoy' && <ScreenHoy goTo={setTab} />}
           {tab === 'sinplan' && <ScreenHoy goTo={setTab} />}
@@ -5256,7 +5280,7 @@ export function Shell() {
           </div>
         </div>
       </header>
-      <main style={{ flex: 1, padding: '40px clamp(24px, 3vw, 48px)', overflowX: 'hidden', minWidth: 0 }}>
+      <main onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ flex: 1, padding: '40px clamp(24px, 3vw, 48px)', overflowX: 'hidden', minWidth: 0 }}>
         <div key={tab} className="tab-enter" style={{ minWidth: 0, maxWidth: CONTENT_MAX, margin: '0 auto' }}>
           {tab === 'hoy' && <ScreenHoy goTo={setTab} />}
           {tab === 'sinplan' && <ScreenHoy goTo={setTab} />}
