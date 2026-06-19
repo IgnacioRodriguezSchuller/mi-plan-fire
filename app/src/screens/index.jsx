@@ -2172,6 +2172,7 @@ export function ScreenProyeccion() {
   const [gastoSheetOpen, setGastoSheetOpen] = useState(false);
   const [openSalario, setOpenSalario] = useState(false);
   const [openComplementos, setOpenComplementos] = useState(false);
+  const [openEventos, setOpenEventos] = useState(false);
   // MC Pro · modo de secuencia de retornos (riesgo de orden): 'random' (default),
   // 'early-crash' (crisis nada más jubilarte, el peor caso), 'late-crash' (crisis tardía).
   const [seqMode, setSeqMode] = useState('random');
@@ -2198,6 +2199,7 @@ export function ScreenProyeccion() {
   const complementosNow = Math.round(sumActiveSegments(plan.bonusSegments, todayKey()));
   const nSalario = (plan.incomeSegments || []).length;
   const nComplementos = (plan.bonusSegments || []).length;
+  const nEventos = (plan.events || []).length;
 
   // ── Calculados (motor) ──
   const estado = d.destinoEstado;
@@ -2401,6 +2403,31 @@ export function ScreenProyeccion() {
                 </CartelTramoRow>
               ))}
               <div style={{ textAlign: 'left', marginTop: 12 }}><CartelBtn variant="text" onClick={() => m.addBonus()}>+ añadir complemento</CartelBtn></div>
+            </>)}
+            {/* #4 · Eventos puntuales · cobros/gastos ÚNICOS (bonus, herencia, compra…). Editables
+                aquí (antes solo los creaba la demo o la tarjeta de vivienda). Los consume projectV2. */}
+            <button onClick={() => setOpenEventos((o) => !o)} aria-expanded={openEventos}
+              style={{ ...subhead, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, background: 'transparent', border: 'none', borderBottom: '1px solid ' + T.lineSoft, padding: '6px 0 8px', cursor: 'pointer' }}>
+              <span>Eventos puntuales <span style={{ fontStyle: 'normal', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.muted }}>· {nEventos > 0 ? `${nEventos} ${nEventos === 1 ? 'evento' : 'eventos'}` : 'ninguno'}</span></span>
+              <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.faint, whiteSpace: 'nowrap' }}>{openEventos ? '▾ ocultar' : '▸ editar'}</span>
+            </button>
+            {openEventos && (<>
+              <p style={{ ...note, marginTop: 8 }}>Cobros o gastos de una sola vez: un bonus, una herencia, la compra de un coche. Suman (+) o restan (−) de tu patrimonio en su fecha.</p>
+              {(plan.events || []).map((e) => {
+                const neg = (e.amount || 0) < 0;
+                return (
+                  <div key={e.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px dashed ' + T.lineSoft }}>
+                    <input type="text" value={e.label || ''} onChange={(ev) => m.updateEvent(e.id, { label: ev.target.value })} placeholder="Concepto" aria-label="Concepto del evento"
+                      style={{ flex: '1 1 110px', minWidth: 90, appearance: 'none', WebkitAppearance: 'none', background: T.paper, border: '1px solid ' + T.lineSoft, borderRadius: 6, padding: '6px 8px', fontFamily: T.serif, fontSize: T.size.body, color: T.ink }} />
+                    <CartelMonthValue value={e.date} onChange={(v) => m.updateEvent(e.id, { date: v })} ariaLabel="Fecha del evento" />
+                    <button onClick={() => m.updateEvent(e.id, { amount: -(e.amount || 0) })} aria-label={neg ? 'Es un gasto · cambiar a cobro' : 'Es un cobro · cambiar a gasto'} title="Cobro (+) / gasto (−)"
+                      style={{ flexShrink: 0, appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: '1px solid ' + (neg ? T.red : T.green), color: neg ? T.red : T.green, borderRadius: 6, width: 30, height: 30, cursor: 'pointer', fontFamily: T.mono, fontSize: 16, lineHeight: 1 }}>{neg ? '−' : '+'}</button>
+                    <EditableValue value={Math.abs(Math.round(e.amount || 0))} onChange={(v) => m.updateEvent(e.id, { amount: (neg ? -1 : 1) * Math.abs(Math.round(v)) })} min={0} max={1000000} suffix="€" ariaLabel="Importe del evento" />
+                    <button onClick={() => m.deleteEvent(e.id)} aria-label="Eliminar evento" style={{ flexShrink: 0, appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', color: T.faint, cursor: 'pointer', fontFamily: T.mono, fontSize: 18, lineHeight: 1, padding: 4 }}>×</button>
+                  </div>
+                );
+              })}
+              <div style={{ textAlign: 'left', marginTop: 12 }}><CartelBtn variant="text" onClick={() => m.addEvent()}>+ añadir evento</CartelBtn></div>
             </>)}
             <div style={subhead}>Aporte</div>
             <CartelTramoRow name={`Aporte ${fmtPctView(savingsPct)} % del ingreso`} dates={savingSeg ? tramoDates(savingSeg) : ''} staticAmt={`≈ ${fmtNum(aporte)} €/mes`} />
