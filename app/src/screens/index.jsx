@@ -2442,6 +2442,8 @@ export function ScreenProyeccion() {
             </div>
           </Reveal>
           <Reveal delay={120}><p style={note}>{d.verdictCopy}</p></Reveal>
+          {/* Rebalanceo compacto · surfacea junto al Diagnóstico (la versión completa + aplicar vive en Datos). */}
+          <RebalanceCard compact />
         </Spread>
 
         {/* 9 · CIERRE · ir a Mes a mes */}
@@ -3049,14 +3051,44 @@ export function AccountsCard() {
 // Rebalanceo · compara la cartera declarada (allocation) con la recomendable por horizonte
 // (computeRebalance, lib) y sugiere el movimiento en €. Solo se muestra si hay allocation
 // declarada (actualLife.completed). Color por tokens (verde=alineado, ámbar=desviado).
-export function RebalanceCard() {
-  const { state } = useStore();
+export function RebalanceCard({ compact = false }) {
+  const { state, updatePlan } = useStore();
   const d = useDerived();
+  const [confirming, setConfirming] = useState(false);
   const { plan, profile } = state;
   const reb = computeRebalance(plan, profile, d.currentPortfolio || 0);
   if (!reb) return null;
-  const { currentRV, targetRV, gap, aligned, moveEur, cashPct, horizonYears } = reb;
+  const { currentRV, targetRV, gap, aligned, moveEur, cashPct, horizonYears, byClass, target } = reb;
   const col = aligned ? T.green : T.amber;
+
+  // Aplicar lo recomendado: fija la allocation al objetivo (reversible editando a mano). Confirmación
+  // en DOS pasos (sin native confirm, bloqueado en iframes). No toca el aporte mensual.
+  const applyTarget = () => {
+    const cur = (plan.actualLife && plan.actualLife.allocation) || {};
+    updatePlan({ actualLife: { ...(plan.actualLife || {}), allocation: { ...cur, ...target } } });
+    setConfirming(false);
+  };
+
+  const msg = aligned
+    ? <>Tu cartera está <strong style={{ fontStyle: 'normal', color: T.green }}>alineada</strong> con tu horizonte. Revísala una vez al año.</>
+    : gap > 0
+      ? <>Vas <strong style={{ fontStyle: 'normal', color: T.amber }}>demasiado conservador</strong>: {cashPct} % en efectivo y depósitos. Mueve unos <strong style={{ fontStyle: 'normal' }}>{fmtEur(moveEur)}</strong> a fondos para acercarte al {targetRV} %.</>
+      : <>Vas <strong style={{ fontStyle: 'normal', color: T.amber }}>algo cargado de riesgo</strong> para tu horizonte. Mueve unos <strong style={{ fontStyle: 'normal' }}>{fmtEur(moveEur)}</strong> de fondos a algo más estable.</>;
+
+  // ── COMPACT (Proyección, junto al Diagnóstico): bloque centrado sin Card. ──
+  if (compact) {
+    return (
+      <Reveal delay={150}>
+        <div style={{ maxWidth: 480, margin: '26px auto 0', textAlign: 'center' }}>
+          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: col, marginBottom: 8 }}>Rebalanceo · {currentRV} % → {targetRV} % en renta variable</div>
+          <div style={{ fontFamily: T.serif, fontSize: 17, color: T.ink, lineHeight: 1.5 }}>{msg}</div>
+          {!aligned && <div style={{ marginTop: 10, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint }}>Ajústalo (o aplícalo de un toque) en Datos → Rebalanceo.</div>}
+        </div>
+      </Reveal>
+    );
+  }
+
+  // ── FULL (Datos): titular + barra + mensaje + detalle por clase + aplicar. ──
   return (
     <Reveal><Card>
       <SectionTag style={{ marginBottom: 6 }}>Rebalanceo</SectionTag>
@@ -3077,15 +3109,40 @@ export function RebalanceCard() {
         <div style={{ height: '100%', width: Math.min(100, Math.max(0, currentRV)) + '%', background: col, borderRadius: 999 }} />
         <div style={{ position: 'absolute', top: -3, bottom: -3, left: Math.min(100, Math.max(0, targetRV)) + '%', width: 2, background: T.ink }} aria-hidden="true" />
       </div>
-      <div style={{ marginTop: 18, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
-        {aligned
-          ? <>Tu cartera está <strong style={{ fontStyle: 'normal', color: T.green }}>alineada</strong> con tu horizonte. Revísala una vez al año y reajusta si se desvía más de un 5 %.</>
-          : gap > 0
-            ? <>Vas <strong style={{ fontStyle: 'normal', color: T.amber }}>demasiado conservador</strong>: tienes mucho en efectivo y depósitos ({cashPct} %). Mueve unos <strong style={{ fontStyle: 'normal' }}>{fmtEur(moveEur)}</strong> a fondos indexados para acercarte al {targetRV} % recomendado.</>
-            : <>Vas <strong style={{ fontStyle: 'normal', color: T.amber }}>algo cargado de riesgo</strong> para tu horizonte. Mueve unos <strong style={{ fontStyle: 'normal' }}>{fmtEur(moveEur)}</strong> de fondos a algo más estable.</>}
+      <div style={{ marginTop: 18, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>{msg}</div>
+
+      {/* Detalle por clase · actual → objetivo + € a mover (+ comprar / − vender). */}
+      <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid ' + T.lineSoft }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr auto', gap: 10, paddingBottom: 6, borderBottom: '1px solid ' + T.line }}>
+          <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint }}>Clase</span>
+          <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint, textAlign: 'right' }}>Actual → objetivo</span>
+          <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint, textAlign: 'right', minWidth: 78 }}>Mover</span>
+        </div>
+        {byClass.map((c) => (
+          <div key={c.key} style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr auto', gap: 10, alignItems: 'baseline', padding: '9px 0', borderBottom: '1px solid ' + T.lineSoft }}>
+            <span style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink }}>{c.label}</span>
+            <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, textAlign: 'right' }}>{c.currentPct}% → {c.targetPct}%</span>
+            <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: c.moveEur > 0 ? T.green : c.moveEur < 0 ? T.amber : T.faint, textAlign: 'right', minWidth: 78 }}>{c.moveEur === 0 ? '—' : (c.moveEur > 0 ? '+' : '−') + fmtEur(Math.abs(c.moveEur))}</span>
+          </div>
+        ))}
       </div>
+
+      {/* Aplicar lo recomendado · confirmación en dos pasos. */}
+      {!aligned && (
+        <div style={{ marginTop: 16 }}>
+          {confirming ? (
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, fontStyle: 'italic' }}>¿Fijar tu asignación al objetivo recomendado?</span>
+              <CartelBtn variant="text" onClick={applyTarget}>Sí, aplicar</CartelBtn>
+              <CartelBtn variant="text" onClick={() => setConfirming(false)}>Cancelar</CartelBtn>
+            </div>
+          ) : (
+            <CartelBtn onClick={() => setConfirming(true)}>Aplicar lo recomendado →</CartelBtn>
+          )}
+        </div>
+      )}
       <div style={{ marginTop: 12, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, lineHeight: T.lh.normal }}>
-        Cambia tu asignación en «Editar gastos y asignación». El rebalanceo se hace una vez al año, o cuando te desvías mucho — sin tocar tu aporte mensual.
+        Aplicar solo cambia el reparto de tu cartera, no tu aporte mensual. El rebalanceo se hace una vez al año, o cuando te desvías mucho.
       </div>
     </Card></Reveal>
   );

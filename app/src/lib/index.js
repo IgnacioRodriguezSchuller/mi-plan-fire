@@ -1007,6 +1007,19 @@ export function recommendedTargetRV(profile, plan) {
   return Math.round(rv * 100);
 }
 
+// Rebalanceo · cartera RECOMENDADA por clase (% que suman 100), derivada del RV objetivo por
+// horizonte: el RV en fondos (~2/3) + planes (~1/3); el resto en efectivo (colchón ≤8) + depósitos.
+// Puro y aditivo; no se persiste.
+export function recommendedAllocation(profile, plan) {
+  const rv = recommendedTargetRV(profile, plan);
+  const nonRv = 100 - rv;
+  const fundsEtfs = Math.round(rv * 0.66);
+  const pensionPlan = rv - fundsEtfs;
+  const cash = Math.min(nonRv, 8);
+  const deposits = nonRv - cash;
+  return { cash, deposits, fundsEtfs, pensionPlan, other: 0 };
+}
+
 // Rebalanceo · compara la cartera ACTUAL (allocation declarada) con la recomendada por
 // horizonte y devuelve la desviación de renta variable + el movimiento sugerido en €.
 // Devuelve null si no hay allocation declarada (actualLife.completed). Puro; reusa
@@ -1023,6 +1036,19 @@ export function computeRebalance(plan, profile, portfolioTotal) {
   const gap = targetRV - currentRV; // + → falta RV (cartera demasiado conservadora)
   const aligned = Math.abs(gap) <= 5;
   const moveEur = Math.round((Math.abs(gap) / 100) * (portfolioTotal || 0));
+  // Detalle por clase · actual (normalizado a %) vs recomendado + € a mover en cada uno.
+  const target = recommendedAllocation(profile, plan);
+  const CLASSES = [
+    { key: 'cash', label: 'Efectivo' },
+    { key: 'deposits', label: 'Depósitos' },
+    { key: 'fundsEtfs', label: 'Fondos / ETF' },
+    { key: 'pensionPlan', label: 'Planes' },
+  ];
+  const byClass = CLASSES.map((c) => {
+    const cur = Math.round(pct(a[c.key]));
+    const tgt = target[c.key] || 0;
+    return { key: c.key, label: c.label, currentPct: cur, targetPct: tgt, moveEur: Math.round(((tgt - cur) / 100) * (portfolioTotal || 0)) };
+  });
   return {
     currentRV,
     targetRV,
@@ -1031,6 +1057,8 @@ export function computeRebalance(plan, profile, portfolioTotal) {
     moveEur,
     cashPct: Math.round(pct(a.cash) + pct(a.deposits)),
     horizonYears: Math.max(0, ((profile && profile.retireAge) || 65) - ((profile && profile.age) || 30)),
+    target,
+    byClass,
   };
 }
 

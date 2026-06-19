@@ -1646,3 +1646,21 @@ de FIRE el motor necesitaba Fat, que no existía.
   con copy nuevo + Ko-fi/GitHub («próximamente») + sin «ver versión web»; «Ver presentación» abre la Landing grande;
   primer arranque (estado nuevo) = una bienvenida con enlace de demo → onboarding; el enlace carga la demo (2 cuentas);
   consola limpia; hash baseline `b3ea52b1…` intacto.
+
+## Rebalanceo extendido · detalle por clase + botón aplicar + en Proyección (2026-06-19)
+- **Causa raíz**: el rebalanceo gustó y solo daba el titular RV%. El dueño pidió **detalle por clase**, **botón
+  aplicar**, **también en Proyección** (y «del hogar», que va con la vista Hogar).
+- **Cambio**:
+  - `lib/index.js`: `recommendedAllocation(profile, plan)` → objetivo **por clase** (RV en fondos ~2/3 + planes ~1/3;
+    resto en efectivo ≤8 + depósitos). `computeRebalance` devuelve además `target` y `byClass:[{key,label,
+    currentPct,targetPct,moveEur}]`. Aditivos y puros.
+  - `screens/index.jsx` `RebalanceCard`: **tabla por clase** (actual → objetivo + € a mover, + comprar/− vender) +
+    **botón «Aplicar lo recomendado»** que fija `plan.actualLife.allocation` al objetivo (confirmación en **dos pasos**,
+    sin native confirm; reversible; no toca el aporte). Prop **`compact`**: versión condensada (sin Card, centrada) para
+    Proyección, renderizada junto al **Diagnóstico**.
+- **No tocado**: firmas del motor, `migrateToV2`, `T`, claves, `isPro`, baseline. Helpers nuevos aditivos (verify-lib
+  sin diffs nuevos).
+- **Verificación**: `npm run build` OK (`dist` 1.055 kB); `verify-content`/`verify-state` PASS; `verify-lib` sin
+  diffs nuevos; navegador (demo, Alex conservador): tabla por clase (Efectivo/Depósitos/Fondos/Planes, actual→objetivo);
+  **«Aplicar» → allocation pasa a `{cash:8,deposits:12,fundsEtfs:53,pensionPlan:27}` (RV 80) y la tarjeta queda
+  alineada**; compacto visible en Proyección («80 % → 80 % en renta variable»); consola limpia; baseline intacto.
