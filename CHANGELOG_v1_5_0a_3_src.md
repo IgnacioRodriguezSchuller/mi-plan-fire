@@ -1851,3 +1851,16 @@ de FIRE el motor necesitaba Fat, que no existía.
 ### Nota / límite conocido
 - El patrimonio del resto de la app (Proyección/Hogar) sigue siendo **cartera líquida** (el motor no trackea el
   valor de la casa); el patrimonio neto con casa vive **dentro de la comparación** (el momento didáctico).
+
+### Detección «vas tarde» · simetría con Monte Carlo (cabo final) (2026-06-19)
+- **Causa raíz**: la detección determinista del ★ ya se extendía hasta los 90 (`DETECT_END_AGE`) para detectar la
+  libertad más allá de la jubilación («vas tarde»), pero ese 90 estaba **fijo**, mientras `runMonteCarlo` proyecta
+  hasta `plan.lifeExpectancy || 90`. Para quien sube la esperanza de vida por encima de 90, un cruce FIRE entre 90 y
+  `lifeExpectancy` lo daba bueno el MC pero la detección determinista lo veía como «no llega» → **asimetría residual**.
+- **Cambio** (`state/index.jsx`, `useDerived`): `DETECT_END_AGE = 90` → **`Math.max(90, plan.lifeExpectancy || 90)`**
+  (mismo horizonte que el Monte Carlo → simetría total). Con el default (90) el comportamiento es idéntico.
+- **No tocado**: firmas de `projectV2`/`runMonteCarlo`, `migrateToV2`, esquema/persistencia, baseline.
+- **Verificación**: Build OK; `verify-content`/`verify-state` PASS; `verify-lib` sin diffs nuevos (`useDerived` es un
+  hook, no está en su set); baseline intacto; navegador: «vas tarde» normal (cruce entre retireAge y 90) sigue
+  mostrando KpiPill `★ N` + «Libre, pero tarde»/«Tu libertad llega tras los {retireAge}»; consola limpia. Cierra el
+  ítem 3 del backlog (lo demás ya estaba implementado en una sesión previa).

@@ -334,10 +334,13 @@ export function useDerived() {
     // cortan en retireAge para el gráfico plan-vs-realidad. Si el cruce FIRE cae
     // DESPUÉS de la edad de retiro, esas series no llegan y ageHittingTarget devuelve
     // null → "vas tarde" quedaba indetectable. Proyectamos DOS series auxiliares
-    // extendidas hasta los 90 SOLO para detección: no se dibujan ni alimentan
-    // planAtLastReg/realAtLastReg (extender las dibujadas rompería el gráfico).
+    // extendidas hasta la esperanza de vida (mín. 90) SOLO para detección: no se dibujan
+    // ni alimentan planAtLastReg/realAtLastReg (extender las dibujadas rompería el gráfico).
     // Mismos parámetros que seriesPlanFromStart/seriesRealFromStart salvo endAge.
-    const DETECT_END_AGE = 90;
+    // El horizonte = max(90, lifeExpectancy) iguala al de runMonteCarlo → simetría total
+    // (sin esto, subir la esperanza de vida >90 dejaba un cruce 90↔lifeExp detectable por el
+    // MC pero no por la detección determinista).
+    const DETECT_END_AGE = Math.max(90, plan.lifeExpectancy || 90);
     const seriesPlanForDetect = projectV2(plan, profile, {
       capital: plan.capital || 0,
       startKey: startKeyForHistory,
