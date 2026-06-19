@@ -4,7 +4,7 @@
 // compartidos), para evitar imports circulares. Solo se añade imports/export.
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { T, WEB_URL } from '../tokens/index.js'
+import { T } from '../tokens/index.js'
 import {
   project, monthlyForGoal, uid, todayKey, addMonthsKey,
   compareKeys, isKeyInSegment, findActiveSegment, sumActiveSegments,
@@ -5217,7 +5217,7 @@ export function Shell() {
         </div>
       </main>
       <footer style={{ padding: '14px 16px 80px', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, textTransform: 'uppercase', textAlign: 'center' }}>
-        Datos guardados en local · Mi Plan v1.5.0a3
+        Datos guardados en local
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, textTransform: 'none', color: T.faint, marginTop: 8, lineHeight: T.lh.normal }}>
           Herramienta de proyección, no de asesoramiento financiero. No garantiza rentabilidades.
         </div>
@@ -5286,7 +5286,7 @@ export function Shell() {
         </div>
       </main>
       <footer style={{ padding: '20px clamp(24px, 3vw, 48px)', borderTop: '1px solid ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, textTransform: 'uppercase' }}>
-        Datos guardados en local · Mi Plan v1.5.0a3
+        Datos guardados en local
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, textTransform: 'none', color: T.faint, marginTop: 8, lineHeight: T.lh.normal }}>
           Herramienta de proyección, no de asesoramiento financiero. No garantiza rentabilidades.
         </div>

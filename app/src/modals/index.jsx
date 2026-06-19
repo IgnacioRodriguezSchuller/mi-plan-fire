@@ -6,7 +6,7 @@
 // una screen aún no migrada. Pendiente para la tanda de screens.
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { T, WEB_URL } from '../tokens/index.js'
+import { T } from '../tokens/index.js'
 
 // Portal a document.body: los overlays `position:fixed` se rompen si un ANCESTRO tiene
 // `transform`/`will-change`/`filter` (p.ej. el `Reveal`, que anima con transform) → el fixed se
@@ -228,19 +228,11 @@ export function WhyDifferentModal({ onClose }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <Block>
-            Esta es una versión local del planificador. Si quieres actualizaciones, sincronizar dispositivos o análisis avanzados, hay una versión web.
-          </Block>
-          <Block>
             Mi Plan FIRE educa sobre categorías de producto (fondos indexados, ETFs, planes de pensiones, robo-advisors) y menciona índices (MSCI World, S&P 500, etc.). No menciona gestoras concretas, brokers ni productos por nombre comercial. No emite recomendaciones personalizadas en el sentido del artículo 140 LMV / MiFID II. Te damos el mapa; el destino lo eliges tú.
           </Block>
         </div>
 
-        <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid ' + T.lineSoft, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <a href={WEB_URL} target="_blank" rel="noopener" style={{
-            fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted,
-            letterSpacing: T.tracking.wider, textTransform: 'uppercase',
-            textDecoration: 'none',
-          }}>Versión web →</a>
+        <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid ' + T.lineSoft, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <Btn variant="primary" size="md" onClick={onClose}>Entendido, vamos →</Btn>
         </div>
       </div>
@@ -773,7 +765,7 @@ export function AboutModal({ onClose }) {
           <em style={{ color: T.accent }}>Mi Plan FIRE</em>
         </div>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.faint, marginBottom: 22 }}>
-          Versión v1.5.0a · planificador FIRE honesto, libre y local
+          Planificador FIRE honesto, libre y local
         </div>
         {(() => {
           const para = { fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.relaxed, marginBottom: 14 };
