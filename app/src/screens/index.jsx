@@ -2746,10 +2746,10 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
   }
 
   // ── Edición · campos editables (la función no se pierde, solo se pliega) ───
-  // Una meta de vivienda en edición ocupa todo el ancho del grid: la comparación de dos vías
-  // (dos columnas + gráfico) necesita aire.
+  // Cualquier hito en edición ocupa TODO el ancho del grid → el editor se abre entero y limpio
+  // (no en una columna estrecha de ~180px). La vivienda además necesita aire para sus dos columnas.
   return (
-    <Card style={{ gridColumn: category === 'vivienda' ? '1 / -1' : undefined }}>
+    <Card style={{ gridColumn: '1 / -1' }}>
       <button onClick={onRemove} title="Eliminar meta"
         style={{ position: 'absolute', top: 10, right: 12, fontFamily: T.mono, fontSize: T.size.body, color: T.faint, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 6px', lineHeight: 1, borderRadius: 4 }}>×</button>
       <input value={goal.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="Nombre de la meta"
