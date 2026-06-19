@@ -3234,7 +3234,7 @@ export function ScreenAjustes() {
         </div>
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px dashed ' + T.lineSoft, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
           {/* B8 · Permanent access to LandingPreOnboarding in revisit mode. */}
-          <button onClick={() => window.__openRevisitLanding && window.__openRevisitLanding()} style={{
+          <button onClick={() => window.__openLanding && window.__openLanding()} style={{
             fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, background: 'transparent',
             border: 'none', cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase', padding: 0,
           }}>Ver presentación de Mi Plan FIRE →</button>
@@ -4620,23 +4620,23 @@ export function Shell() {
   // migration. When the user clicks "Empezar →", the flag flips and we
   // either land them on the existing Landing (if they haven't completed
   // onboarding) or directly on the dashboard (if they have).
+  // Primer arranque · UNA sola bienvenida (LandingPreOnboarding) → onboarding. La Landing
+  // grande («Tu dinero a treinta años vista») deja de ser pantalla obligatoria y pasa a ser
+  // «la presentación» (botón en Datos → window.__openLanding). landingSeen se conserva como
+  // campo (se marca aquí) pero ya NO gatea el arranque.
   if (!state.hasSeenLandingPreOnboarding) {
     return (
       <>
         <LandingPreOnboarding
           mode="intro"
-          onStart={() => update({ hasSeenLandingPreOnboarding: true })}
+          onStart={() => update({ hasSeenLandingPreOnboarding: true, landingSeen: true })}
           onOpenManifesto={() => setShowManifesto(true)}
+          onLoadDemo={() => seedDemo()}
         />
         {showManifesto && <WhyDifferentModal onClose={() => setShowManifesto(false)} />}
       </>
     );
   }
-  if (!state.landingSeen) return <Landing
-    mode="intro"
-    onStart={() => update({ landingSeen: true })}
-    onLoadDemo={() => seedDemo()}
-  />;
   if (!state.onboardingComplete) return <Onboarding />;
   if (showLanding) return <Landing mode="view" onClose={() => setShowLanding(false)} />;
   // B8 · Revisit mode: header logo or Ajustes button → landing without flag side-effects.
@@ -4666,7 +4666,7 @@ export function Shell() {
     <>
     <div style={{ width: '100vw', minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: T.serif, display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: '10px 14px', background: T.panel, borderBottom: '1px solid ' + T.line, display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50 }}>
-        <button onClick={() => setShowRevisitLanding(true)} aria-label="Ver presentación de Mi Plan FIRE" style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontStyle: 'italic', fontSize: 22, color: T.accent, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 1 }}>
+        <button onClick={() => setShowLanding(true)} aria-label="Ver presentación de Mi Plan FIRE" style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontStyle: 'italic', fontSize: 22, color: T.accent, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 1 }}>
           Mi Plan
         </button>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -4724,7 +4724,7 @@ export function Shell() {
     <>
     <div style={{ width: '100vw', minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: T.serif, display: 'flex', flexDirection: 'column' }}>
       <header style={{ position: 'sticky', top: 0, zIndex: 50, background: T.panel, borderBottom: '1px solid ' + T.line, padding: '14px clamp(24px, 3vw, 48px)', display: 'flex', alignItems: 'center', gap: 28 }}>
-        <button onClick={() => setShowRevisitLanding(true)} aria-label="Ver presentación de Mi Plan FIRE" style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontStyle: 'italic', fontSize: 28, color: T.accent, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 1 }}>
+        <button onClick={() => setShowLanding(true)} aria-label="Ver presentación de Mi Plan FIRE" style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontStyle: 'italic', fontSize: 28, color: T.accent, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 1 }}>
           Mi Plan
         </button>
         <nav style={{ display: 'flex', gap: 24, flex: 1 }}>

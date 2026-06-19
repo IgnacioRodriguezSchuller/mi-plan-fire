@@ -1623,3 +1623,26 @@ de FIRE el motor necesitaba Fat, que no existía.
   **diversificación ámbar** + «rebalancéalo en Datos», rebalanceo «mueve ~2,9k€ a fondos»; **Alex·34** → ahorro/
   robustez/**diversificación verde**, rebalanceo «alineada», hipoteca declarada; comparador muestra ambos (★53/★54);
   sin «comandancia»; consola limpia; hash baseline `b3ea52b1…` intacto.
+
+## «Acerca de» reescrito + donaciones · arranque a una bienvenida + la Landing como presentación (2026-06-19)
+- **Causa raíz**: (A) el modal «Acerca de» decía «hay una versión web / Ver versión web» — incoherente: la app
+  **ya es** la web. (C) el primer arranque tenía DOS bienvenidas (`LandingPreOnboarding` mínima → `Landing` grande)
+  y la presentación buena estaba escondida en un botón de Datos.
+- **Cambio**:
+  - `modals/index.jsx` `AboutModal`: copy nuevo **coherente y extenso** — esto es la versión web, **gratis y
+    local-first** (los datos no salen del navegador, sin cuenta/nube/tracking/anuncios), **todo incluido** (sin muro),
+    **AGPL-3.0**, «no es asesoramiento». **Donaciones**: dos enlaces `<a href>` (Ko-fi/«Invítame a un café» +
+    GitHub Sponsors) desde `DONATE_KOFI_URL`/`DONATE_GITHUB_URL` (placeholder configurable → «próximamente» si vacío).
+    Quitado «Ver versión web».
+  - `screens/index.jsx` `Shell`: **primer arranque = una sola bienvenida** (`LandingPreOnboarding`) → onboarding
+    (retirado el gate `!landingSeen`; `landingSeen` se conserva como campo, se marca al empezar, ya no gatea). La
+    **`Landing` grande pasa a ser «la presentación»**: el botón «Ver presentación» (Datos) y el logo del header
+    abren ahora `Landing` mode="view" (`window.__openLanding`/`showLanding`) en vez de la mínima.
+  - `flows/index.jsx` `LandingPreOnboarding`: prop `onLoadDemo` + enlace **«¿Prefieres curiosear? Ver una demo →»**
+    (preserva el acceso a demo que vivía en la Landing grande).
+- **No tocado**: `migrateToV2`, motor, claves localStorage, campos persistidos (`landingSeen`/`hasSeenLanding…`
+  conservados), `isPro`, baseline. **Cero red** (donaciones = `<a href>`).
+- **Verificación**: `npm run build` OK (`dist` 1.052 kB); `verify-content`/`verify-state` PASS; navegador: «Acerca de»
+  con copy nuevo + Ko-fi/GitHub («próximamente») + sin «ver versión web»; «Ver presentación» abre la Landing grande;
+  primer arranque (estado nuevo) = una bienvenida con enlace de demo → onboarding; el enlace carga la demo (2 cuentas);
+  consola limpia; hash baseline `b3ea52b1…` intacto.

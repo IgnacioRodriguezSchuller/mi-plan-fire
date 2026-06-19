@@ -41,7 +41,7 @@ function IconArrowRight() {
   );
 }
 
-export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro', onBack }) {
+export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro', onBack, onLoadDemo }) {
   const mobile = useIsMobile();
   return (
     <div style={{
@@ -97,6 +97,14 @@ export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro',
             </>
           )}
         </div>
+        {/* Acceso a la demo (antes vivía en la Landing grande, ahora reubicada como presentación). */}
+        {mode !== 'revisit' && onLoadDemo && (
+          <button onClick={onLoadDemo} style={{
+            fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, background: 'transparent',
+            border: 'none', cursor: 'pointer', letterSpacing: T.tracking.wide, textTransform: 'uppercase',
+            padding: '4px 0', alignSelf: 'flex-start',
+          }}>¿Prefieres curiosear? Ver una demo →</button>
+        )}
       </div>
     </div>
   );

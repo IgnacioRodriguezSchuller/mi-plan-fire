@@ -714,6 +714,11 @@ export function ConceptModal({ id, onClose, read = false, onToggleRead }) {
 }
 
 
+// Portales de donación (KDP-style placeholder, configurable). Vacío → «próximamente»;
+// con URL → enlace activo. Cero red: es un <a href>, no fetch. Pega aquí tus URLs reales.
+export const DONATE_KOFI_URL = '';      // p.ej. 'https://ko-fi.com/miplanfire'
+export const DONATE_GITHUB_URL = '';    // p.ej. 'https://github.com/sponsors/IgnacioRodriguezSchuller'
+
 export function AboutModal({ onClose }) {
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -747,20 +752,44 @@ export function AboutModal({ onClose }) {
           <em style={{ color: T.accent }}>Mi Plan FIRE</em>
         </div>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: T.faint, marginBottom: 22 }}>
-          Versión v1.5.0a · planificador FIRE local
+          Versión v1.5.0a · planificador FIRE honesto, libre y local
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.relaxed, marginBottom: 14 }}>
-          Esta es una versión local del planificador, libre y gratuita (AGPL-3.0). Tus datos viven en este navegador.
+        {(() => {
+          const para = { fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.relaxed, marginBottom: 14 };
+          const strong = { color: T.ink, fontStyle: 'normal' };
+          return (
+            <>
+              <div style={para}>
+                Una herramienta para ver, <strong style={strong}>sin promesas</strong>, hacia dónde te lleva lo que ahorras: proyección a 30 años, Monte Carlo, tu número FIRE, diagnóstico, rebalanceo, comparador de escenarios y vista de hogar. <strong style={strong}>Todo incluido</strong> — no hay versión de pago ni funciones bloqueadas.
+              </div>
+              <div style={para}>
+                Funciona <strong style={strong}>entera en tu navegador</strong>. Tus datos no salen de tu dispositivo: sin cuenta, sin nube, sin seguimiento, sin anuncios. Cuando borras, se borra. Puedes exportarlos cuando quieras.
+              </div>
+              <div style={{ ...para, marginBottom: 24 }}>
+                Es <strong style={strong}>software libre y gratuito</strong> (AGPL-3.0). No es asesoramiento financiero ni garantiza rentabilidades: es una calculadora honesta, las matemáticas las pones tú.
+              </div>
+            </>
+          );
+        })()}
+        {/* Donaciones · enlaces (cero red). Vacío → «próximamente». */}
+        <div style={{ paddingTop: 20, borderTop: '1px solid ' + T.lineSoft }}>
+          <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal, marginBottom: 14 }}>
+            Mantenerlo y mejorarlo lleva tiempo. Si te resulta útil y quieres echar una mano:
+          </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {[
+              { url: DONATE_KOFI_URL, label: 'Invítame a un café' },
+              { url: DONATE_GITHUB_URL, label: 'Patrocina en GitHub' },
+            ].map((d) => (
+              d.url
+                ? <a key={d.label} href={d.url} target="_blank" rel="noopener noreferrer"
+                    style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '10px 16px', borderRadius: 999, background: T.ink, color: T.bg, textDecoration: 'none', whiteSpace: 'nowrap' }}>{d.label} →</a>
+                : <span key={d.label}
+                    style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '10px 16px', borderRadius: 999, border: '1px solid ' + T.line, color: T.faint, whiteSpace: 'nowrap' }}>{d.label} · próximamente</span>
+            ))}
+          </div>
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.relaxed, marginBottom: 22 }}>
-          Si quieres actualizaciones, sincronizar dispositivos o análisis avanzados, hay una versión web.
-        </div>
-        <div style={{ marginBottom: 22 }}>
-          <Btn variant="ghost" size="md" onClick={() => { window.open(WEB_URL, '_blank', 'noopener'); }}>
-            Ver versión web →
-          </Btn>
-        </div>
-        <div style={{ paddingTop: 14, borderTop: '1px dashed ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, textTransform: 'uppercase' }}>
+        <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.widest, textTransform: 'uppercase' }}>
           agpl-3.0 · código en github (próximamente)
         </div>
       </div>
