@@ -2329,7 +2329,28 @@ export function ScreenProyeccion() {
           <Reveal delay={120}><p style={cap}>Tu número — <EditableValue value={gasto} onChange={setGasto} min={0} max={100000} suffix="€/mes" ariaLabel="Gasto mensual" /> → {fmtNum(gasto * 12)} €/año × {fiMult} = {fmtNum(fireTargetReal)} € de 2026 (regla del {fmtPctView(withdrawalRate)} %).</p></Reveal>
           <Reveal delay={140}><CartelBtn variant="text" onClick={() => setGastoSheetOpen(true)} style={{ marginTop: 14 }}>Desglosar mi gasto →</CartelBtn></Reveal>
           <Reveal delay={160}><p style={note}>Tu meta sube con los años porque tus gastos también subirán. El ★ es el cruce: a los {libreAge != null ? libreAge : '—'}, el {fmtPctView(withdrawalRate)} % anual de tu cartera iguala tu gasto.</p></Reveal>
-          <Reveal delay={200}><p style={note}>Tipos de FIRE: <b style={{ color: T.accent }}>Lean</b> a los {leanAge != null ? leanAge : '—'} (gasto ajustado), <b style={{ color: T.accent }}>Coast</b> a los {coastAge != null ? coastAge : '—'} (dejas de aportar), <b style={{ color: T.green }}>FIRE pleno</b> a los {libreAge != null ? libreAge : '—'} (tu número) y <b style={{ color: T.muted }}>Fat</b> {fatAge != null ? `a los ${fatAge}` : 'fuera de alcance'} (vida holgada, ×1,5).</p></Reveal>
+          {/* #1 · Tipos de FIRE como tarjetas visuales (glifos SVG inline, sin assets ni red). La
+              cifra-edad va en T.ink (las hero no llevan accent); FIRE pleno lleva ★ verde por ser
+              la edad de libertad (excepción documentada). */}
+          <Reveal delay={200} style={{ width: '100%', maxWidth: 560 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(116px, 1fr))', gap: 10, marginTop: 6 }}>
+              {[
+                { key: 'lean', label: 'Lean', age: leanAge, color: T.accent, desc: 'Gasto ajustado', glyph: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4.5" /></svg> },
+                { key: 'coast', label: 'Coast', age: coastAge, color: T.accent, desc: 'Dejas de aportar', glyph: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 15c4 0 5-7 9-7s5 4 9 4" /></svg> },
+                { key: 'pleno', label: 'FIRE pleno', age: libreAge, color: T.green, desc: 'Tu número', star: true, glyph: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.6l2.7 5.6 6.1.7-4.5 4.2 1.2 6L12 16.9 6.5 19.1l1.2-6-4.5-4.2 6.1-.7z" /></svg> },
+                { key: 'fat', label: 'Fat', age: fatAge, color: T.muted, desc: 'Vida holgada · ×1,5', glyph: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" /></svg> },
+              ].map((c) => (
+                <div key={c.key} style={{ background: T.paper, border: '1px solid ' + T.lineSoft, borderRadius: 10, padding: '12px 8px 11px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <span style={{ color: c.color, lineHeight: 0 }}>{c.glyph}</span>
+                  <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: c.color }}>{c.label}</span>
+                  <span style={{ fontFamily: T.display, fontWeight: 600, fontStyle: 'italic', fontSize: 25, color: T.ink, lineHeight: 1 }}>
+                    {c.age != null ? (c.star ? <><span style={{ color: T.green }}>★</span>{c.age}</> : c.age) : '—'}
+                  </span>
+                  <span style={{ fontFamily: T.serif, fontSize: T.size.caption, color: T.muted, lineHeight: T.lh.snug }}>{c.desc}</span>
+                </div>
+              ))}
+            </div>
+          </Reveal>
         </Spread>
 
         {/* 3 · LA PALANCA */}
@@ -2346,13 +2367,13 @@ export function ScreenProyeccion() {
         <Spread>
           <Reveal><CartelIcon id="patrimonio" size={72} color={T.ink} style={{ margin: '0 auto 6px' }} /></Reveal>
           <Reveal delay={40}><SectionTag>Ingresos</SectionTag></Reveal>
-          <Reveal delay={70}><p style={cap}>Lo que entra cada mes. El salario base sube con el IPC; los complementos van aparte.</p></Reveal>
-          <Reveal delay={90}><p style={note}>El salario sigue al IPC al <EditableValue value={ipcPct} onChange={setIpcPct} min={0} max={100} suffix="%" ariaLabel="Seguimiento del salario al IPC" /> (100 % = sube como la inflación; 0 % = se queda fijo). Distinto de la inflación general, que ajustas en Asunciones.</p></Reveal>
+          <Reveal delay={70}><p style={cap}>Lo que entra cada mes, <b>neto</b> — lo que recibes en cuenta. El salario sigue al IPC; los complementos van aparte.</p></Reveal>
+          <Reveal delay={90}><p style={note}>El salario sigue al IPC al <EditableValue value={ipcPct} onChange={setIpcPct} min={0} max={100} suffix="%" ariaLabel="Seguimiento del salario al IPC" /> (100 % = como la inflación; 0 % = fijo). Distinta de la inflación general (Asunciones).</p></Reveal>
           <Reveal delay={100} style={{ width: '100%', maxWidth: 600 }}>
             {/* Salario base · colapsable (resumen → editar tramos) */}
             <button onClick={() => setOpenSalario((o) => !o)} aria-expanded={openSalario}
               style={{ ...subhead, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, background: 'transparent', border: 'none', borderBottom: '1px solid ' + T.lineSoft, padding: '6px 0 8px', cursor: 'pointer' }}>
-              <span>Salario base <span style={{ fontStyle: 'normal', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.muted }}>· {fmtNum(salarioNow)} €/mes · {nSalario} {nSalario === 1 ? 'tramo' : 'tramos'}</span></span>
+              <span>Salario base neto <span style={{ fontStyle: 'normal', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.muted }}>· {fmtNum(salarioNow)} €/mes · {nSalario} {nSalario === 1 ? 'tramo' : 'tramos'}</span></span>
               <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.faint, whiteSpace: 'nowrap' }}>{openSalario ? '▾ ocultar' : '▸ editar'}</span>
             </button>
             {openSalario && (<>
@@ -2408,7 +2429,7 @@ export function ScreenProyeccion() {
               ))}
             </div>
           </Reveal>
-          <Reveal delay={120}><p style={note}>Medias razonables a largo plazo. En <b>auto</b>, la tasa de retiro se ajusta a tu horizonte de jubilación (estudio Trinity): ~30 años → 4 %, 40+ años → 3–3,5 %; en <b>manual</b> la fijas tú. Cambiarlos actualiza toda la proyección. El selector <b>Nominal / € de hoy</b> de arriba cambia cómo se muestran todas las cifras.</p></Reveal>
+          <Reveal delay={120}><p style={note}>Medias razonables a largo plazo. En <b>auto</b>, la tasa de retiro se ajusta a tu horizonte de jubilación (<Concept id="regla-4">estudio Trinity</Concept>): ~30 años → 4 %, 40+ años → 3–3,5 %; en <b>manual</b> la fijas tú. Cambiarlos actualiza toda la proyección. El selector <b>Nominal / € de hoy</b> de arriba cambia cómo se muestran todas las cifras.</p></Reveal>
         </Spread>
 
         {/* 6 · ¿Y TE DURA? */}
