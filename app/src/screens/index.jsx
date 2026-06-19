@@ -2861,14 +2861,16 @@ export function HousingPathsCard({ goal, d, plan, profile }) {
   const closeApply = () => { setApplyPath(null); setUnderstood(false); };
   const doApply = () => {
     const events = [...(plan.events || [])];
+    // Campo aditivo actualLife.home → lo lee homeEquityAt para la figura «patrimonio total · con tu casa».
+    const home = { value: price, purchaseKey, appreciation };
     if (applyPath === 'contado') {
       events.push({ id: uid(), date: purchaseKey, amount: -price, label: 'Compra vivienda (contado)', status: 'confirmado' });
-      updatePlan({ events });
+      updatePlan({ events, actualLife: { ...(plan.actualLife || {}), home } });
     } else if (applyPath === 'hipoteca') {
       events.push({ id: uid(), date: purchaseKey, amount: -cmp.downPayment, label: 'Entrada de la vivienda', status: 'confirmado' });
       updatePlan({
         events,
-        actualLife: { ...(plan.actualLife || {}), mortgage: { enabled: true, originalAmount: cmp.loan, termYears: mortgageYears, startYear, type: 'fixed', fixedRate: mortgageRate, spread: 1.0, euriborRef: 3.0 } },
+        actualLife: { ...(plan.actualLife || {}), home, mortgage: { enabled: true, originalAmount: cmp.loan, termYears: mortgageYears, startYear, type: 'fixed', fixedRate: mortgageRate, spread: 1.0, euriborRef: 3.0 } },
       });
     }
     closeApply();

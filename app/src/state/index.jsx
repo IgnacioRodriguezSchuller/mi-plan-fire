@@ -6,7 +6,7 @@ import {
   computePlannedFor, computeEffectiveCapitalReturn, computeCurrentPortfolio,
   currentMonthlyAporte, currentMonthlyIncome, computeIncomeFor, sumExpenses,
   projectV2, projectDecumulation, compareKeys, todayKey, addMonthsKey, uid,
-  normalizeSegments, parseKeyMonths, toRealEur, effectiveWithdrawalRate,
+  normalizeSegments, parseKeyMonths, toRealEur, effectiveWithdrawalRate, homeEquityAt,
 } from '../lib/index.js'
 import { ConfirmModal } from '../modals/index.jsx'
 import {
@@ -510,6 +510,10 @@ export function useDerived() {
       realVsPlanDelta, realVsPlanRatio,
       fiTarget, ageAtFiPlan, ageAtFiReal,
       withdrawalRate: effWdrRate,
+      // Equity de la vivienda (valor − hipoteca, nominal) hoy y a la jubilación. El ★/fiTarget/MC
+      // NO la usan (no vives de tu casa): solo alimenta la figura «patrimonio total · con tu casa».
+      homeEquityNow: homeEquityAt(plan, 0),
+      homeEquityAtRetire: homeEquityAt(plan, Math.max(0, Math.round((profile.retireAge - profile.age) * 12))),
       cruceEdad, destinoEstado,
       // Veredicto único "¿voy bien?" (fuente de verdad para Hoy/Seguimiento/KpiPill)
       verdict, verdictAge, verdictCopy,

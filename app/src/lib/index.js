@@ -388,6 +388,44 @@ export function compareHousingPaths({ plan, profile, currentPortfolio, fiTarget,
   };
 }
 
+// Equity (valor de mercado − saldo hipoteca) de la vivienda declarada en `actualLife.home`, en un mes
+// dado contado desde HOY (monthsFromNow). Devuelve NOMINAL (€ del momento) y 0 si no hay casa o aún no
+// se ha comprado en ese punto. El valor se revaloriza desde la compra; el saldo amortiza (francés, mismo
+// modelo que buildMortgageSchedule). PURA, no persiste, no toca firmas del motor. `actualLife.home` es
+// aditivo (lo escribe «aplicar» de la comparación de vivienda); sin él, la app sigue mostrando solo cartera.
+export function homeEquityAt(plan, monthsFromNow) {
+  const al = plan && plan.actualLife;
+  const home = al && al.home;
+  if (!home || !(Number(home.value) > 0) || !home.purchaseKey) return 0;
+  const today = todayKey();
+  const [ty, tm] = today.split('-').map(Number);
+  const [py, pm] = String(home.purchaseKey).split('-').map(Number);
+  const purchaseMonthsFromNow = (py - ty) * 12 + (pm - tm);
+  const monthsOwned = (monthsFromNow || 0) - purchaseMonthsFromNow;
+  if (monthsOwned < 0) return 0; // aún no comprada en ese punto del tiempo
+  const appr = home.appreciation != null ? home.appreciation : 2.5;
+  const homeValue = Number(home.value) * Math.pow(1 + appr / 100, monthsOwned / 12);
+  // Saldo de la hipoteca a `monthsOwned` cuotas desde su inicio (= la compra).
+  let mortBal = 0;
+  const mort = al.mortgage;
+  if (mort && mort.enabled && (Number(mort.originalAmount) || 0) > 0) {
+    const loan = Number(mort.originalAmount) || 0;
+    const n = Math.max(1, Math.round((Number(mort.termYears) || 30) * 12));
+    const rate = mort.type === 'variable'
+      ? ((Number(mort.euriborRef) || 0) + (Number(mort.spread) || 0)) / 100
+      : (Number(mort.fixedRate) || 0) / 100;
+    const iM = rate / 12;
+    const k = Math.min(n, Math.max(0, Math.round(monthsOwned)));
+    if (k >= n) mortBal = 0;
+    else if (iM === 0) mortBal = Math.max(0, loan - (loan / n) * k);
+    else {
+      const pay = loan * iM / (1 - Math.pow(1 + iM, -n));
+      mortBal = Math.max(0, loan * Math.pow(1 + iM, k) - pay * (Math.pow(1 + iM, k) - 1) / iM);
+    }
+  }
+  return Math.max(0, homeValue - mortBal);
+}
+
 // Currently active monthly aporte for a plan (used in many UI places)
 // ----------------------------------------------------------------------------
 // "Antes de Mi Plan" helpers — used in the mirror screen and to feed projectV2
