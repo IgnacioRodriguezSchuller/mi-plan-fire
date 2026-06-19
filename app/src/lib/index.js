@@ -291,6 +291,103 @@ export function projectV2(plan, profile, opts = {}) {
   return series;
 }
 
+// ============================================================
+// Comprar un piso · DOS VÍAS: descapitalizar (al contado, saca el precio de la cartera) vs
+// apalancarse (hipoteca, mantiene la cartera invertida). Helper PURO y autocontenido (mates
+// propias, como DcaCard): reusa projectV2 para la trayectoria de aporte (respeta segmentos/IPC)
+// y modela la casa + la hipoteca aparte (el motor no trackea el valor del inmueble). Cero red.
+// NO persiste, NO toca firmas del motor.
+//
+// Insight honesto: el PATRIMONIO NETO incluye la casa (cartera + valorCasa − saldoHipoteca), pero
+// la EDAD DE LIBERTAD ★ solo cuenta la CARTERA LÍQUIDA (no vives de tu casa). Por eso pagar al
+// contado te deja más rico en papel pero RETRASA tu ★; la hipoteca mantiene la cartera invertida →
+// ★ antes SI la cartera renta más que el tipo, a cambio de deuda e intereses.
+// Todo en € de HOY (real): la cartera y la casa se deflactan; el ★ se detecta en real vs fiTarget
+// (mismo criterio que useDerived).
+export function compareHousingPaths({ plan, profile, currentPortfolio, fiTarget,
+  price, downPaymentPct = 20, mortgageYears = 25, mortgageRate = 3.0, appreciation = 2.5, purchaseAge, currentRent }) {
+  const age = (profile && profile.age) || 30;
+  const retireAge = (profile && profile.retireAge) || 65;
+  const infl = (plan && plan.inflationRate != null) ? plan.inflationRate : 2.5;
+  // Alquiler que dejas de pagar al COMPRAR (ambas vías): ese dinero pasa a invertirse. Por defecto,
+  // el gasto de vivienda declarado. Es lo que evita que la cuota parezca «drenar» la cartera: la
+  // hipoteca solo se descuenta del alquiler liberado, no del bolsillo entero.
+  const rentMonthly = currentRent != null
+    ? currentRent
+    : ((plan && plan.actualLife && plan.actualLife.expenses && plan.actualLife.expenses.housing) || 0);
+  const buyAge = purchaseAge != null ? Math.max(age, purchaseAge) : Math.min(retireAge, age + 5);
+  const endAge = 90; // horizonte de detección del ★ (igual que la app)
+  const cap0 = currentPortfolio || 0;
+  const priceN = Math.max(0, price || 0);
+  const rM = Math.pow(1 + (plan.annualReturn || 0) / 100, 1 / 12) - 1;
+  const apprM = Math.pow(1 + (appreciation || 0) / 100, 1 / 12) - 1;
+  const months = Math.max(1, Math.round((endAge - age) * 12));
+  const buyMonth = Math.max(0, Math.round((buyAge - age) * 12));
+
+  const downPayment = Math.round(priceN * (Math.max(0, Math.min(100, downPaymentPct)) / 100));
+  const loan = Math.max(0, priceN - downPayment);
+  const n = Math.max(1, Math.round((mortgageYears || 25) * 12));
+  const iM = (mortgageRate || 0) / 100 / 12;
+  const monthlyPayment = loan <= 0 ? 0 : (iM === 0 ? loan / n : loan * iM / (1 - Math.pow(1 + iM, -n)));
+  const totalInterest = Math.max(0, monthlyPayment * n - loan);
+  // Saldo francés tras k cuotas (mismo modelo que buildMortgageSchedule, granularidad mensual).
+  const balanceAt = (k) => {
+    if (loan <= 0 || k <= 0) return loan;
+    if (k >= n) return 0;
+    if (iM === 0) return Math.max(0, loan - monthlyPayment * k);
+    return Math.max(0, loan * Math.pow(1 + iM, k) - monthlyPayment * (Math.pow(1 + iM, k) - 1) / iM);
+  };
+
+  // Trayectoria de aporte (aporte + eventos confirmados) de projectV2 → respeta segmentos/IPC.
+  const baseline = projectV2(plan, profile, { capital: cap0, endAge, includeHypothetical: false });
+  const flowAt = (m) => (baseline[m] ? (baseline[m].monthlyAporte || 0) : 0);
+  // Cartera líquida (nominal) justo antes de comprar → asequibilidad de cada vía.
+  const liquidAtPurchase = baseline[buyMonth] ? (baseline[buyMonth].portfolio || 0) : cap0;
+
+  // Simula una vía replicando la capitalización de projectV2 + deltas de vivienda.
+  const simulate = (capitalHit, payMortgage) => {
+    let p = cap0;
+    const netWorthSeries = [];
+    const liquidSeries = [];
+    let freedomAge = null;
+    for (let m = 0; m <= months; m++) {
+      if (m > 0) {
+        // Tras comprar dejas de pagar alquiler (lo inviertes); la hipoteca se descuenta de ahí.
+        let extra = 0;
+        if (m > buyMonth) extra += rentMonthly;
+        if (payMortgage && m > buyMonth && m <= buyMonth + n) extra -= monthlyPayment;
+        p = p * (1 + rM) + flowAt(m) + extra;
+        if (m === buyMonth) p -= capitalHit;
+        if (p < 0) p = 0;
+      }
+      const a = age + m / 12;
+      const realLiquid = toRealEur(p, m, infl);
+      if (freedomAge == null && fiTarget > 0 && realLiquid >= fiTarget) freedomAge = a;
+      if (m % 12 === 0) {
+        const homeValueN = m >= buyMonth ? priceN * Math.pow(1 + apprM, m - buyMonth) : 0;
+        const mortBalN = payMortgage && m >= buyMonth ? balanceAt(m - buyMonth) : 0;
+        netWorthSeries.push({ age: Math.round(a), portfolio: Math.round(toRealEur(p + homeValueN - mortBalN, m, infl)) });
+        liquidSeries.push({ age: Math.round(a), portfolio: Math.round(realLiquid) });
+      }
+    }
+    const last = netWorthSeries[netWorthSeries.length - 1];
+    return {
+      netWorthSeries, liquidSeries,
+      freedomAge: freedomAge != null ? Math.ceil(freedomAge) : null,
+      finalNetWorth: last ? last.portfolio : 0,
+    };
+  };
+
+  return {
+    buyAge, endAge, price: priceN, downPayment, loan, rentMonthly,
+    monthlyPayment: Math.round(monthlyPayment), totalInterest: Math.round(totalInterest),
+    mortgageYears, mortgageRate, appreciation, inflationRate: infl,
+    liquidAtPurchase: Math.round(liquidAtPurchase),
+    contado: { ...simulate(priceN, false), label: 'Al contado', capitalHit: priceN, totalInterest: 0, affordable: liquidAtPurchase >= priceN },
+    hipoteca: { ...simulate(downPayment, true), label: 'Con hipoteca', capitalHit: downPayment, totalInterest: Math.round(totalInterest), affordable: liquidAtPurchase >= downPayment },
+  };
+}
+
 // Currently active monthly aporte for a plan (used in many UI places)
 // ----------------------------------------------------------------------------
 // "Antes de Mi Plan" helpers — used in the mirror screen and to feed projectV2
