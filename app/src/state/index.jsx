@@ -148,15 +148,15 @@ export function StateProvider({ children }) {
   // entero (coherente con el aviso de seedDemoConfirm: "sustituye tus datos"). Así el
   // comparador de escenarios y el rebalanceo lucen con datos reales y relatables.
   const seedDemo = useCallback(() => setAccountsData((d) => {
-    const id25 = 'demo-alex-25';
-    const id34 = 'demo-alex-34';
+    const idA = 'demo-alex';
+    const idM = 'demo-marta';
     return {
       ...d,
       version: 1,
-      activeId: id25,
+      activeId: idA,
       accounts: {
-        [id25]: { id: id25, label: 'Alex · 25', state: seedAlex('joven') },
-        [id34]: { id: id34, label: 'Alex · 34', state: seedAlex('maduro') },
+        [idA]: { id: idA, label: 'Alex', state: seedAlex('joven') },
+        [idM]: { id: idM, label: 'Marta', state: seedAlex('maduro') },
       },
     };
   }), []);

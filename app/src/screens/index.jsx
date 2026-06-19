@@ -8,7 +8,7 @@ import { T, WEB_URL } from '../tokens/index.js'
 import {
   project, monthlyForGoal, uid, todayKey, addMonthsKey,
   compareKeys, isKeyInSegment, findActiveSegment, sumActiveSegments,
-  readableMonth, projectV2, sumExpenses,
+  readableMonth, projectV2, sumExpenses, sumAllocation,
   buildMortgageSchedule, currentMonthlyAporte, computePlannedFor,
   computeIncomeFor, toRealEur, estimateSpanishPension, computeEffectiveCapitalReturn,
   computeRebalance,
@@ -4628,9 +4628,134 @@ export function AccountMenu({ open, anchor, onClose, onGoToAjustes, onShowAbout 
 // suyo (Plan 720 centrado, Aprende/Ajustes 880, resto full-width → desnivel).
 const CONTENT_MAX = 720;
 
+// Vista HOGAR · habla en plural y agrega TODAS las cuentas. Diagrama compartido e interactivo:
+// toggle uno/otra/todos → MultiLineChart con la curva de patrimonio de cada persona + la combinada
+// (suma alineada por «años desde hoy», no por edad: las personas tienen edades distintas). Solo se
+// monta como tab cuando hay 2+ cuentas. Reusa projectV2/scenarioSummary/sumAllocation. Cero red.
+export function ScreenHogar() {
+  const { accounts, switchAccount } = useStore();
+  const list = useMemo(() => Object.values(accounts || {}), [accounts]);
+  const [view, setView] = useState('todos');
+  const PALETTE = [T.accent, T.green, T.amber, T.muted, T.faint];
+
+  const people = useMemo(() => list.map((a, i) => {
+    const st = a.state || {};
+    const plan = st.plan || {};
+    const profile = st.profile || {};
+    let series = [];
+    try {
+      const eff = computeEffectiveCapitalReturn(plan);
+      series = projectV2(plan, profile, { capital: plan.capital || 0, endAge: 90, includeHypothetical: false, effectiveReturn: eff }) || [];
+    } catch (e) {}
+    // X = años desde hoy (monthIndex/12), no la edad → alineable entre personas de distinta edad.
+    const yfn = series.map((r) => ({ m: r.monthIndex || 0, age: (r.monthIndex || 0) / 12, portfolio: r.portfolio || 0 }));
+    const months = st.months || [];
+    const portfolioNow = (plan.capital || 0) + months.reduce((s, m) => s + (m.actual || 0), 0);
+    let aporte = 0, edad = null, rvPct = null;
+    try { aporte = Math.round(currentMonthlyAporte(plan) || 0); edad = scenarioSummary(st).edadLibertad; } catch (e) {}
+    const al = plan.actualLife;
+    const totA = al ? sumAllocation(al) : 0;
+    if (al && al.completed && totA > 0) rvPct = (((al.allocation.fundsEtfs || 0) + (al.allocation.pensionPlan || 0)) / totA);
+    return { id: a.id, label: a.label, color: PALETTE[i % PALETTE.length], yfn, portfolioNow, aporte, edad, rvPct };
+  }), [list]);
+
+  // Curva combinada del hogar: suma de carteras por mes-desde-hoy (mismo grid en todas).
+  const combined = useMemo(() => {
+    const map = {};
+    people.forEach((p) => p.yfn.forEach((r) => { map[r.m] = (map[r.m] || 0) + r.portfolio; }));
+    return Object.keys(map).map((k) => ({ age: (+k) / 12, portfolio: map[k] })).sort((a, b) => a.age - b.age);
+  }, [people]);
+
+  const totalNow = people.reduce((s, p) => s + p.portfolioNow, 0);
+  const totalAporte = people.reduce((s, p) => s + p.aporte, 0);
+  // Rebalanceo del hogar · RV conjunta ponderada por patrimonio.
+  const hhRV = (() => {
+    let port = 0, rv = 0;
+    people.forEach((p) => { if (p.rvPct != null) { port += p.portfolioNow; rv += p.portfolioNow * p.rvPct; } });
+    return port > 0 ? Math.round((rv / port) * 100) : null;
+  })();
+
+  const allScenarios = [
+    ...people.map((p) => ({ id: p.id, label: p.label, color: p.color, series: p.yfn, bold: false })),
+    { id: 'todos', label: 'Juntos', color: T.ink, series: combined, bold: true },
+  ];
+  const shown = view === 'todos' ? allScenarios : allScenarios.filter((s) => s.id === view);
+
+  if (list.length < 2) return null;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
+      <div>
+        <SectionTag>Vuestro hogar</SectionTag>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4, lineHeight: T.lh.tight, textWrap: 'pretty' }}>
+          Entre {list.length === 2 ? 'los dos' : 'todos'} tenéis <em style={{ color: T.accent }}>{fmtEur(totalNow)}</em> hoy.
+          <span style={{ color: T.muted }}> Y cada mes sumáis {fmtEur(totalAporte)} a vuestro futuro.</span>
+        </div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 10, lineHeight: T.lh.normal, maxWidth: 620 }}>
+          Aquí cuenta lo de cada uno y lo de todos juntos. El plan de cada persona se afina en su pestaña; aquí veis cómo suma.
+        </div>
+      </div>
+
+      {/* Toggle interactivo · uno / otra / todos */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div role="group" aria-label="Ver el hogar" style={{ display: 'inline-flex', gap: 3, padding: 3, background: T.panel, borderRadius: 999, border: '1px solid ' + T.line, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {[...people.map((p) => ({ id: p.id, label: p.label })), { id: 'todos', label: 'Todos' }].map((o) => {
+            const active = view === o.id;
+            return (
+              <button key={o.id} onClick={() => setView(o.id)} aria-pressed={active}
+                style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '5px 14px', borderRadius: 999, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', background: active ? T.accent : 'transparent', color: active ? T.bg : T.muted, transition: 'background .15s ease, color .15s ease', appearance: 'none', WebkitAppearance: 'none' }}>{o.label}</button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Diagrama compartido */}
+      <Card>
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 10, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>
+          {shown.map((s) => (
+            <span key={s.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 14, height: 3, background: s.color, borderRadius: 2, display: 'inline-block' }} />{s.label}
+            </span>
+          ))}
+        </div>
+        <MultiLineChart scenarios={shown} height={300} />
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, marginTop: 8 }}>
+          Patrimonio proyectado · eje horizontal en años desde hoy.
+        </div>
+      </Card>
+
+      {/* Cada persona · clic para ir a su plan */}
+      <Card>
+        <Label style={{ marginBottom: 10 }}>Cada uno</Label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {people.map((p) => (
+            <button key={p.id} onClick={() => switchAccount(p.id)} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 10, alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: T.paper, border: '1px solid ' + T.line, cursor: 'pointer', textAlign: 'left', fontFamily: T.serif, color: T.ink }}>
+              <span style={{ width: 10, height: 10, borderRadius: 999, background: p.color, flexShrink: 0 }} />
+              <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.body, letterSpacing: T.tracking.tight }}>{p.label}{p.edad != null && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.green, marginLeft: 8, letterSpacing: 0 }}>★ libre a los {p.edad}</span>}</span>
+              <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textAlign: 'right' }}>{fmtEur(p.portfolioNow)} · {fmtEur(p.aporte)}/mes</span>
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      {/* Rebalanceo del hogar · RV conjunta ponderada por patrimonio. */}
+      {hhRV != null && (
+        <Card>
+          <SectionTag style={{ marginBottom: 8 }}>Rebalanceo del hogar</SectionTag>
+          <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
+            Entre {list.length === 2 ? 'los dos' : 'todos'} tenéis <strong style={{ fontStyle: 'normal', color: hhRV >= 65 ? T.green : T.amber }}>{hhRV} %</strong> de vuestro patrimonio en renta variable (fondos y planes). {hhRV >= 65 ? 'Es un reparto razonable para vuestro horizonte.' : 'En conjunto vais algo conservadores: hay margen para mover parte a fondos.'} Cada uno ajusta el suyo en su pestaña de Datos.
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 export function Shell() {
-  const { state, update, seedDemo } = useStore();
+  const { state, update, seedDemo, accounts } = useStore();
   const mobile = useIsMobile();
+  // Tab «Hogar» solo con 2+ cuentas (un hogar son varias personas).
+  const isHousehold = Object.keys(accounts || {}).length > 1;
   const [showLanding, setShowLanding] = useState(false);
   // v5.8 · Manifesto modal triggered by the secondary CTA of LandingPreOnboarding.
   const [showManifesto, setShowManifesto] = useState(false);
@@ -4714,6 +4839,7 @@ export function Shell() {
   const tabs = [
     { id: 'hoy', label: 'Plan', symbol: '◐' },
     { id: 'proy', label: 'Proyección', symbol: '◢' },
+    ...(isHousehold ? [{ id: 'hogar', label: 'Hogar', symbol: '◈' }] : []),
     { id: 'seguimiento', label: 'Seguimiento', symbol: '◧' },
     { id: 'aprender', label: 'Aprende', symbol: '◇' },
     { id: 'ajustes', label: 'Datos', symbol: '◌' },
@@ -4742,6 +4868,7 @@ export function Shell() {
           {tab === 'hoy' && <ScreenHoy goTo={setTab} />}
           {tab === 'sinplan' && <ScreenHoy goTo={setTab} />}
           {tab === 'proy' && <ScreenProyeccion />}
+          {tab === 'hogar' && <ScreenHogar />}
           {tab === 'seguimiento' && <ScreenSeguimiento />}
           {tab === 'aprender' && <ScreenAprende />}
           {tab === 'ajustes' && <ScreenAjustes />}
@@ -4811,6 +4938,7 @@ export function Shell() {
           {tab === 'hoy' && <ScreenHoy goTo={setTab} />}
           {tab === 'sinplan' && <ScreenHoy goTo={setTab} />}
           {tab === 'proy' && <ScreenProyeccion />}
+          {tab === 'hogar' && <ScreenHogar />}
           {tab === 'seguimiento' && <ScreenSeguimiento />}
           {tab === 'aprender' && <ScreenAprende />}
           {tab === 'ajustes' && <ScreenAjustes />}

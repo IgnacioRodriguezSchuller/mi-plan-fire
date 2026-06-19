@@ -1664,3 +1664,23 @@ de FIRE el motor necesitaba Fat, que no existía.
   diffs nuevos; navegador (demo, Alex conservador): tabla por clase (Efectivo/Depósitos/Fondos/Planes, actual→objetivo);
   **«Aplicar» → allocation pasa a `{cash:8,deposits:12,fundsEtfs:53,pensionPlan:27}` (RV 80) y la tarjeta queda
   alineada**; compacto visible en Proyección («80 % → 80 % en renta variable»); consola limpia; baseline intacto.
+
+## Vista «Hogar» (plural + diagrama compartido) + demo a pareja + rebalanceo del hogar (2026-06-19)
+- **Causa raíz**: el dueño pidió una vista de hogar en plural con un diagrama interactivo (lo de uno / lo de otro /
+  lo de todos). Para que sume de verdad, la demo deja de ser «Alex en dos etapas» (una persona) y pasa a **pareja**.
+- **Cambio**:
+  - `state/persistence.js`: `seedAlex('maduro')` ahora es **Marta** (30, cartera óptima) en vez de Alex·34; `'joven'`
+    sigue siendo **Alex** (28, cartera conservadora → rebalanceo + diversificación ámbar). Capitales 8k/30k.
+  - `state/index.jsx` `seedDemo`: carga **«Alex» + «Marta»** (ids `demo-alex`/`demo-marta`).
+  - `screens/index.jsx` **`ScreenHogar`** (nueva) + **tab «Hogar» condicional** (solo con 2+ cuentas; `isHousehold`
+    en el `Shell`, render móvil+escritorio). Narrativa **en plural** («Vuestro hogar», patrimonio y aporte conjuntos);
+    **toggle interactivo uno/otra/todos**; **diagrama compartido** (`MultiLineChart`) con la curva de cada persona +
+    la **combinada** (suma alineada por **«años desde hoy»** = `monthIndex/12`, no por edad → personas de distinta
+    edad se alinean); «Cada uno» (clic → su plan, con su ★ edad de libertad); **rebalanceo del hogar** (RV conjunta
+    ponderada por patrimonio). Reusa `projectV2`/`scenarioSummary`/`sumAllocation`/`computeEffectiveCapitalReturn`.
+- **No tocado**: firmas del motor, `migrateToV2` (el `actualLife` de la pareja sobrevive igual), claves, `isPro`,
+  baseline. Cero red.
+- **Verificación**: `npm run build` OK (`dist` 1.061 kB); `verify-content`/`verify-state` PASS; baseline intacto;
+  navegador: demo = **Alex (28) + Marta (30)**; aparece la **tab Hogar**; «Vuestro hogar · tenéis 46k€» (= 8k+30k+
+  meses); toggle **Todos → Alex+Marta+Juntos**, **Marta → solo Marta** (el diagrama filtra); «Cada uno» con 2 edades
+  de libertad; rebalanceo del hogar; consola limpia. Con 1 cuenta la tab NO aparece (guard `isHousehold`).

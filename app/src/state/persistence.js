@@ -209,14 +209,14 @@ function buildDemoMonths(aporte) {
   return months;
 }
 
-// Demo · "Alex en dos etapas" (mismo tío, dos momentos de su vida):
-//  - 'joven' (25): alquila, ahorra para el piso, empieza a invertir pero con DEMASIADO
-//    efectivo → renta variable (fondos+planes) <50 % → diversificación a mejorar; ahí luce
-//    el rebalanceo y el diagnóstico marca "un punto a mejorar".
-//  - 'maduro' (34, +9 años): ya tiene piso (hipoteca), cartera madura y bien diversificada
-//    (~85 % RV) → diagnóstico verde, rebalanceo "alineado".
-// Declara actualLife (gastos/casa/allocation) — antes la demo lo dejaba a cero. Cambiar
-// VALORES de demo es seguro: no toca migrateToV2 (que solo rellena lo ausente) ni claves.
+// Demo · una PAREJA (dos personas, un hogar) — así la vista Hogar suma de verdad:
+//  - 'joven' = Alex (28): alquila, empieza a invertir pero con DEMASIADO efectivo → renta
+//    variable (fondos+planes) <50 % → diversificación a mejorar; ahí luce el rebalanceo y el
+//    diagnóstico marca "un punto a mejorar".
+//  - 'maduro' = Marta (30): ya tiene piso (hipoteca), cartera madura y bien diversificada
+//    (~85 % RV) → diagnóstico verde, rebalanceo "alineada".
+// Declara actualLife (gastos/casa/allocation) y pensión. Cambiar VALORES de demo es seguro:
+// no toca migrateToV2 (que solo rellena lo ausente) ni claves.
 export function seedAlex(stage) {
   const joven = stage !== 'maduro';
   const aporte = joven ? 400 : 640;
@@ -225,9 +225,9 @@ export function seedAlex(stage) {
     landingSeen: true,
     hasSeenLandingPreOnboarding: true,
     migrationsApplied: { v1_1_0_landing_reset: true },
-    profile: { name: 'Alex', age: joven ? 25 : 34, retireAge: 60 },
+    profile: { name: joven ? 'Alex' : 'Marta', age: joven ? 28 : 30, retireAge: 60 },
     plan: {
-      capital: joven ? 5000 : 82000,
+      capital: joven ? 8000 : 30000,
       annualReturn: 8,
       salaryInflationFactor: 1.0,
       monthlyPlanned: aporte,
