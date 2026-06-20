@@ -402,7 +402,7 @@ export function Onboarding() {
           <input type="range" min="18" max="70" value={data.age} onChange={(e) => set('age', +e.target.value)}
             style={{ width: '100%', accentColor: T.accent, marginTop: 20 }} />
           <OnboardingHelp>
-            El tiempo es la variable más poderosa de tu plan — más que el sueldo o la rentabilidad. Con el interés compuesto, 10 años de adelanto pesan más que doblar la aportación en los últimos 10. Tu edad fija el horizonte que proyectamos.
+            El tiempo es tu variable más poderosa: con interés compuesto, 10 años de adelanto pesan más que doblar la aportación al final.
           </OnboardingHelp>
         </div>
       ),
@@ -430,7 +430,7 @@ export function Onboarding() {
             ))}
           </div>
           <OnboardingHelp title="¿Por qué importa el capital inicial?">
-            El dinero que ya tienes empieza a trabajar desde el día uno; lo que aportes después pierde ese adelanto. 1.000 € hoy al 7 % son ~7.600 € en 30 años; los mismos 1.000 € dentro de un año, ~7.100 €. Si no tienes nada, pon 0 — lo que cuenta es lo que empieces a aportar ahora.
+            El dinero que ya tienes empieza a componer desde hoy; si no tienes nada, pon 0 — lo que cuenta es lo que empieces a aportar.
           </OnboardingHelp>
         </div>
       ),
@@ -451,9 +451,6 @@ export function Onboarding() {
               alignSelf: 'center',
             }}>Neto</span>
           </div>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, marginBottom: 14 }}>
-            Introduce tu salario <strong style={{ color: T.ink, fontStyle: 'normal' }}>neto</strong>, no el bruto.
-          </div>
           <input type="range" min="0" max="10000" step="100" value={data.income} onChange={(e) => set('income', +e.target.value)}
             style={{ width: '100%', accentColor: T.accent }} />
           <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
@@ -470,7 +467,7 @@ export function Onboarding() {
           </div>
           {/* B3 · IPC update question */}
           <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px dashed ' + T.lineSoft }}>
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted, marginBottom: 10 }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, letterSpacing: 0, color: T.muted, marginBottom: 10 }}>
               ¿Tu salario se actualiza con la inflación (IPC)?
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
@@ -520,9 +517,7 @@ export function Onboarding() {
             {/* 2ª pasada · aclaración IPC movida al "+¿por qué?" (limpieza). */}
           </div>
           <OnboardingHelp title="¿Por qué necesito tu salario?">
-            Es la base de tu capacidad de ahorro y nos permite estimar tu pensión pública futura (se calcula con tus bases de cotización). Una cifra aproximada al mes basta; si tu sueldo varía, defines tramos más adelante.
-            <br /><br />
-            Pon tu salario <strong style={{ color: T.ink, fontStyle: 'normal' }}>neto</strong> —lo que ingresas en cuenta tras IRPF y Seguridad Social—, no el bruto: con el bruto el plan se distorsiona. Si tu bruto son 35.000 €/año y el neto 24.000 €, son 2.000 €/mes netos.
+            Es la base de tu capacidad de ahorro y de tu pensión pública futura; ponlo <strong style={{ color: T.ink, fontStyle: 'normal' }}>neto</strong> (lo que ingresas tras impuestos), no bruto.
           </OnboardingHelp>
         </div>
       ),
@@ -536,8 +531,8 @@ export function Onboarding() {
           {/* Type toggle */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 12, padding: 4, background: T.panel, borderRadius: 999, border: '1px solid ' + T.line }}>
             {[
-              { id: 'percent', l: 'Proporcional', icon: '📈' },
-              { id: 'fixed', l: 'Fijo en €', icon: '📌' },
+              { id: 'percent', l: 'Proporcional' },
+              { id: 'fixed', l: 'Fijo en €' },
             ].map((opt) => (
               <button key={opt.id} onClick={() => set('savingType', opt.id)}
                 style={{
@@ -546,7 +541,7 @@ export function Onboarding() {
                   color: data.savingType === opt.id ? T.bg : T.muted,
                   border: 'none', borderRadius: 999, cursor: 'pointer',
                   letterSpacing: T.tracking.wider, textTransform: 'uppercase',
-                }}>{opt.icon} {opt.l}</button>
+                }}>{opt.l}</button>
             ))}
           </div>
           {/* B4 · Explicación Porcentual/Fijo movida al "+¿por qué?" (limpieza). */}
@@ -568,9 +563,6 @@ export function Onboarding() {
                 ) : (
                   <>Sube con tu sueldo, así si ganas más también ahorras más.</>
                 )}
-              </div>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: tier.color, fontSize: T.size.body, lineHeight: T.lh.normal, marginBottom: 14 }}>
-                {tier.message}
               </div>
               <input type="range" min="0" max="100" step="1" value={data.savingPercent} onChange={(e) => set('savingPercent', +e.target.value)}
                 style={{ width: '100%', accentColor: T.accent }} />
@@ -633,9 +625,7 @@ export function Onboarding() {
             );
           })()}
           <OnboardingHelp title="¿Por qué importa cuánto puedes ahorrar?">
-            Es la única palanca que controlas del todo: la rentabilidad la decide el mercado; cuánto ahorras, tú. No buscamos un compromiso, sino una estimación realista —piensa qué te suele quedar a fin de mes. Mejor 50 €/mes y subir que 300 € que abandonas en tres meses.
-            <br /><br />
-            <strong style={{ color: T.ink, fontStyle: 'normal' }}>Porcentual</strong>: un % de tu salario neto cada mes; sube y baja con el sueldo. <strong style={{ color: T.ink, fontStyle: 'normal' }}>Fijo</strong>: la misma cantidad siempre, llueva o truene.
+            Es la única palanca que controlas del todo: la rentabilidad la decide el mercado, cuánto ahorras lo decides tú.
           </OnboardingHelp>
         </div>
       ),
@@ -690,13 +680,8 @@ export function Onboarding() {
                   </div>
                 </div>
               </div>
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide }}>Importes en neto (lo que recibes en cuenta), igual que tu salario — no el bruto.</div>
-              {/* F1.4 · Inline explanation of "tope" */}
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal, paddingTop: 6, borderTop: '1px dashed ' + T.lineSoft }}>
-                <strong style={{ color: T.ink, fontStyle: 'normal' }}>Tope</strong>: el salario máximo al que esperas llegar en tu carrera. Si dejas el mismo valor que tu salario actual, no habrá progresión.
-              </div>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal }}>
-                Empezando en {fmtEur(data.income)}/mes, +{fmtEur(data.evoStep)} cada {data.evoEvery} meses, hasta {fmtEur(data.evoCap)}. Genera ~{Math.min(50, Math.ceil(Math.max(0, data.evoCap - data.income) / Math.max(1, data.evoStep)) + 1)} tramos.
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, paddingTop: 8, borderTop: '1px dashed ' + T.lineSoft }}>
+                El <strong style={{ color: T.ink, fontStyle: 'normal' }}>tope</strong> es el salario máximo que esperas alcanzar; si lo dejas igual que el actual, no hay progresión.
               </div>
             </div>
           )}
@@ -704,8 +689,8 @@ export function Onboarding() {
           {data.evolution === 'variable' && (
             <div style={{ background: T.panel, border: '1px solid ' + T.line, borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
               <Label>Define tu progresión (hasta 4 tramos)</Label>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal }}>
-                Sin patrón claro: define los tramos que conozcas. Si necesitas más adelante, los amplias en <strong style={{ color: T.ink, fontStyle: 'normal' }}>Proyección → Tramos de ingreso</strong>.
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal }}>
+                Define los tramos que conozcas; los amplías luego en Proyección.
               </div>
               {(data.variableSegments || [{ amount: data.income, fromMonth: 0 }]).slice(0, 4).map((seg, idx) => (
                 <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, padding: '10px 12px', background: T.bg, border: '1px solid ' + T.lineSoft, borderRadius: 8 }}>
@@ -763,13 +748,10 @@ export function Onboarding() {
                   padding: '8px 14px', borderRadius: 999, letterSpacing: T.tracking.wider, textTransform: 'uppercase',
                 }}>+ Añadir tramo</button>
               )}
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.faint, fontSize: T.size.caption, lineHeight: T.lh.normal }}>
-                Continuar configurando más tarde en <strong style={{ color: T.ink, fontStyle: 'normal' }}>Proyección → Tramos de ingreso</strong>.
-              </div>
             </div>
           )}
-          <OnboardingHelp title="¿Por qué pregunto cómo crees que evolucionará tu sueldo?">
-            Casi nadie gana lo mismo a los 30 que a los 50. Si asumiéramos tu sueldo actual durante 30 años, casi seguro te subestimaríamos (o, en carreras que se estancan, lo contrario). Tu estimación honesta nos deja proyectar realista, no idealista.
+          <OnboardingHelp title="¿Por qué pregunto cómo evolucionará tu sueldo?">
+            Casi nadie gana lo mismo a los 30 que a los 50; tu estimación honesta nos deja proyectar realista, no idealista.
           </OnboardingHelp>
         </div>
       ),
@@ -791,7 +773,7 @@ export function Onboarding() {
             Eso te da <strong style={{ color: T.accent, fontStyle: 'normal' }}>{data.retireAge - data.age} años</strong> para que el interés compuesto trabaje a tu favor.
           </div>
           <OnboardingHelp title="¿Por qué te pregunto cuándo quieres retirarte?">
-            Define la meta: cuándo quieres que tu patrimonio invertido pueda sostenerte sin sueldo. No hace falta clavarlo —65 es la jubilación tradicional; 55-60, libertad temprana; 45-50, FIRE clásico—. Calculamos cuánto necesitas para llegar, y puedes cambiarla cuando quieras.
+            Define la meta: cuándo quieres que tu patrimonio pueda sostenerte sin sueldo; no hace falta clavarlo, puedes cambiarla cuando quieras.
           </OnboardingHelp>
         </div>
       ),
@@ -4531,10 +4513,10 @@ export function OnboardingHelp({ title, children }) {
         onClick={() => setOpen(!open)}
         style={{
           background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-          fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0,
+          fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0,
           color: T.accent, display: 'flex', alignItems: 'center', gap: 6,
         }}>
-        <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.body, lineHeight: 1 }}>{open ? '–' : '+'}</span>
+        <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, lineHeight: 1 }}>{open ? '–' : '+'}</span>
         {title || '¿Por qué pregunto esto?'}
       </button>
       {open && (
