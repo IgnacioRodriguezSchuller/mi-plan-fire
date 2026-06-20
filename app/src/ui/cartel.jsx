@@ -7,6 +7,16 @@ import { T } from '../tokens/index.js'
 import { parseSpanishNumber } from './index.jsx'
 import { readableMonth } from '../lib/index.js'
 
+// #U2 · Glifos de los tipos de FIRE (en `currentColor`). FUENTE ÚNICA: los usan las tarjetas de
+// Proyección y los marcadores de LifeChart, para que el icono de la curva y el de la tarjeta sean
+// el mismo. Cada glifo es el contenido interno de un <svg viewBox="0 0 24 24"> (24 px).
+export const FIRE_GLYPHS = {
+  lean: <circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />,
+  coast: <path d="M3 15c4 0 5-7 9-7s5 4 9 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+  pleno: <path d="M12 2.6l2.7 5.6 6.1.7-4.5 4.2 1.2 6L12 16.9 6.5 19.1l1.2-6-4.5-4.2 6.1-.7z" fill="currentColor" stroke="none" />,
+  fat: <><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2" /><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" /></>,
+};
+
 // Tinte claro de accent SOLO para el realce de la banda ink (la maqueta usaba #f4a06a, que no
 // está en la paleta; lo declaramos aquí como derivado de accent, no como color nuevo suelto).
 export const ACCENT_LIGHT = '#f4a06a';
@@ -334,11 +344,18 @@ export function LifeChart({ points, cruceAge, markers = [], style = {} }) {
       {(markers || []).map((m, i) => {
         const pt = ptAt(m.age);
         if (!pt) return null;
+        const glyph = m.icon && FIRE_GLYPHS[m.icon];
         return (
-          <g key={i} style={{ opacity: drawn ? 1 : 0, transition: 'opacity .6s ease 1.6s' }}>
-            <circle cx={pt.x} cy={pt.y} r="7" fill={T.bg} />
-            <circle cx={pt.x} cy={pt.y} r="5" fill={m.fill ? m.color : T.bg} stroke={m.color} strokeWidth="2" />
-            {m.label ? <text x={pt.x} y={pt.y - 12} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="12" fill={m.color}>{m.label}</text> : null}
+          <g key={i} style={{ opacity: drawn ? 1 : 0, transition: 'opacity .6s ease 1.6s', color: m.color }}>
+            {glyph ? (<>
+              {/* Halo de fondo para que el icono despegue de la línea + el glifo del tipo de FIRE. */}
+              <circle cx={pt.x} cy={pt.y} r="11" fill={T.bg} />
+              <svg x={pt.x - 9} y={pt.y - 9} width="18" height="18" viewBox="0 0 24 24">{glyph}</svg>
+            </>) : (<>
+              <circle cx={pt.x} cy={pt.y} r="7" fill={T.bg} />
+              <circle cx={pt.x} cy={pt.y} r="5" fill={m.fill ? m.color : T.bg} stroke={m.color} strokeWidth="2" />
+            </>)}
+            {m.label ? <text x={pt.x} y={pt.y - 14} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="12" fill={m.color}>{m.label}</text> : null}
           </g>
         );
       })}
