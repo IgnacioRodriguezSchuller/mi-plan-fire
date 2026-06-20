@@ -1992,3 +1992,7 @@ de FIRE el motor necesitaba Fat, que no existía.
 ### T3 · Café · tarjeta prominente junto a la cruz (presentación)
 - **Cambio** (`Landing`, `flows`): la tarjeta de café se mueve del PIE al **header**, **junto al «×»** (y a «Saltar · demo» en intro), con borde `T.accent` para destacar — más grande y visible que el icono diminuto anterior. Desktop: icono + «Invítame a un café» + pills Ko-fi/GitHub. Móvil: compacta (icono + 1 pill) para caber en una línea con el «×» sin desbordar.
 - **No tocado**: cero red (los `<a href>` de donación; «· pronto» mientras las URLs estén vacías); el no-scroll de la presentación fija se conserva. **Verificación**: navegador — desktop: café a la izquierda del «×», presentación sin scroll; móvil (390px): café (175px) + «×» en la misma línea, sin scroll horizontal/vertical. Build OK; content/state PASS; lib 13 / tokens 2.
+
+### T4 · Tarjetas de tipos de FIRE ordenadas por edad (línea temporal)
+- **Cambio** (`ScreenProyeccion`, `screens`): el array de las 4 tarjetas (Lean/Coast/FIRE pleno/Fat) se ordena por **edad ascendente** antes del `.map` (`.slice().sort(...)`, los `null`/«—» al final) → el orden en pantalla sigue la línea de vida (de antes a después), no el orden fijo.
+- **Verificación**: navegador — demo: Lean 57 → FIRE pleno ★63 → Fat 71 → Coast «—» (no alcanzada, al final). Build OK; content/state PASS; lib 13 / tokens 2.

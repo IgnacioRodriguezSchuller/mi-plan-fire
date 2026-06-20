@@ -2321,7 +2321,7 @@ export function ScreenProyeccion() {
                 { key: 'coast', label: 'Coast', age: coastAge, color: T.accent, desc: 'Dejas de aportar', glyph: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 15c4 0 5-7 9-7s5 4 9 4" /></svg> },
                 { key: 'pleno', label: 'FIRE pleno', age: libreAge, color: T.green, desc: 'Tu número', star: true, glyph: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.6l2.7 5.6 6.1.7-4.5 4.2 1.2 6L12 16.9 6.5 19.1l1.2-6-4.5-4.2 6.1-.7z" /></svg> },
                 { key: 'fat', label: 'Fat', age: fatAge, color: T.muted, desc: 'Vida holgada · ×1,5', glyph: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" /></svg> },
-              ].map((c) => (
+              ].slice().sort((a, b) => (a.age == null ? Infinity : a.age) - (b.age == null ? Infinity : b.age)).map((c) => (
                 <div key={c.key} style={{ background: T.paper, border: '1px solid ' + T.lineSoft, borderRadius: 10, padding: '12px 8px 11px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                   <span style={{ color: c.color, lineHeight: 0 }}>{c.glyph}</span>
                   <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: c.color }}>{c.label}</span>
