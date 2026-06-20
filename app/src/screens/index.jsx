@@ -3451,7 +3451,6 @@ export function ScreenAjustes() {
   const accIdx = Math.max(0, Object.keys(accounts || {}).indexOf(activeAccountId));
   const effectiveColor = state.profile.color || ACCOUNT_PALETTE[accIdx % ACCOUNT_PALETTE.length];
   const mobile = useIsMobile();
-  const [showEditLife, setShowEditLife] = useState(false);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
@@ -3515,15 +3514,13 @@ export function ScreenAjustes() {
       {/* CUENTAS */}
       <Reveal><AccountsCard /></Reveal>
 
-      {/* SITUACIÓN ECONÓMICA · re-editar gastos/hipoteca/asignación (antes solo en onboarding · FN1/CN1) */}
+      {/* SITUACIÓN ECONÓMICA · #U4 · editor INLINE abierto en la card (antes botón → modal a pantalla completa). */}
       <Reveal><Card>
         <SectionTag style={{ marginBottom: 14 }}>Tu situación económica</SectionTag>
-        <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal, maxWidth: 640 }}>
+        <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal, maxWidth: 640, marginBottom: 20 }}>
           Tu gasto mensual, la hipoteca y cómo repartes tu capital entre cuentas. Alimenta «tu número» y el rendimiento de tu cartera.
         </div>
-        <div style={{ display: 'flex', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
-          <Btn variant="ghost" size="sm" onClick={() => setShowEditLife(true)}>Editar gastos y asignación →</Btn>
-        </div>
+        <ActualLifeOnboarding inline onComplete={(payload) => updatePlan({ actualLife: payload })} />
       </Card></Reveal>
 
       {/* DATOS */}
@@ -3608,14 +3605,7 @@ export function ScreenAjustes() {
         </div>
       </Card></Reveal>
 
-      {/* Editar situación económica · reusa ActualLifeOnboarding (prefilla de plan.actualLife);
-          mismo patrón que ScreenSinMiPlan. No cambia el shape persistido. */}
-      {showEditLife && (
-        <ActualLifeOnboarding
-          onClose={() => setShowEditLife(false)}
-          onComplete={(payload) => { updatePlan({ actualLife: payload }); setShowEditLife(false); }}
-        />
-      )}
+      {/* #U4 · La situación económica se edita INLINE en su card (arriba), no en modal. */}
     </div>
   );
 }
@@ -3676,7 +3666,7 @@ export function AllocRow({ k, label, fixedReturn, customKey, returnLabel, alloca
   );
 }
 
-export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null }) {
+export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null, inline = false }) {
   const { state, mutatePlan } = useStore();
   const plan = overridePlan || state.plan;
   const tk = todayKey();
@@ -3722,6 +3712,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
   }));
 
   useEffect(() => {
+    if (inline) return; // #U4 · inline vive dentro de una card: ni overlay, ni bloqueo de scroll, ni Escape.
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
@@ -3730,7 +3721,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [onClose]);
+  }, [onClose, inline]);
 
   const setExpense = (k, v) => setData(d => ({ ...d, expenses: { ...d.expenses, [k]: Math.max(0, v) } }));
   const setMortgage = (patch) => setData(d => ({ ...d, mortgage: { ...d.mortgage, ...patch } }));
@@ -3798,29 +3789,33 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
 
   // Reusable styled bits
   return (
-    <div onClick={onClose} style={{
+    <div onClick={inline ? undefined : onClose} style={inline ? undefined : {
       position: 'fixed', inset: 0, background: 'rgba(26,22,18,0.55)',
       zIndex: 1100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
       padding: '24px 12px', overflowY: 'auto',
     }}>
-      <div onClick={(e) => e.stopPropagation()} style={{
+      <div onClick={(e) => e.stopPropagation()} style={inline ? { fontFamily: T.serif, color: T.ink, position: 'relative' } : {
         background: T.bg, maxWidth: 640, width: '100%',
         borderRadius: 14, padding: 'clamp(22px, 4vw, 36px)',
         fontFamily: T.serif, color: T.ink,
         boxShadow: '0 24px 60px rgba(26,22,18,0.3)',
         position: 'relative',
       }}>
-        <button onClick={onClose} aria-label="Cerrar"
-          style={{ position: 'absolute', top: 14, right: 14, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, padding: 8, letterSpacing: T.tracking.wider }}>
-          ✕ CERRAR
-        </button>
+        {!inline && (
+          <button onClick={onClose} aria-label="Cerrar"
+            style={{ position: 'absolute', top: 14, right: 14, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, padding: 8, letterSpacing: T.tracking.wider }}>
+            ✕ CERRAR
+          </button>
+        )}
 
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint, marginBottom: 8 }}>
-          Paso {step + 1} de {totalSteps} · Descubre más sobre tu situación
-        </div>
+        {!inline && (
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint, marginBottom: 8 }}>
+            Paso {step + 1} de {totalSteps} · Descubre más sobre tu situación
+          </div>
+        )}
 
         {/* Step 1 · Expenses */}
-        {step === 0 && (
+        {(inline || step === 0) && (
           <>
             <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8 }}>
               ¿Cuánto te cuesta vivir cada mes?
@@ -3859,7 +3854,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
         )}
 
         {/* Step 2 · Mortgage */}
-        {step === 1 && (
+        {(inline || step === 1) && (
           <>
             <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8 }}>
               ¿Tienes hipoteca?
@@ -3947,7 +3942,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
         )}
 
         {/* Step 3 · Allocation */}
-        {step === 2 && (
+        {(inline || step === 2) && (
           <>
             <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8 }}>
               ¿Dónde está tu dinero hoy?
@@ -3987,8 +3982,8 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
           </>
         )}
 
-        {/* Step 4 · Confirmation */}
-        {step === 3 && (
+        {/* Step 4 · Confirmation · solo en el asistente modal (inline guarda sin paso de confirmación) */}
+        {(!inline && step === 3) && (
           <>
             <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8 }}>
               Esto es lo que vas a ver
@@ -4042,20 +4037,27 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null 
           </>
         )}
 
-        {/* Footer nav */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginTop: 24, paddingTop: 16, borderTop: '1px solid ' + T.line, flexWrap: 'wrap' }}>
-          <button onClick={() => step > 0 ? setStep(step - 1) : onClose()} style={{
-            fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '10px 16px', background: 'transparent', color: T.muted,
-            border: '1px solid ' + T.line, borderRadius: 999, cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase',
-          }}>{step > 0 ? '← Atrás' : 'Cancelar'}</button>
-          {step < totalSteps - 1 ? (
-            <Btn variant="primary" size="md" onClick={() => canNext && setStep(step + 1)}>
-              {canNext ? 'Siguiente →' : 'Completa para continuar'}
-            </Btn>
-          ) : (
-            <Btn variant="accent" size="md" onClick={finish}>Ver mi situación completa →</Btn>
-          )}
-        </div>
+        {/* Footer · inline: un único «Guardar cambios»; modal: navegación por pasos. */}
+        {inline ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 24, paddingTop: 16, borderTop: '1px solid ' + T.line, flexWrap: 'wrap' }}>
+            <Btn variant="accent" size="md" onClick={() => { if (allocOk) finish(); }}>{allocOk ? 'Guardar cambios' : 'La asignación debe sumar 100%'}</Btn>
+            <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint }}>Alimenta «tu número» y el rendimiento de tu cartera.</span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginTop: 24, paddingTop: 16, borderTop: '1px solid ' + T.line, flexWrap: 'wrap' }}>
+            <button onClick={() => step > 0 ? setStep(step - 1) : onClose()} style={{
+              fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '10px 16px', background: 'transparent', color: T.muted,
+              border: '1px solid ' + T.line, borderRadius: 999, cursor: 'pointer', letterSpacing: T.tracking.wider, textTransform: 'uppercase',
+            }}>{step > 0 ? '← Atrás' : 'Cancelar'}</button>
+            {step < totalSteps - 1 ? (
+              <Btn variant="primary" size="md" onClick={() => canNext && setStep(step + 1)}>
+                {canNext ? 'Siguiente →' : 'Completa para continuar'}
+              </Btn>
+            ) : (
+              <Btn variant="accent" size="md" onClick={finish}>Ver mi situación completa →</Btn>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
