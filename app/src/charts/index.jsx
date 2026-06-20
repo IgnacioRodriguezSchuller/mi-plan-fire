@@ -484,20 +484,20 @@ export function FlowTimelineCard({ plan, profile, maxYears, compact }) {
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
         <div>
-          <Label>Cómo se reparte tu ingreso en el tiempo</Label>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 4, lineHeight: T.lh.snug }}>
-            De {fmtEur(first.income)}/mes a {fmtEur(last.income)}/mes. A lo largo de {Math.round(span)} años, vas a invertir <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(lifetimeInvest)}</strong> de un total bruto de {fmtEur(lifetimeIncome)}.
+          <Label>Cómo se reparte tu ingreso</Label>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
+            En {Math.round(span)} años invertirás unos <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(lifetimeInvest)}</strong>, de un ingreso total de {fmtEur(lifetimeIncome)}.
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0, marginBottom: 8, flexWrap: 'wrap' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ width: 10, height: 10, borderRadius: 2, background: T.green, display: 'inline-block' }}></span>
+      <div style={{ display: 'flex', gap: 16, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0, marginBottom: 10, flexWrap: 'wrap' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 12, height: 12, borderRadius: 3, background: T.green, display: 'inline-block' }}></span>
           Inversión
         </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ width: 10, height: 10, borderRadius: 2, background: T.panel, border: '1px solid ' + T.line, display: 'inline-block' }}></span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 12, height: 12, borderRadius: 3, background: T.panel, border: '1px solid ' + T.line, display: 'inline-block' }}></span>
           Para vivir
         </span>
       </div>
@@ -542,8 +542,8 @@ export function FlowTimelineCard({ plan, profile, maxYears, compact }) {
             />
             <defs>
               <linearGradient id="reparto-invest" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={T.green} stopOpacity={0.34} />
-                <stop offset="100%" stopColor={T.green} stopOpacity={0.06} />
+                <stop offset="0%" stopColor={T.green} stopOpacity={0.58} />
+                <stop offset="100%" stopColor={T.green} stopOpacity={0.14} />
               </linearGradient>
               <linearGradient id="reparto-life" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={T.panel} stopOpacity={0.85} />
@@ -553,7 +553,7 @@ export function FlowTimelineCard({ plan, profile, maxYears, compact }) {
             {/* Reparto · inversión a la BASE (verde con degradado, anclada a 0) + "para vivir"
                 encima como banda beige suave (T.panel, visible pero ligera). Curva monotone (suave).
                 Antes: life a la base (masa beige pesada) + invest flotando arriba en tira fina (feo). */}
-            <Area type="monotone" dataKey="invest" stackId="1" stroke={T.green} strokeWidth={2} fill="url(#reparto-invest)" isAnimationActive={false} />
+            <Area type="monotone" dataKey="invest" stackId="1" stroke={T.green} strokeWidth={2.5} fill="url(#reparto-invest)" isAnimationActive={false} />
             <Area type="monotone" dataKey="life" stackId="1" stroke={T.line} strokeWidth={1} fill="url(#reparto-life)" isAnimationActive={false} />
           </AreaChart>
         </ResponsiveContainer>
