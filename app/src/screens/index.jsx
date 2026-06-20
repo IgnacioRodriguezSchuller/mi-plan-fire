@@ -2736,6 +2736,8 @@ export function MonthlyFlowBlock() {
 
 export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
   const [editing, setEditing] = useState(false);
+  // #U1 · la «×» CIERRA la card (no borra); borrar va por «Borrar» + confirmación.
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const tg = useMemo(() => {
     const series = d.seriesPlan || [];
     for (let i = 0; i < series.length; i++) {
@@ -2780,7 +2782,7 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
   // (no en una columna estrecha de ~180px). La vivienda además necesita aire para sus dos columnas.
   return (
     <Card style={{ gridColumn: '1 / -1' }}>
-      <button onClick={onRemove} title="Eliminar meta"
+      <button onClick={() => setEditing(false)} title="Cerrar" aria-label="Cerrar"
         style={{ position: 'absolute', top: 10, right: 12, fontFamily: T.mono, fontSize: T.size.body, color: T.faint, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 6px', lineHeight: 1, borderRadius: 4 }}>×</button>
       <input value={goal.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="Nombre de la meta"
         style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, background: 'transparent', border: 'none', outline: 'none', color: T.ink, padding: 0, width: '100%', minWidth: 0, marginBottom: 10, paddingRight: 24 }} />
@@ -2800,8 +2802,18 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
       <GoalContextualBlock goal={goal} category={category} portfolio={d.currentPortfolio} />
       {category === 'vivienda' && <HousingPathsCard goal={goal} d={d} plan={plan} profile={profile} />}
       <div style={{ marginTop: 16 }}>
-        <Btn variant="ghost" size="sm" onClick={() => setEditing(false)}>Hecho</Btn>
+        <Btn variant="ghost" size="sm" onClick={() => setConfirmDelete(true)} style={{ color: T.red, borderColor: T.red }}>Borrar</Btn>
       </div>
+      <ConfirmModal
+        open={confirmDelete}
+        title="¿Borrar este hito?"
+        body={`Se eliminará la meta «${goal.name || 'sin nombre'}». No se puede deshacer.`}
+        confirmLabel="Sí, borrar"
+        cancelLabel="Cancelar"
+        destructive
+        onConfirm={() => { setConfirmDelete(false); onRemove(); }}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </Card>
   );
 }

@@ -2001,3 +2001,11 @@ de FIRE el motor necesitaba Fat, que no existía.
 - **Cambio** (`Shell` + `AccountMenu`, `screens`): la inicial del círculo pasa a derivar **siempre del nombre del usuario** (`state.profile.name`), no de la etiqueta de cuenta (antes una cuenta «Cuenta principal» mostraba «C» aunque el usuario se llamara Beatriz → ahora «B»). La lista del `AccountMenu` usa el nombre+color de cada cuenta.
 - **Cambio** (`ScreenAjustes` + `profile.color`): nuevo campo **aditivo** `profile.color` (guarda un token, p.ej. `#15803d`). `accColor = profile.color || ACCOUNT_PALETTE[indexCuenta]`. En la card «Tu perfil» de Datos, fila **«Color del círculo»** con 5 swatches de los tokens de `ACCOUNT_PALETTE` (accent/green/amber/muted/faint); clic = `updateProfile({ color })`; el actual con anillo `T.ink`.
 - **No tocado**: claves localStorage; `profile.color` es aditivo (no renombra nada) y sobrevive `migrateToV2`. Color **solo por tokens** (los swatches son `T.*`). **Verificación**: navegador — cuenta «Cuenta principal»/nombre «Beatriz» → círculo «B»; elegir verde → círculo verde, persiste (`profile.color:'#15803d'`) tras recargar. Build OK; content/state PASS; lib 13 / tokens 2; consola limpia.
+
+## ───────────── Lote iconos FIRE + hito ×/borrar + reparto + situación (2026-06-20) ─────────────
+> Cuarto barrido del dueño. Un commit por bloque (U1–U5).
+
+### U1 · Hito: la cruz CIERRA (no borra) + «Borrar» con confirmación (ítem 2)
+- **Causa raíz**: en `GoalRow` (edición), la «×» llamaba a `onRemove` → borraba el hito de un toque (peligroso); el botón «Hecho» solo plegaba.
+- **Cambio** (`GoalRow`, `screens`): la **«×» cierra** la card (`setEditing(false)`, `aria-label="Cerrar"`) dejando el hito intacto. El botón «Hecho» se **reescribe a «Borrar»** (rojo, `T.red`) y abre un **`ConfirmModal`** local (estado `confirmDelete`): «¿Borrar este hito? · Se eliminará la meta «{nombre}». No se puede deshacer.», `destructive`, «Sí, borrar» → `onRemove`. La edición sigue auto-guardando por campo.
+- **No tocado**: `removeGoal`/`updateGoal` (motor/estado), `ConfirmModal` (reusado, ya importado). **Verificación**: navegador — abrir hito → «×» vuelve a la vista con el hito intacto (`state.goals` conserva la meta); «Borrar» → sale el aviso; «Sí, borrar» → la meta desaparece. Build OK; content/state PASS; lib 13 / tokens 2.
