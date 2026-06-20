@@ -128,7 +128,21 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 26 : 30, letterSpacing: T.tracking.tight }}>
           Mi <em style={{ color: T.accent }}>Plan</em>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: mobile ? 8 : 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: mobile ? 8 : 14, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {/* #T3 · Café · tarjeta prominente JUNTO A LA CRUZ (presentación). Cero red: <a href> + SVG. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: mobile ? 7 : 10, padding: mobile ? '6px 8px 6px 11px' : '7px 10px 7px 15px', background: T.paper, border: '1.5px solid ' + T.accent, borderRadius: 999, flexShrink: 0 }}>
+            <svg width={mobile ? 19 : 22} height={mobile ? 19 : 22} viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+              <path d="M4 9h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z" />
+              <path d="M17 10h2.2a2.3 2.3 0 0 1 0 4.6H17" />
+              <path d="M7.5 3.4c-.5.7-.5 1.3 0 2M11 3.4c-.5.7-.5 1.3 0 2" />
+            </svg>
+            {!mobile && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: T.ink, whiteSpace: 'nowrap' }}>Invítame a un café</span>}
+            {(mobile ? donations.slice(0, 1) : donations).map((dn) => { const short = dn.label.includes('GitHub') ? 'GitHub' : 'Ko-fi'; return dn.url ? (
+              <a key={dn.label} href={dn.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.bg, background: T.accent, textDecoration: 'none', padding: '6px 10px', borderRadius: 999, whiteSpace: 'nowrap' }}>{short} →</a>
+            ) : (
+              <span key={dn.label} style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint, padding: '6px 10px', border: '1px solid ' + T.lineSoft, borderRadius: 999, whiteSpace: 'nowrap' }}>{short} · pronto</span>
+            ); })}
+          </div>
           {isView ? (
             <button onClick={onClose} aria-label="Cerrar" style={{
               background: T.ink, color: T.bg, border: 'none', width: 38, height: 38, borderRadius: 999,
@@ -219,30 +233,6 @@ export function Landing({ onStart, onLoadDemo, onClose, mode = 'intro' }) {
         )}
       </div>
 
-      {/* #13 · Café · tarjeta dedicada (antes un icono diminuto en el header). Cero red: <a href> + SVG. */}
-      <div style={{
-        marginTop: mobile ? 'clamp(12px, 2.5vh, 20px)' : 'clamp(14px, 2.5vh, 24px)',
-        display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
-        padding: mobile ? '12px 14px' : '13px 18px', background: T.paper,
-        border: '1px solid ' + T.line, borderRadius: 12, maxWidth: 560,
-      }}>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
-          <path d="M4 9h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z" />
-          <path d="M17 10h2.2a2.3 2.3 0 0 1 0 4.6H17" />
-          <path d="M7.5 3.4c-.5.7-.5 1.3 0 2M11 3.4c-.5.7-.5 1.3 0 2" />
-        </svg>
-        <div style={{ flex: '1 1 170px', minWidth: 0 }}>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 15 : 16, color: T.ink, letterSpacing: T.tracking.tight }}>Gratis y sin anuncios</div>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.snug }}>Si te resulta útil, invítame a un café.</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {donations.map((dn) => dn.url ? (
-            <a key={dn.label} href={dn.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.accent, textDecoration: 'none', padding: '8px 12px', border: '1px solid ' + T.accent, borderRadius: 999, whiteSpace: 'nowrap' }}>{dn.label} →</a>
-          ) : (
-            <span key={dn.label} style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint, padding: '8px 12px', border: '1px solid ' + T.lineSoft, borderRadius: 999, whiteSpace: 'nowrap' }}>{dn.label} · pronto</span>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
