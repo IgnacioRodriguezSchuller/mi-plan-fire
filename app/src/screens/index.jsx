@@ -3330,7 +3330,11 @@ export function RebalanceCard({ compact = false }) {
   // toca el aporte mensual.
   const applyTarget = () => {
     const cur = (plan.actualLife && plan.actualLife.allocation) || {};
-    updatePlan({ actualLife: { ...(plan.actualLife || {}), allocation: { ...cur, ...target } } });
+    // Aplicar los objetivos POR CLASE de byClass (mantienen el plan de pensiones a su % actual por
+    // ser ilíquido), no el recommendedAllocation crudo (que pondría planes = 0 → como si lo vendieras).
+    const applied = { other: 0 };
+    byClass.forEach((c) => { applied[c.key] = c.targetPct; });
+    updatePlan({ actualLife: { ...(plan.actualLife || {}), allocation: { ...cur, ...applied } } });
     setConfirming(false);
     setUnderstood(false);
   };
@@ -3388,10 +3392,13 @@ export function RebalanceCard({ compact = false }) {
         {byClass.map((c) => (
           <div key={c.key} style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr auto', gap: 10, alignItems: 'baseline', padding: '9px 0', borderBottom: '1px solid ' + T.lineSoft }}>
             <span style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink }}>{c.label}</span>
-            <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, textAlign: 'right' }}>{c.currentPct}% → {c.targetPct}%</span>
-            <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: c.moveEur > 0 ? T.green : c.moveEur < 0 ? T.amber : T.faint, textAlign: 'right', minWidth: 78 }}>{c.moveEur === 0 ? '—' : (c.moveEur > 0 ? '+' : '−') + fmtEur(Math.abs(c.moveEur))}</span>
+            <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, textAlign: 'right' }}>{c.locked ? `${c.currentPct}%` : `${c.currentPct}% → ${c.targetPct}%`}</span>
+            <span style={{ fontFamily: T.mono, fontSize: T.size.caption, color: c.locked ? T.faint : (c.moveEur > 0 ? T.green : c.moveEur < 0 ? T.amber : T.faint), textAlign: 'right', minWidth: 78 }}>{c.locked ? 'mantener' : (c.moveEur === 0 ? '—' : (c.moveEur > 0 ? '+' : '−') + fmtEur(Math.abs(c.moveEur)))}</span>
           </div>
         ))}
+        <div style={{ marginTop: 12, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, lineHeight: T.lh.normal }}>
+          El objetivo va a <b style={{ fontStyle: 'normal' }}>fondos indexados globales</b> de bajo coste. Los planes de pensiones no se mueven: son ilíquidos hasta la jubilación, así que cuentan como tu renta variable y, si acaso, son palanca fiscal —no el destino de tu ahorro.
+        </div>
       </div>
 
       {/* Aplicar lo recomendado · paso CONSCIENTE en modal didáctico (desglose + qué es rebalancear + checkbox). */}

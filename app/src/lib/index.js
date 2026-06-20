@@ -1128,18 +1128,21 @@ export const STANDARD_PLAN_REFERENCE = {
   description: 'Plan estándar de referencia: ahorrar 20% del neto, allocation por horizonte, fondo indexado mundial, DCA mensual, rebalanceo anual.',
 };
 
-// Rebalanceo · % de RENTA VARIABLE (fondos+planes) recomendado según el horizonte
-// (años hasta la jubilación), tomado de STANDARD_PLAN_REFERENCE. Puro y aditivo; el
-// objetivo se DERIVA del perfil, no se persiste (sin cambio de esquema). Cero red.
+// Rebalanceo · % de RENTA VARIABLE recomendado según el horizonte (años hasta la jubilación).
+// Glide-path coherente con FIRE: cargado de bolsa cuando queda mucho (coherente con el 8 % asumido,
+// propio de una cartera casi toda en RV) y bajando gradualmente al acercarse el retiro (riesgo de
+// secuencia). Anclas: >25a→90 · 15-25→80 · 8-15→65 · ≤8→50. Derivado del perfil, NO se persiste
+// (sin cambio de esquema). Cero red. NOTA: los campos `allocationRV_*` de STANDARD_PLAN_REFERENCE
+// quedan como referencia legacy — el glide vive aquí, inline.
 export function recommendedTargetRV(profile, plan) {
   const age = (profile && profile.age) || 30;
   const retire = (profile && profile.retireAge) || 65;
   const years = Math.max(0, retire - age);
-  const R = STANDARD_PLAN_REFERENCE;
-  const rv = years > 20 ? R.allocationRV_youngHorizon
-    : years > 10 ? R.allocationRV_midHorizon
-      : R.allocationRV_nearHorizon;
-  return Math.round(rv * 100);
+  const rv = years > 25 ? 90
+    : years > 15 ? 80
+      : years > 8 ? 65
+        : 50;
+  return rv;
 }
 
 // Tasa de retiro (SWR) · DERIVADA del horizonte de jubilación = años desde la edad de
@@ -1172,16 +1175,17 @@ export function effectiveWithdrawalRate(profile, plan) {
 }
 
 // Rebalanceo · cartera RECOMENDADA por clase (% que suman 100), derivada del RV objetivo por
-// horizonte: el RV en fondos (~2/3) + planes (~1/3); el resto en efectivo (colchón ≤8) + depósitos.
-// Puro y aditivo; no se persiste.
+// horizonte. FUNDS-FIRST: TODO el RV en fondos indexados globales (lo que promulgamos); los planes
+// de pensiones NO entran en el reparto por defecto — son ilíquidos hasta los ~67 (o 10 años), lo que
+// choca con jubilarse pronto; quedan como palanca FISCAL de la fase 5, no como destino del ahorro.
+// El no-RV: colchón pequeño en efectivo (≤5) + el resto en renta fija a corto (depósitos). Puro y
+// aditivo; no se persiste.
 export function recommendedAllocation(profile, plan) {
   const rv = recommendedTargetRV(profile, plan);
   const nonRv = 100 - rv;
-  const fundsEtfs = Math.round(rv * 0.66);
-  const pensionPlan = rv - fundsEtfs;
-  const cash = Math.min(nonRv, 8);
+  const cash = Math.min(nonRv, 5);
   const deposits = nonRv - cash;
-  return { cash, deposits, fundsEtfs, pensionPlan, other: 0 };
+  return { cash, deposits, fundsEtfs: rv, pensionPlan: 0, other: 0 };
 }
 
 // Rebalanceo · compara la cartera ACTUAL (allocation declarada) con la recomendada por
@@ -1208,10 +1212,17 @@ export function computeRebalance(plan, profile, portfolioTotal) {
     { key: 'fundsEtfs', label: 'Fondos / ETF' },
     { key: 'pensionPlan', label: 'Planes' },
   ];
+  // Los planes de pensiones son ILÍQUIDOS (no se rescatan antes de tiempo) → nunca se recomienda
+  // venderlos: se «mantienen» a su % actual (cuentan como tu RV) y el RV objetivo restante va a
+  // fondos. Así no se sugiere lo imposible.
+  const pensionCur = Math.round(pct(a.pensionPlan));
   const byClass = CLASSES.map((c) => {
     const cur = Math.round(pct(a[c.key]));
-    const tgt = target[c.key] || 0;
-    return { key: c.key, label: c.label, currentPct: cur, targetPct: tgt, moveEur: Math.round(((tgt - cur) / 100) * (portfolioTotal || 0)) };
+    let tgt = target[c.key] || 0;
+    let locked = false;
+    if (c.key === 'pensionPlan') { tgt = cur; locked = true; }
+    else if (c.key === 'fundsEtfs') { tgt = Math.max(0, (target.fundsEtfs || 0) - pensionCur); }
+    return { key: c.key, label: c.label, currentPct: cur, targetPct: tgt, locked, moveEur: locked ? 0 : Math.round(((tgt - cur) / 100) * (portfolioTotal || 0)) };
   });
   return {
     currentRV,
