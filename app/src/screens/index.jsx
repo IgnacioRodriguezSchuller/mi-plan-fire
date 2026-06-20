@@ -3429,9 +3429,13 @@ export function RebalanceCard({ compact = false }) {
 }
 
 export function ScreenAjustes() {
-  const { state, activePlan, accounts,
+  const { state, activePlan, accounts, activeAccountId,
     resetAll, wipeEverything, reonboard, seedDemoConfirm, updatePlan, update, updateProfile } = useStore();
   const multiAccount = Object.keys(accounts || {}).length > 1;
+  // #T5 · color del círculo de cuenta: paleta por tokens; el efectivo = elegido o el de la paleta por índice.
+  const ACCOUNT_PALETTE = [T.accent, T.green, T.amber, T.muted, T.faint];
+  const accIdx = Math.max(0, Object.keys(accounts || {}).indexOf(activeAccountId));
+  const effectiveColor = state.profile.color || ACCOUNT_PALETTE[accIdx % ACCOUNT_PALETTE.length];
   const mobile = useIsMobile();
   const [showEditLife, setShowEditLife] = useState(false);
 
@@ -3475,6 +3479,19 @@ export function ScreenAjustes() {
               <EditableNumber value={activePlan.capital || 0} onChange={(v) => updatePlan({ capital: v })} min={0} max={10_000_000} color={T.ink} /> €
             </span>
           </Row>
+        </div>
+        {/* #T5 · Color del círculo de cuenta (por tokens). El usuario lo elige; persiste en profile.color (aditivo). */}
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid ' + T.lineSoft, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, color: T.muted }}>Color del círculo</span>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {ACCOUNT_PALETTE.map((c) => {
+              const isSel = effectiveColor === c;
+              return (
+                <button key={c} onClick={() => updateProfile({ color: c })} aria-label={`Elegir color del círculo${isSel ? ' (actual)' : ''}`} title="Color del círculo"
+                  style={{ width: 30, height: 30, borderRadius: '50%', background: c, border: 'none', cursor: 'pointer', padding: 0, boxShadow: isSel ? '0 0 0 2px ' + T.bg + ', 0 0 0 4px ' + T.ink : 'none' }} />
+              );
+            })}
+          </div>
         </div>
       </Card></Reveal>
 
@@ -4920,8 +4937,9 @@ export function AccountMenu({ open, anchor, onClose, onGoToAjustes, onShowAbout 
       <div style={{ padding: '4px 14px 6px', fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint }}>Perfiles</div>
       {accIds.map((id, i) => {
         const a = accounts[id]; const isActive = id === activeAccountId;
-        const color = PALETTE[i % PALETTE.length];
-        const initial = ((a.label || '').trim()[0] || '·').toUpperCase();
+        const aName = (a.state && a.state.profile && a.state.profile.name) || '';
+        const color = (a.state && a.state.profile && a.state.profile.color) || PALETTE[i % PALETTE.length];
+        const initial = ((aName.trim()[0]) || (a.label || '').trim()[0] || '·').toUpperCase();
         return (
           <button key={id} onClick={() => { if (!isActive) switchAccount(id); onClose(); }} style={{
             display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
@@ -5089,9 +5107,12 @@ export function Shell() {
   const ACCOUNT_PALETTE = [T.accent, T.green, T.amber, T.muted, T.faint];
   const accIds = Object.keys(accounts || {});
   const accIdx = Math.max(0, accIds.indexOf(activeAccountId));
-  const accColor = ACCOUNT_PALETTE[accIdx % ACCOUNT_PALETTE.length];
   const accLabel = (accounts && accounts[activeAccountId] && accounts[activeAccountId].label) || '';
-  const accInitial = (accLabel.trim()[0] || '·').toUpperCase();
+  // #T5 · la inicial es SIEMPRE la del NOMBRE del usuario (no la etiqueta de cuenta); el color lo
+  // elige el usuario en Datos (profile.color, aditivo) y si no, cae al de la paleta por índice.
+  const accName = (state.profile && state.profile.name) || '';
+  const accInitial = (accName.trim()[0] || accLabel.trim()[0] || '·').toUpperCase();
+  const accColor = (state.profile && state.profile.color) || ACCOUNT_PALETTE[accIdx % ACCOUNT_PALETTE.length];
   const [showLanding, setShowLanding] = useState(false);
   // v5.8 · Manifesto modal triggered by the secondary CTA of LandingPreOnboarding.
   // B8 · Revisit-mode landing, triggered by header logo or Ajustes button.
