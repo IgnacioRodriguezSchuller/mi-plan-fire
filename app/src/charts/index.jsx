@@ -13,12 +13,13 @@
 // romper nada más.
 // ─────────────────────────────────────────────────────────────────────────
 import * as Recharts from 'recharts'
-import { useMemo } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { T } from '../tokens/index.js'
 import {
   fmtEur, toRealEur, todayKey, addMonthsKey, computeIncomeFor, computePlannedFor,
 } from '../lib/index.js'
 import { Card, Label } from '../ui/index.jsx'
+import { useReveal } from '../ui/cartel.jsx'
 
 if (typeof window !== 'undefined' && !window.Recharts) {
   window.Recharts = Recharts
@@ -458,106 +459,81 @@ export function FlowTimelineCard({ plan, profile, maxYears, compact }) {
     return out;
   }, [plan.incomeSegments, plan.bonusSegments, plan.savingSegments, profile.age, profile.retireAge, maxYears]);
 
-  const R = window.Recharts || {};
-  const { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } = R;
+  // #V1 · Gráfica de ingresos «tipo cartel»: SVG a mano (como LifeChart/MonteCarloChart), no Recharts.
+  const [ref, inView] = useReveal(0.18);
+  const lineRef = useRef(null);
+  const [len, setLen] = useState(0);
+  const span = profile.retireAge - profile.age;
+
+  // Áreas apiladas: invest (verde) a la base + "para vivir" (beige) encima, hasta la línea de ingreso.
+  const W = 640, H = compact ? 230 : 290, L = 18, Rr = 18, TP = 24, B = 36;
+  const a0 = series.length ? series[0].age : profile.age;
+  const a1 = series.length ? series[series.length - 1].age : profile.retireAge;
+  const maxY = Math.max(1, ...series.map(s => s.income)) * 1.10;
+  const X = (age) => L + (a1 === a0 ? 0 : (age - a0) / (a1 - a0)) * (W - L - Rr);
+  const Y = (v) => H - B - (v / maxY) * (H - TP - B);
+  const lineOf = (key) => series.map((s, i) => `${i ? 'L' : 'M'}${X(s.age).toFixed(1)} ${Y(s[key] || 0).toFixed(1)}`).join(' ');
+  const investPath = lineOf('invest');
+  const incomePath = lineOf('income');
+  const investArea = series.length ? `${investPath} L${X(a1).toFixed(1)} ${Y(0).toFixed(1)} L${X(a0).toFixed(1)} ${Y(0).toFixed(1)} Z` : '';
+  const investRev = series.slice().reverse().map((s) => `L${X(s.age).toFixed(1)} ${Y(s.invest || 0).toFixed(1)}`).join(' ');
+  const lifeArea = series.length ? `${incomePath} ${investRev} Z` : '';
+
+  useEffect(() => { try { if (lineRef.current) setLen(lineRef.current.getTotalLength()); } catch (e) { /* jsdom */ } }, [series, maxY]);
 
   if (!series.length || series.every(s => s.income === 0)) return null;
-  if (!ResponsiveContainer) return null;
 
-  const startAge = profile.age;
-  const endAge = profile.retireAge;
-  const span = endAge - startAge;
-  const step = span > 25 ? 10 : span > 10 ? 5 : 2;
-  const tickIndices = [];
-  for (let a = Math.ceil(startAge); a <= endAge; a += step) {
-    const idx = Math.round((a - startAge) / span * (series.length - 1));
-    tickIndices.push(idx);
-  }
-
-  // Final-month aggregate for header context
   const last = series[series.length - 1];
   const first = series[0];
-  const lifetimeInvest = series.reduce((s, p) => s + p.invest, 0) * 3; // *3 because quarterly samples
+  const lifetimeInvest = series.reduce((s, p) => s + p.invest, 0) * 3; // *3 · muestras trimestrales
   const lifetimeIncome = series.reduce((s, p) => s + p.income, 0) * 3;
+  const drawn = inView; // useReveal ya respeta prefers-reduced-motion
+
+  // Ticks de edad + punto medio para colocar las etiquetas dentro de cada banda.
+  const tStep = span > 25 ? 10 : span > 10 ? 5 : 2;
+  const ticks = []; for (let a = Math.ceil(a0 / tStep) * tStep; a <= a1; a += tStep) ticks.push(a);
+  const midS = series[Math.floor(series.length * 0.52)];
 
   return (
     <Card>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
-        <div>
-          <Label>Cómo se reparte tu ingreso</Label>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
-            En {Math.round(span)} años invertirás unos <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(lifetimeInvest)}</strong>, de un ingreso total de {fmtEur(lifetimeIncome)}.
-          </div>
+      <div style={{ marginBottom: 14 }}>
+        <Label>Cómo se reparte tu ingreso</Label>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
+          En {Math.round(span)} años invertirás unos <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(lifetimeInvest)}</strong>, de un ingreso total de {fmtEur(lifetimeIncome)}.
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 16, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0, marginBottom: 10, flexWrap: 'wrap' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 3, background: T.green, display: 'inline-block' }}></span>
-          Inversión
-        </span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 12, height: 12, borderRadius: 3, background: T.panel, border: '1px solid ' + T.line, display: 'inline-block' }}></span>
-          Para vivir
-        </span>
-      </div>
-
-      <div style={{ width: '100%', height: compact ? 160 : 200 }}>
-        <ResponsiveContainer>
-          <AreaChart data={series} margin={{ top: 6, right: 8, left: 0, bottom: 4 }}>
-            <CartesianGrid stroke={T.lineSoft} strokeDasharray="2 4" vertical={false} />
-            <XAxis
-              dataKey="monthIndex"
-              ticks={tickIndices}
-              tickFormatter={(v) => {
-                const row = series.find(s => s.monthIndex === v);
-                return row ? Math.round(row.age) + '' : '';
-              }}
-              tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
-              axisLine={{ stroke: T.line }}
-              tickLine={false}
-            />
-            <YAxis
-              tickFormatter={fmtEur}
-              tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
-              axisLine={false}
-              tickLine={false}
-              width={50}
-            />
-            <Tooltip
-              formatter={(value, name) => {
-                const labels = { invest: 'Inversión', life: 'Para vivir' };
-                return [fmtEur(value), labels[name] || name];
-              }}
-              labelFormatter={(v) => {
-                const row = series.find(s => s.monthIndex === v);
-                return row ? `${Math.round(row.age)} años · ${fmtEur(row.income)}/mes` : '';
-              }}
-              // B6 · Tooltip rows reflect vertical position of the stack: invest
-              // sits on top in the chart, so it appears first in the tooltip.
-              itemSorter={(item) => item && item.dataKey === 'invest' ? 0 : 1}
-              contentStyle={{ background: T.ink, border: 'none', borderRadius: 6, fontFamily: T.mono, fontSize: T.size.caption, color: '#fff', padding: '6px 10px' }}
-              labelStyle={{ color: 'rgba(255,255,255,0.6)', fontSize: T.size.eyebrow, marginBottom: 4 }}
-              itemStyle={{ color: '#fff' }}
-            />
-            <defs>
-              <linearGradient id="reparto-invest" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={T.green} stopOpacity={0.58} />
-                <stop offset="100%" stopColor={T.green} stopOpacity={0.14} />
-              </linearGradient>
-              <linearGradient id="reparto-life" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={T.panel} stopOpacity={0.85} />
-                <stop offset="100%" stopColor={T.panel} stopOpacity={0.42} />
-              </linearGradient>
-            </defs>
-            {/* Reparto · inversión a la BASE (verde con degradado, anclada a 0) + "para vivir"
-                encima como banda beige suave (T.panel, visible pero ligera). Curva monotone (suave).
-                Antes: life a la base (masa beige pesada) + invest flotando arriba en tira fina (feo). */}
-            <Area type="monotone" dataKey="invest" stackId="1" stroke={T.green} strokeWidth={2.5} fill="url(#reparto-invest)" isAnimationActive={false} />
-            <Area type="monotone" dataKey="life" stackId="1" stroke={T.line} strokeWidth={1} fill="url(#reparto-life)" isAnimationActive={false} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      <svg ref={ref} viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }} aria-label="Cómo se reparte tu ingreso en el tiempo: inversión y gasto de vida">
+        <defs>
+          <linearGradient id="reparto-invest" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={T.green} stopOpacity={0.55} />
+            <stop offset="100%" stopColor={T.green} stopOpacity={0.12} />
+          </linearGradient>
+          <linearGradient id="reparto-life" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={T.panel} stopOpacity={0.92} />
+            <stop offset="100%" stopColor={T.panel} stopOpacity={0.5} />
+          </linearGradient>
+        </defs>
+        {/* baseline */}
+        <line x1={L} y1={H - B} x2={W - Rr} y2={H - B} stroke={T.lineSoft} strokeWidth="1" />
+        {/* bandas */}
+        <path d={lifeArea} fill="url(#reparto-life)" stroke="none" style={{ opacity: drawn ? 1 : 0, transition: 'opacity .8s ease .3s' }} />
+        <path d={investArea} fill="url(#reparto-invest)" stroke="none" style={{ opacity: drawn ? 1 : 0, transition: 'opacity .8s ease .3s' }} />
+        {/* frontera de inversión (verde) */}
+        <path d={investPath} fill="none" stroke={T.green} strokeWidth="2.5" style={{ opacity: drawn ? 1 : 0, transition: 'opacity .8s ease .5s' }} />
+        {/* línea de ingreso (tinta), con draw-in */}
+        <path ref={lineRef} d={incomePath} fill="none" stroke={T.ink} strokeWidth="2"
+          style={{ strokeDasharray: len || undefined, strokeDashoffset: drawn ? 0 : (len || 0), transition: 'stroke-dashoffset 2s cubic-bezier(.4,0,.1,1)' }} />
+        {/* etiquetas de las bandas (estilo cartel) */}
+        {midS && <text x={X(midS.age)} y={(Y(midS.invest || 0) + Y(0)) / 2 + 4} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.green}>inviertes</text>}
+        {midS && (Y(midS.income) < Y(midS.invest || 0) - 16) && <text x={X(midS.age)} y={(Y(midS.income) + Y(midS.invest || 0)) / 2 + 4} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.muted}>para vivir</text>}
+        {/* ingreso · cifras a los extremos de la línea */}
+        <text x={X(a0) + 4} y={Y(first.income) - 8} textAnchor="start" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.ink}>{fmtEur(first.income)}/mes</text>
+        <text x={X(a1) - 4} y={Y(last.income) - 8} textAnchor="end" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.ink}>{fmtEur(last.income)}/mes</text>
+        {/* eje de edad */}
+        {ticks.map((a) => <text key={a} x={X(a)} y={H - B + 18} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="12" fill={T.faint}>{a}</text>)}
+        <text x={(L + W - Rr) / 2} y={H - 4} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="12" fill={T.faint}>edad</text>
+      </svg>
     </Card>
   );
 }
