@@ -229,6 +229,11 @@ export function projectV2(plan, profile, opts = {}) {
   const monthlySalaryGrowth = annualIPC * salaryFactor > 0
     ? Math.pow(1 + annualIPC * salaryFactor, 1 / 12) - 1
     : 0;
+  // Full (unscaled) monthly inflation — used only by the 'surplus' saving mode to
+  // grow the cost of living independently of how much the salary tracks the IPC.
+  const monthlyFullInflation = annualIPC > 0
+    ? Math.pow(1 + annualIPC, 1 / 12) - 1
+    : 0;
 
   for (let m = 0; m <= months; m++) {
     const key = addMonthsKey(startKey, m);
@@ -253,6 +258,14 @@ export function projectV2(plan, profile, opts = {}) {
       const seg = findActiveSegment(plan.savingSegments, key);
       if (seg) {
         if (seg.type === 'percent') aporte = totalIncome * ((Number(seg.value) || 0) / 100);
+        else if (seg.type === 'surplus') {
+          // Dynamic "invest what's left": the cost of living grows at full inflation
+          // while the salary grows at salaryMultiplier — you invest whatever the
+          // salary exceeds the (inflated) cost of living. If the salary lags inflation
+          // the invested surplus shrinks; if it outpaces it, the surplus grows.
+          const livingCost = (Number(seg.value) || 0) * Math.pow(1 + monthlyFullInflation, m);
+          aporte = Math.max(0, totalIncome - livingCost);
+        }
         else aporte = Number(seg.value) || 0;
       }
     }
@@ -533,6 +546,13 @@ export function computePlannedFor(plan, key) {
     const income = sumActiveSegments(plan.incomeSegments, key);
     const bonus = sumActiveSegments(plan.bonusSegments, key);
     return Math.round((income + bonus) * (Number(seg.value) || 0) / 100);
+  }
+  if (seg.type === 'surplus') {
+    // What's left after the (today's) cost of living, given the income tramo at `key`.
+    // Nominal display helper — inflation growth lives in projectV2, not here.
+    const income = sumActiveSegments(plan.incomeSegments, key);
+    const bonus = sumActiveSegments(plan.bonusSegments, key);
+    return Math.max(0, Math.round(income + bonus - (Number(seg.value) || 0)));
   }
   return Number(seg.value) || 0;
 }

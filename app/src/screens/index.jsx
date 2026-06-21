@@ -352,8 +352,9 @@ export function Onboarding() {
     capital: 1000,
     monthly: 300,
     income: 2000,
-    savingType: 'percent',     // 'fixed' | 'percent' — default proportional so it grows with salary
+    savingType: 'percent',     // 'fixed' | 'percent' | 'surplus' — default proportional so it grows with salary
     savingPercent: 15,         // when type=percent
+    livingCost: 0,             // when type=surplus · coste de vida hoy (€/mes); aporte = ingreso − coste
     evolution: null,
     evoStep: 200,
     evoEvery: 12,
@@ -532,7 +533,7 @@ export function Onboarding() {
     },
     {
       title: '¿Cuánto de eso puedes guardar?',
-      sub: 'Elige primero el tipo: que crezca con tu sueldo, o que se mantenga fijo.',
+      sub: 'Proporcional al sueldo, fijo en euros, o lo que te sobra cada mes.',
       input: (
         <div>
           {/* Type toggle */}
@@ -540,8 +541,16 @@ export function Onboarding() {
             {[
               { id: 'percent', l: 'Proporcional' },
               { id: 'fixed', l: 'Fijo en €' },
+              { id: 'surplus', l: 'Dinámico' },
             ].map((opt) => (
-              <button key={opt.id} onClick={() => set('savingType', opt.id)}
+              <button key={opt.id} onClick={() => {
+                  // Selecting "Dinámico" the first time seeds the cost of living to ~60%
+                  // of income, so the implied surplus is sensible instead of all-or-nothing.
+                  if (opt.id === 'surplus' && (!data.livingCost || data.livingCost <= 0)) {
+                    set('livingCost', Math.round((data.income || 0) * 0.6));
+                  }
+                  set('savingType', opt.id);
+                }}
                 style={{
                   flex: 1, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, padding: '11px 12px',
                   background: data.savingType === opt.id ? T.ink : 'transparent',
@@ -585,6 +594,35 @@ export function Onboarding() {
                       borderRadius: 999, cursor: 'pointer',
                     }}>{p}%</button>
                 ))}
+              </div>
+            </>
+            );
+          })() : data.savingType === 'surplus' ? (() => {
+            const aporte = Math.max(0, (data.income || 0) - (data.livingCost || 0));
+            const pct = data.income > 0 ? Math.round(aporte / data.income * 100) : 0;
+            const tier = data.income > 0 ? getSavingsTier(pct) : null;
+            return (
+            <>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginBottom: 10 }}>
+                ¿Cuánto te cuesta vivir al mes, hoy?
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.accent }}>
+                  <EditableValue value={data.livingCost} onChange={(v) => set('livingCost', Math.max(0, Math.min(v, 50000)))} min={0} max={50000} big ariaLabel="Coste de vida mensual hoy" />
+                </span>
+                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.muted }}>€ / mes</span>
+              </div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginBottom: 8 }}>
+                {data.income > 0 ? (
+                  <>Inviertes <strong style={{ color: T.accent, fontStyle: 'normal' }}>{fmtEur(aporte)}/mes</strong> hoy — lo que te sobra, un {pct}%{tier ? <> · <span style={{ color: tier.color, fontStyle: 'normal' }}>{tier.label}</span></> : null}.</>
+                ) : (
+                  <>Inviertes lo que te sobra del sueldo cada mes.</>
+                )}
+              </div>
+              <input type="range" min="0" max={Math.max(500, data.income || 5000)} step="50" value={data.livingCost} onChange={(e) => set('livingCost', +e.target.value)}
+                style={{ width: '100%', accentColor: T.accent }} />
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, marginTop: 14, paddingTop: 12, borderTop: '1px dashed ' + T.lineSoft }}>
+                Proteges tu nivel de vida —sube con la inflación— e inviertes lo que sobra del sueldo —sube con el IPC—. Si tu sueldo no sigue al coste de vida, inviertes menos; si lo supera, más.
               </div>
             </>
             );
@@ -847,6 +885,18 @@ export function Onboarding() {
         customReturns: { deposits: 2.0, fundsEtfs: null, pensionPlan: null, other: 0 },
       },
     };
+
+    // Saving mode → planned € (for seed/preview) and the persisted savingSegment.
+    const plannedMonthly =
+      data.savingType === 'percent' ? Math.round((data.income || 0) * data.savingPercent / 100)
+      : data.savingType === 'surplus' ? Math.max(0, Math.round((data.income || 0) - (data.livingCost || 0)))
+      : data.monthly;
+    const savingSegment =
+      data.savingType === 'percent'
+        ? { id: uid(), from: tk, to: null, type: 'percent', value: data.savingPercent, label: 'Aporte ' + data.savingPercent + '% del ingreso' }
+      : data.savingType === 'surplus'
+        ? { id: uid(), from: tk, to: null, type: 'surplus', value: data.livingCost, label: 'Invierto lo que sobra' }
+        : { id: uid(), from: tk, to: null, type: 'fixed', value: data.monthly, label: 'Aporte mensual' };
     update({
       schemaVersion: 2,
       landingSeen: true,
@@ -863,18 +913,14 @@ export function Onboarding() {
           enabled: false, startAge: 67, monthlyAmount: 0, yearsContributed: 0, autoEstimate: true,
         },
         actualLife: actualLifePayload,
-        monthlyPlanned: data.savingType === 'percent' ? Math.round((data.income || 0) * data.savingPercent / 100) : data.monthly,
+        monthlyPlanned: plannedMonthly,
         incomeSegments,
         bonusSegments: [],
-        savingSegments: [
-          data.savingType === 'percent'
-            ? { id: uid(), from: tk, to: null, type: 'percent', value: data.savingPercent, label: 'Aporte ' + data.savingPercent + '% del ingreso' }
-            : { id: uid(), from: tk, to: null, type: 'fixed', value: data.monthly, label: 'Aporte mensual' }
-        ],
+        savingSegments: [savingSegment],
         events: [],
       },
       sandbox: null,
-      months: seedMonths(data.savingType === 'percent' ? Math.round((data.income || 0) * data.savingPercent / 100) : data.monthly),
+      months: seedMonths(plannedMonthly),
       goals: defaultGoals(data),
       activeTab: 'hoy',
     });
@@ -1635,6 +1681,10 @@ export function WhatIfCard({ d, plan }) {
       const newPct = Math.round(rawPct * 10) / 10;  // 1 decimal · no persistir floats de 17 dígitos
       return { ...p, savingSegments: segs.map((seg, i) => i === idx ? { ...seg, value: newPct } : seg) };
     }
+    if (s.type === 'surplus') {
+      // Modo dinámico: invertir +bump = gastar bump menos en vivir → baja el coste de vida.
+      return { ...p, savingSegments: segs.map((seg, i) => i === idx ? { ...seg, value: Math.max(0, (Number(seg.value) || 0) - bump) } : seg) };
+    }
     return { ...p, savingSegments: segs.map((seg, i) => i === idx ? { ...seg, value: (Number(seg.value) || 0) + bump } : seg) };
   };
   const sim = useMemo(() => projectV2(applyBump(plan), profile, {
@@ -2269,6 +2319,10 @@ export function ScreenProyeccion() {
   // patrón de gasto y recalcula el número FIRE. Mantiene el desglose plano en "otros".
   const setGasto = (euros) => updatePlan({ actualLife: { ...(plan.actualLife || {}), completed: true, expenses: { housing: 0, food: 0, transport: 0, subscriptions: 0, other: Math.round(euros) } } });
   const setSavingsPct = (pct) => { if (savingSeg) m.updateSaving(savingSeg.id, { type: 'percent', value: Math.max(0, Math.min(60, pct)) }); };
+  // Modo dinámico «lo que sobra»: la palanca editable es el coste de vida, no el %.
+  const isSurplus = !!(savingSeg && savingSeg.type === 'surplus');
+  const livingCostNow = isSurplus ? Math.round(Number(savingSeg.value) || 0) : 0;
+  const setLivingCost = (euros) => { if (savingSeg) m.updateSaving(savingSeg.id, { value: Math.max(0, Math.round(euros)) }); };
   // IPC del salario (salaryInflationFactor): 100 % = el salario sube como la inflación; 0 % = fijo.
   // Default 1.0 (ya en migrateToV2). Lo lee projectV2 → recálculo en vivo. Distinto de inflationRate.
   const ipcPct = Math.round((plan.salaryInflationFactor != null ? plan.salaryInflationFactor : 1.0) * 100);
@@ -2366,10 +2420,21 @@ export function ScreenProyeccion() {
         {/* 3 · LA PALANCA */}
         <Spread>
           <Reveal><CartelIcon id="retorno-anual" size={76} color={T.accent} style={{ margin: '0 auto 6px' }} /></Reveal>
-          <Reveal delay={40}><SectionTag>La palanca · tu tasa de ahorro</SectionTag></Reveal>
-          <Reveal delay={80}><p style={mega(T.ink)}><EditableValue value={savingsPct} onChange={setSavingsPct} min={0} max={60} suffix="%" ariaLabel="Tasa de ahorro" /> · {fmtNum(aporte)} €/mes</p></Reveal>
-          <Reveal delay={130}><p style={cap}>No es cuánto ganas — es qué % guardas. Es lo que más adelanta tu fecha.</p></Reveal>
-          <Reveal delay={170}><p style={note}>Tu número no cambia: mover esto solo cambia cuándo llegas (rango 0 % a 60 %).</p></Reveal>
+          {isSurplus ? (
+            <>
+              <Reveal delay={40}><SectionTag>La palanca · lo que te sobra</SectionTag></Reveal>
+              <Reveal delay={80}><p style={mega(T.ink)}><EditableValue value={livingCostNow} onChange={setLivingCost} min={0} max={Math.max(1000, incomeNow)} suffix=" €/mes" ariaLabel="Coste de vida mensual" /></p></Reveal>
+              <Reveal delay={130}><p style={cap}>Tu coste de vida hoy. Inviertes el resto: <b style={{ fontStyle: 'normal' }}>{fmtNum(aporte)} €/mes</b> ({fmtPctView(savingsPct)} % del ingreso).</p></Reveal>
+              <Reveal delay={170}><p style={note}>Modo dinámico: el coste de vida sube con la inflación y tu sueldo con el IPC. Si tu sueldo no sigue al coste de vida, inviertes menos; si lo supera, más.</p></Reveal>
+            </>
+          ) : (
+            <>
+              <Reveal delay={40}><SectionTag>La palanca · tu tasa de ahorro</SectionTag></Reveal>
+              <Reveal delay={80}><p style={mega(T.ink)}><EditableValue value={savingsPct} onChange={setSavingsPct} min={0} max={60} suffix="%" ariaLabel="Tasa de ahorro" /> · {fmtNum(aporte)} €/mes</p></Reveal>
+              <Reveal delay={130}><p style={cap}>No es cuánto ganas — es qué % guardas. Es lo que más adelanta tu fecha.</p></Reveal>
+              <Reveal delay={170}><p style={note}>Tu número no cambia: mover esto solo cambia cuándo llegas (rango 0 % a 60 %).</p></Reveal>
+            </>
+          )}
           <Reveal delay={210} style={{ width: '100%', marginTop: '3vh' }}><WhatIfCard d={d} plan={plan} /></Reveal>
         </Spread>
 
@@ -2440,7 +2505,7 @@ export function ScreenProyeccion() {
               <div style={{ textAlign: 'left', marginTop: 12 }}><CartelBtn variant="text" onClick={() => m.addEvent()}>+ añadir evento</CartelBtn></div>
             </>)}
             <div style={subhead}>Aporte</div>
-            <CartelTramoRow name={`Aporte ${fmtPctView(savingsPct)} % del ingreso`} dates={savingSeg ? tramoDates(savingSeg) : ''} staticAmt={`≈ ${fmtNum(aporte)} €/mes`} />
+            <CartelTramoRow name={isSurplus ? 'Inviertes lo que te sobra' : `Aporte ${fmtPctView(savingsPct)} % del ingreso`} dates={savingSeg ? tramoDates(savingSeg) : ''} staticAmt={`≈ ${fmtNum(aporte)} €/mes`} />
           </Reveal>
           {hayPosibles && <Reveal delay={140}><p style={note}>Eventos y boosts incluidos: a los {retireAge} llegarías a {fmtMoneyBig(finalConPosible)}.</p></Reveal>}
         </Spread>
