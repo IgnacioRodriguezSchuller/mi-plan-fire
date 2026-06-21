@@ -18,8 +18,8 @@ import { T } from '../tokens/index.js'
 import {
   fmtEur, toRealEur, todayKey, addMonthsKey, computeIncomeFor, computePlannedFor,
 } from '../lib/index.js'
-import { Card, Label } from '../ui/index.jsx'
-import { useReveal } from '../ui/cartel.jsx'
+import { Card } from '../ui/index.jsx'
+import { useReveal, SectionTag } from '../ui/cartel.jsx'
 
 if (typeof window !== 'undefined' && !window.Recharts) {
   window.Recharts = Recharts
@@ -496,9 +496,12 @@ export function FlowTimelineCard({ plan, profile, maxYears, compact }) {
 
   return (
     <Card>
-      <div style={{ marginBottom: 14 }}>
-        <Label>Cómo se reparte tu ingreso</Label>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
+      <div style={{ marginBottom: 16 }}>
+        <SectionTag>El reparto</SectionTag>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4, color: T.ink }}>
+          Cómo se reparte tu ingreso
+        </div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 8, lineHeight: T.lh.normal }}>
           En {Math.round(span)} años invertirás unos <strong style={{ color: T.green, fontStyle: 'normal' }}>{fmtEur(lifetimeInvest)}</strong>, de un ingreso total de {fmtEur(lifetimeIncome)}.
         </div>
       </div>
@@ -525,14 +528,16 @@ export function FlowTimelineCard({ plan, profile, maxYears, compact }) {
         <path ref={lineRef} d={incomePath} fill="none" stroke={T.ink} strokeWidth="2"
           style={{ strokeDasharray: len || undefined, strokeDashoffset: drawn ? 0 : (len || 0), transition: 'stroke-dashoffset 2s cubic-bezier(.4,0,.1,1)' }} />
         {/* etiquetas de las bandas (estilo cartel) */}
-        {midS && <text x={X(midS.age)} y={(Y(midS.invest || 0) + Y(0)) / 2 + 4} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.green}>inviertes</text>}
-        {midS && (Y(midS.income) < Y(midS.invest || 0) - 16) && <text x={X(midS.age)} y={(Y(midS.income) + Y(midS.invest || 0)) / 2 + 4} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.muted}>para vivir</text>}
-        {/* ingreso · cifras a los extremos de la línea */}
-        <text x={X(a0) + 4} y={Y(first.income) - 8} textAnchor="start" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.ink}>{fmtEur(first.income)}/mes</text>
-        <text x={X(a1) - 4} y={Y(last.income) - 8} textAnchor="end" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.ink}>{fmtEur(last.income)}/mes</text>
+        {midS && <text x={X(midS.age)} y={(Y(midS.invest || 0) + Y(0)) / 2 + 4} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="14" fill={T.green}>inviertes</text>}
+        {midS && (Y(midS.income) < Y(midS.invest || 0) - 16) && <text x={X(midS.age)} y={(Y(midS.income) + Y(midS.invest || 0)) / 2 + 4} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="14" fill={T.muted}>para vivir</text>}
+        {/* ingreso · cifras a los extremos de la línea. El inicio (sueldo bajo que sube en
+            escalones) va DEBAJO del extremo izquierdo para no chocar con la escalera; el final
+            (línea plana arriba) va encima del extremo derecho. */}
+        <text x={X(a0) + 2} y={Y(first.income) + 16} textAnchor="start" fontFamily={T.serif} fontStyle="italic" fontSize="14" fill={T.ink}>{fmtEur(first.income)}/mes</text>
+        <text x={X(a1) - 4} y={Y(last.income) - 8} textAnchor="end" fontFamily={T.serif} fontStyle="italic" fontSize="14" fill={T.ink}>{fmtEur(last.income)}/mes</text>
         {/* eje de edad */}
-        {ticks.map((a) => <text key={a} x={X(a)} y={H - B + 18} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="12" fill={T.faint}>{a}</text>)}
-        <text x={(L + W - Rr) / 2} y={H - 4} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="12" fill={T.faint}>edad</text>
+        {ticks.map((a) => <text key={a} x={X(a)} y={H - B + 18} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.muted}>{a}</text>)}
+        <text x={(L + W - Rr) / 2} y={H - 4} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="13" fill={T.muted}>edad</text>
       </svg>
     </Card>
   );

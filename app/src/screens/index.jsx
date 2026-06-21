@@ -36,6 +36,7 @@ import {
 import {
   ConfirmModal, MonthlyCalendarModal, PublicPensionDisclaimerModal,
   Concept, ConceptModal, AboutModal,
+  DONATE_KOFI_URL, DONATE_GITHUB_URL, SUGGEST_URL,
 } from '../modals/index.jsx'
 import { StateProvider, useStore, useDerived, usePlanMutators } from '../state/index.jsx'
 import { LandingPreOnboarding, Landing } from '../flows/index.jsx'
@@ -130,7 +131,7 @@ export function HouseholdSummaryCard() {
     <Card style={{ background: T.ink, color: T.bg, border: '1px solid ' + T.ink }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: 'rgba(255,255,255,0.5)' }}>
             Hogar · {list.length} personas
           </div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.tight, marginTop: 4, lineHeight: T.lh.tight }}>
@@ -145,19 +146,19 @@ export function HouseholdSummaryCard() {
       {/* Combined flow */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, padding: '14px 0', borderTop: '1px dashed rgba(255,255,255,0.18)', borderBottom: '1px dashed rgba(255,255,255,0.18)' }}>
         <div>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Ingreso conjunto</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Ingreso conjunto</div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight }}>
             {fmtEur(totalIncome)}
           </div>
         </div>
         <div>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Inversión conjunta</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Inversión conjunta</div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, color: '#86efac' }}>
             {fmtEur(totalInvestment)}
           </div>
         </div>
         <div>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Tasa hogar</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Tasa hogar</div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, color: householdRate >= 0.20 ? '#86efac' : householdRate >= 0.10 ? '#fcd34d' : '#fca5a5' }}>
             {Math.round(householdRate * 100)}%
           </div>
@@ -183,7 +184,7 @@ export function HouseholdSummaryCard() {
               }} />
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: T.size.body }}>
                 {a.label}
-                {isActive && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.accent, marginLeft: 8, letterSpacing: 0 }}>activa</span>}
+                {isActive && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.accent, marginLeft: 8, letterSpacing: 0 }}>activa</span>}
               </span>
               <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: 'rgba(255,255,255,0.65)', letterSpacing: T.tracking.wide, textAlign: 'right' }}>
                 {fmtEur(a.portfolio)} · {fmtEur(a.investment)}/mes
@@ -221,7 +222,7 @@ export function HouseholdTeaserCard({ goTo }) {
         <circle cx="36" cy="22" r="15.5" fill="none" stroke={T.green} strokeWidth="2" />
       </svg>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0 }}>Vuestro hogar · {list.length} personas</div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, letterSpacing: 0 }}>Vuestro hogar · {list.length} personas</div>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 30 : 38, color: T.ink, letterSpacing: T.tracking.tight, lineHeight: 1, marginTop: 4 }}>{fmtEur(totalPortfolio)}</div>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>juntos hoy · {names.join(' y ')}</div>
       </div>
@@ -266,7 +267,7 @@ export function MonthlyFlowCard({ plan, profile }) {
   const FlowBar = ({ aporte, life, rate, label, accent }) => (
     <div style={{ marginBottom: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6, gap: 8 }}>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>{label}</div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>{label}</div>
         <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: rateColor(rate), letterSpacing: T.tracking.wide, fontWeight: 600 }}>
           {(rate * 100).toFixed(0)}% inversión
         </div>
@@ -513,7 +514,7 @@ export function Onboarding() {
               if (cur > 0 && cur < 1) {
                 return (
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>% del IPC</span>
+                    <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>% del IPC</span>
                     <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink }}>
                       <EditableNumber value={Math.round(cur * 100)} onChange={(v) => set('salaryInflationFactor', Math.max(0, Math.min(100, v)) / 100)} min={0} max={100} step={1} color={T.ink} /> %
                     </span>
@@ -1745,7 +1746,7 @@ export function DcaCard({ annualReturn }) {
   const dcaLoss = Math.round((amount / months) * 0.20);
   const col = { flex: '1 1 130px', minWidth: 120 };
   const valBig = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 'clamp(22px, 3.2vw, 30px)', letterSpacing: T.tracking.tight, color: T.ink, lineHeight: 1 };
-  const lbl = { fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0, marginBottom: 4 };
+  const lbl = { fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, letterSpacing: 0, marginBottom: 4 };
   return (
     <CartelCard tone={T.accent} style={{ maxWidth: 560, margin: '0 auto', textAlign: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -1917,7 +1918,7 @@ export function ScreenMesAMes() {
                 )}
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 8, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0, flexWrap: 'wrap' }}>
               <LegendChip color={realColor} label="Real" />
               <LegendChip color={T.faint} label="Plan" dashed />
             </div>
@@ -1999,9 +2000,9 @@ export function MonthRow({ month, isCurrent, onChange }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
             <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, color: isCurrent ? T.accent : empty ? T.faint : T.ink, textTransform: 'capitalize' }}>{month.label.replace('.', '')}</span>
-            {isCurrent && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.accent, letterSpacing: 0 }}>Mes actual</span>}
-            {past && empty && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.amber, letterSpacing: 0 }}>Atrasado</span>}
-            {empty && !past && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0 }}>Futuro</span>}
+            {isCurrent && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.accent, letterSpacing: 0 }}>Mes actual</span>}
+            {past && empty && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.amber, letterSpacing: 0 }}>Atrasado</span>}
+            {empty && !past && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Futuro</span>}
           </div>
           {!empty && (
             <button onClick={() => onChange({ actual: null })}
@@ -2016,11 +2017,11 @@ export function MonthRow({ month, isCurrent, onChange }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, minWidth: 0 }}>
           <div style={{ minWidth: 0 }}>
             <Label style={{ marginBottom: 2 }}>Plan</Label>
-            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.faint, letterSpacing: T.tracking.tight, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.muted, letterSpacing: T.tracking.tight, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {fmtEur(plannedComputed)}
             </div>
             {seg && seg.type === 'percent' && incomeAtMonth > 0 && (
-              <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 1, letterSpacing: T.tracking.wide, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, marginTop: 1, letterSpacing: T.tracking.wide, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {fmtPctView(seg.value)}% · {fmtEur(incomeAtMonth)}
               </div>
             )}
@@ -2082,17 +2083,17 @@ export function MonthRow({ month, isCurrent, onChange }) {
     }}>
       <div>
         <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, color: isCurrent ? T.accent : empty ? T.faint : T.ink, textTransform: 'capitalize' }}>{month.label.replace('.', '')}</div>
-        {isCurrent && <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.accent, letterSpacing: 0, marginTop: 2 }}>Mes actual</div>}
-        {past && empty && <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.amber, letterSpacing: 0, marginTop: 2 }}>Atrasado</div>}
+        {isCurrent && <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.accent, letterSpacing: 0, marginTop: 2 }}>Mes actual</div>}
+        {past && empty && <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.amber, letterSpacing: 0, marginTop: 2 }}>Atrasado</div>}
       </div>
 
       <div style={{ minWidth: 0 }}>
         <Label style={{ marginBottom: 2 }}>Plan</Label>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-          <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.faint, letterSpacing: T.tracking.tight }}>{fmtEur(plannedComputed)}</span>
+          <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.muted, letterSpacing: T.tracking.tight }}>{fmtEur(plannedComputed)}</span>
         </div>
         {seg && seg.type === 'percent' && incomeAtMonth > 0 && (
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 1, letterSpacing: T.tracking.wide }}>
+          <div style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.muted, marginTop: 1, letterSpacing: T.tracking.wide }}>
             {fmtPctView(seg.value)}% · {fmtEur(incomeAtMonth)}
           </div>
         )}
@@ -2135,7 +2136,7 @@ export function MonthRow({ month, isCurrent, onChange }) {
       </div>
 
       <div style={{ textAlign: 'right' }}>
-        {empty && !past && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0 }}>Futuro</span>}
+        {empty && !past && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, letterSpacing: 0 }}>Futuro</span>}
         {!empty && (
           <button onClick={() => onChange({ actual: null })}
             title="Borrar registro"
@@ -2674,9 +2675,12 @@ export function HitosEditor() {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {goals.length === 0 ? (
-          <Card style={{ borderStyle: 'dashed', padding: 24 }}>
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal }}>
-              Aún no has añadido ningún hito a tu plan. Los hitos son metas intermedias (un colchón de liquidez, comprar una vivienda, pagar la entrada, etc.) que te ayudan a estructurar tu camino. Añade el primero cuando quieras.
+          <Card style={{ borderStyle: 'dashed', padding: '36px 24px', textAlign: 'center' }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.ink, fontSize: T.size.lead, lineHeight: T.lh.snug }}>
+              Tu camino aún no tiene hitos.
+            </div>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, maxWidth: 380, margin: '8px auto 0' }}>
+              Un colchón de liquidez, la entrada de un piso, un sabático. Marca el primero cuando quieras.
             </div>
           </Card>
         ) : (
@@ -2772,7 +2776,7 @@ export function ScreenSeguimiento() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <SectionTag>Seguimiento</SectionTag>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4 }}>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXxl, lineHeight: 1.02, letterSpacing: T.tracking.display, marginTop: 8 }}>
             Cómo va tu plan, mes a mes.
           </div>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 8, maxWidth: 640, lineHeight: T.lh.normal }}>
@@ -2812,6 +2816,20 @@ export function ScreenSeguimiento() {
       {/* Bloque · Reparto del ingreso en el tiempo */}
       <Reveal><section>
         <RepartoIngresoBlock />
+      </section></Reveal>
+
+      {/* Cierre de Seguimiento · CERRAR EL LOOP (hero, estilo cartel). Mismo patrón que el
+          cierre de Plan (eyebrow + serif grande + sub + CartelBtn), pero tema CONSTANCIA y
+          empuje PRIMARIO a Proyección (acabas de revisar real vs plan → ajusta) y secundario a
+          Aprende. Distinto del verdictNode táctico de arriba. */}
+      <Reveal><section>
+        <div style={{ textAlign: 'center', padding: mobile ? '36px 8px 12px' : '52px 8px 20px' }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.accent }}>El siguiente paso</div>
+          <h2 style={{ fontFamily: T.serif, fontWeight: 600, fontSize: 'clamp(34px, 6.5vw, 72px)', lineHeight: 0.98, letterSpacing: '-.03em', margin: '8px 0 0', color: T.ink }}>El plan no se decide; se sostiene.</h2>
+          <p style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(16px, 2vw, 21px)', color: T.muted, maxWidth: '46ch', margin: '18px auto 0', lineHeight: 1.45 }}>Cada mes que anotas lo mantiene vivo. Vuelve, ajústalo, y deja que el tiempo trabaje.</p>
+          <div style={{ marginTop: 24 }}><CartelBtn onClick={() => update({ activeTab: 'proy' })}>Afina los números en Proyección →</CartelBtn></div>
+          <div style={{ marginTop: 14 }}><CartelBtn variant="text" onClick={() => update({ activeTab: 'aprender' })}>O repasa un concepto en Aprende →</CartelBtn></div>
+        </div>
       </section></Reveal>
     </div>
   );
@@ -2861,8 +2879,8 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
             </text>
           </svg>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, letterSpacing: T.tracking.tight, lineHeight: 1.15, color: T.ink }}>{goal.name}</div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: T.muted, marginTop: 2 }}>{fmtEur(goal.target)} · {goal.targetAge} años</div>
-          <Pill color={onTrack ? T.green : T.amber} bg={onTrack ? T.greenSoft : 'rgba(180,83,9,0.10)'} border="transparent" style={{ fontSize: T.size.eyebrow, padding: '4px 10px', marginTop: 10 }}>
+          <div style={{ fontFamily: T.mono, fontSize: T.size.caption, letterSpacing: T.tracking.wide, color: T.muted, marginTop: 2 }}>{fmtEur(goal.target)} · {goal.targetAge} años</div>
+          <Pill color={onTrack ? T.green : T.amber} bg={onTrack ? T.greenSoft : 'rgba(180,83,9,0.10)'} border="transparent" style={{ fontSize: T.size.caption, padding: '4px 10px', marginTop: 10 }}>
             {onTrack ? 'En camino' : 'Falta'} · faltan {fmtEur(faltan)}
           </Pill>
         </div>
@@ -2886,7 +2904,7 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
         <span style={{ fontFamily: T.serif, color: T.muted }}>a los <EditableNumber value={goal.targetAge} onChange={(v) => onChange({ targetAge: v })} min={profile.age + 1} max={90} width={36} color={T.ink} /> años</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
-        <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0 }}>Categoría</span>
+        <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Categoría</span>
         <select value={category} onChange={(e) => onChange({ category: e.target.value })}
           style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '4px 8px', background: T.bg, border: '1px solid ' + T.line, borderRadius: 999, color: T.ink, letterSpacing: T.tracking.wide, appearance: 'none', WebkitAppearance: 'none' }}>
           {GOAL_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -2953,7 +2971,7 @@ export function GoalContextualBlock({ goal, category, portfolio }) {
     <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px dashed ' + T.lineSoft }}>
       <button onClick={() => setOpen(o => !o)} style={{
         background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-        fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0,
+        fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0,
         color: T.accent, display: 'inline-flex', alignItems: 'center', gap: 6,
       }}>
         {open ? '↑ Recoger' : '▾ Ver nota contextual'}
@@ -3031,7 +3049,7 @@ export function HousingPathsCard({ goal, d, plan, profile }) {
     closeApply();
   };
 
-  const lbl = { fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, letterSpacing: 0, marginBottom: 4 };
+  const lbl = { fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, letterSpacing: 0, marginBottom: 4 };
   const valBig = { fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 'clamp(20px, 3vw, 28px)', letterSpacing: T.tracking.tight, color: T.ink, lineHeight: 1 };
   const col = { flex: '1 1 150px', minWidth: 150 };
   const param = { display: 'inline-flex', alignItems: 'baseline', gap: 5, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted };
@@ -3064,7 +3082,7 @@ export function HousingPathsCard({ goal, d, plan, profile }) {
             ) : (
               <>
                 <div style={{ ...valBig, fontSize: 'clamp(16px, 2.4vw, 21px)', color: T.amber }}>No llegas</div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.amber, marginTop: 6, lineHeight: T.lh.normal }}>tu cartera a los {cmp.buyAge} ({fmtEur(cmp.liquidAtPurchase)}) no cubre {fmtEur(price)}</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.amber, marginTop: 6, lineHeight: T.lh.normal }}>tu cartera a los {cmp.buyAge} ({fmtEur(cmp.liquidAtPurchase)}) no cubre {fmtEur(price)}</div>
               </>
             )}
           </div>
@@ -3072,12 +3090,12 @@ export function HousingPathsCard({ goal, d, plan, profile }) {
             <div style={lbl}>Apalancarse · con hipoteca</div>
             <div style={valBig}>{fmtEur(h.finalNetWorth)}</div>
             <div style={{ fontFamily: T.serif, fontSize: T.size.caption, color: h.freedomAge != null ? T.green : T.muted, marginTop: 6 }}>libre {starTxt(h.freedomAge)}</div>
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, marginTop: 4 }}>cuota {fmtEur(cmp.monthlyPayment)}/mes · interés {fmtEur(cmp.totalInterest)}</div>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, marginTop: 4 }}>cuota {fmtEur(cmp.monthlyPayment)}/mes · interés {fmtEur(cmp.totalInterest)}</div>
           </div>
         </div>
         <div style={{ marginTop: 18 }}>
           <MultiLineChart scenarios={scenarios} height={200} />
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.faint, marginTop: 4 }}>patrimonio neto (cartera + casa − hipoteca), en € de hoy</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, marginTop: 4 }}>patrimonio neto (cartera + casa − hipoteca), en € de hoy</div>
         </div>
         <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid ' + T.lineSoft, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal, textAlign: 'left' }}>
           El patrimonio neto incluye tu casa, pero tu <b style={{ fontStyle: 'normal' }}>edad de libertad ★ solo cuenta la cartera</b> (no vives de tu casa). Apalancarse mantiene la cartera invertida → libertad antes <i>mientras tu cartera rente más que el tipo de la hipoteca</i>, a cambio de cargar deuda. Pagar al contado te deja sin deuda, pero retrasa tu ★.
@@ -3344,7 +3362,7 @@ export function AccountsCard() {
                   letterSpacing: T.tracking.tight,
                 }}>
                   {a.label}
-                  {isActive && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.accent, marginLeft: 8, letterSpacing: 0 }}>activa</span>}
+                  {isActive && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.accent, marginLeft: 8, letterSpacing: 0 }}>activa</span>}
                 </button>
               )}
               <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
@@ -3696,6 +3714,23 @@ export function ScreenAjustes() {
         </div>
       </Card></Reveal>
 
+      {/* Portal de sugerencias · estilo CARTEL (centrado editorial, sin Card · cero red).
+          Enlace serif activo si SUGGEST_URL, si no «· pronto». */}
+      <Reveal><div style={{ textAlign: 'center', padding: mobile ? '40px 8px 8px' : '56px 8px 12px' }}>
+        <SectionTag>Sugerencias</SectionTag>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(18px, 2.4vw, 26px)', color: T.ink, maxWidth: '30ch', margin: '10px auto 0', lineHeight: 1.25 }}>
+          ¿Echas algo en falta o ves algo raro?
+        </div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 'clamp(15px, 2vw, 18px)', color: T.muted, maxWidth: '42ch', margin: '12px auto 0', lineHeight: 1.45 }}>
+          Cuéntamelo — esto lo construye una persona, y leerte es la mejor forma de mejorarlo.
+        </div>
+        <div style={{ marginTop: 20 }}>
+          {SUGGEST_URL
+            ? <a href={SUGGEST_URL} target="_blank" rel="noopener noreferrer" style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 18, color: T.accent, textDecoration: 'none' }}>Enviar una sugerencia →</a>
+            : <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 18, color: T.faint }}>Enviar una sugerencia · pronto</span>}
+        </div>
+      </div></Reveal>
+
       {/* #U4 · La situación económica se edita INLINE en su card (arriba), no en modal. */}
     </div>
   );
@@ -3705,7 +3740,7 @@ export function ExpenseRow({ k, label, chips, expenses, onSetExpense }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed ' + T.lineSoft, paddingBottom: 10, marginBottom: 10, gap: 12, flexWrap: 'wrap' }}>
       <div style={{ minWidth: 110 }}>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>{label}</div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>{label}</div>
         <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
           {chips.map((v) => (
             <button key={v} onClick={() => onSetExpense(k, v)} style={{
@@ -3736,7 +3771,7 @@ export function AllocRow({ k, label, fixedReturn, customKey, returnLabel, alloca
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, borderBottom: '1px dashed ' + T.lineSoft, paddingBottom: 12, marginBottom: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>{label}</div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>{label}</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle }}>
           <EditableNumber value={allocation[k]} onChange={(v) => onSetAlloc(k, v)} min={0} max={100} step={1} color={T.ink} />
           <span style={{ fontSize: T.size.body, color: T.muted }}>%</span>
@@ -3921,7 +3956,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null,
             <ExpenseRow k="other" label="Otros" chips={[100, 200, 400]} expenses={data.expenses} onSetExpense={setExpense} />
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 14, borderTop: '1px solid ' + T.line, marginTop: 4 }}>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Total</div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Total</div>
               <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: T.ink, letterSpacing: T.tracking.tight }}>
                 {fmtEur(totalExpenses)}<span style={{ fontSize: T.size.body, color: T.muted, marginLeft: 4 }}>/mes</span>
                 {income > 0 && (
@@ -4049,7 +4084,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null,
             <AllocRow k="other" label="Otros" customKey="other" allocation={data.allocation} onSetAlloc={setAlloc} onSetReturn={setCustomReturn} planReturn={planReturn} />
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 14, borderTop: '1px solid ' + T.line, marginTop: 4 }}>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Total</div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Total</div>
               <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, color: allocOk ? T.green : (totalAllocation > 100 ? T.red : T.amber), letterSpacing: T.tracking.tight }}>
                 {Math.round(totalAllocation)}%
               </div>
@@ -4400,7 +4435,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
         </div>
         {erosion && (
           <>
-            <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
+            <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 18, height: 0, borderTop: '2px dashed ' + T.faint }} /> {hasMultipleIncomeSegments ? 'Salario sobre el papel (según tu plan)' : `Salario sobre el papel (sube ${salaryGrowthAnnual.toFixed(1)}%/año)`}
               </span>
@@ -4416,7 +4451,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
               </div>
             </div>
             <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line }}>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Poder adquisitivo perdido (acumulado)</div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Poder adquisitivo perdido (acumulado)</div>
               <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXl, color: T.red, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
                 −{fmtEur(erosion.lost)}
               </div>
@@ -4437,7 +4472,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
         <div style={{ marginTop: 14 }}>
           <OppCostChart />
         </div>
-        <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
+        <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 18, height: 0, borderTop: '2px dashed ' + T.faint }} /> En cuenta corriente (real)
           </span>
@@ -4448,17 +4483,17 @@ export function ScreenSinMiPlan({ embedded = false }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginTop: 16 }}>
           <div style={{ padding: '12px 14px', background: T.panel, border: '1px solid ' + T.line, borderRadius: 10 }}>
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted, marginBottom: 6 }}>Sin Plan</div>
-            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.faint, letterSpacing: T.tracking.tight }}>{fmtEur(oppCost.parkedFinalReal)}</div>
+            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.muted, letterSpacing: T.tracking.tight }}>{fmtEur(oppCost.parkedFinalReal)}</div>
             <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 4, letterSpacing: T.tracking.wide }}>ajustado por inflación</div>
           </div>
           <div style={{ padding: '12px 14px', background: T.ink, color: T.bg, borderRadius: 10 }}>
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, letterSpacing: 0, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>Con Plan</div>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>Con Plan</div>
             <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight }}>{fmtEur(oppCost.investedFinalReal)}</div>
             <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: 'rgba(255,255,255,0.45)', marginTop: 4, letterSpacing: T.tracking.wide }}>ajustado por inflación</div>
           </div>
         </div>
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line }}>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Diferencia</div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Diferencia</div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXl, color: T.red, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
             {fmtEur(oppCost.difference)}
           </div>
@@ -4506,7 +4541,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
                 return (
                   <div key={row.label} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 10, alignItems: 'center' }}>
                     <div>
-                      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>{row.label}</div>
+                      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>{row.label}</div>
                       <div style={{ height: 10, marginTop: 4, background: T.panel, borderRadius: 999, border: '1px solid ' + T.lineSoft, overflow: 'hidden', position: 'relative' }}>
                         <div style={{
                           height: '100%',
@@ -4556,7 +4591,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
               <div style={{ marginTop: 14 }}>
                 <MortgageChart />
               </div>
-              <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
+              <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 14, height: 10, background: T.accent }} /> Capital amortizado
                 </span>
@@ -4565,7 +4600,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
                 </span>
               </div>
               <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed ' + T.line }}>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>Intereses totales a lo largo del plazo</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Intereses totales a lo largo del plazo</div>
                 <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.amber, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
                   {fmtEur(mortgageTotalInterest)}
                 </div>
@@ -4586,7 +4621,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
               {allocCategories.filter(c => c.pct > 0).map((c) => (
                 <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>{c.label}</div>
+                    <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>{c.label}</div>
                     <div style={{ height: 12, marginTop: 4, background: T.panel, borderRadius: 999, border: '1px solid ' + T.lineSoft, overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: c.pct + '%', background: c.color, borderRadius: 999 }} />
                     </div>
@@ -4745,9 +4780,7 @@ export function ScreenAprende() {
   return (
     <div>
       <header style={{ marginBottom: 32 }}>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint }}>
-          Aprende
-        </div>
+        <SectionTag>Aprende</SectionTag>
         <h1 style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXxl, lineHeight: 1, letterSpacing: T.tracking.display, margin: '8px 0 0', color: T.ink }}>
           Los conceptos<br />que sostienen tu plan
         </h1>
@@ -4935,7 +4968,27 @@ export function ScreenAprende() {
         </div>
       )}
 
-      <footer style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, lineHeight: T.lh.relaxed, color: T.faint }}>
+      {/* Nota de donación · café (cartel, sobria). Clona el patrón de donaciones (icono SVG ya en uso).
+          Vacío → «· pronto». Cero red: son <a href>, no fetch. */}
+      <div style={{ marginTop: 40, paddingTop: 24, borderTop: '1px dashed ' + T.lineSoft, textAlign: 'center' }}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: 'block', margin: '0 auto 10px' }}>
+          <path d="M4 9h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z" />
+          <path d="M17 10h2.2a2.3 2.3 0 0 1 0 4.6H17" />
+          <path d="M7.5 3.4c-.5.7-.5 1.3 0 2M11 3.4c-.5.7-.5 1.3 0 2" />
+        </svg>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.lead, color: T.ink, lineHeight: T.lh.snug, maxWidth: 460, margin: '0 auto' }}>
+          Mi Plan es gratuito y sin anuncios. Si te ayuda, puedes invitarme a un café.
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 16 }}>
+          {[{ url: DONATE_KOFI_URL, label: 'Ko-fi' }, { url: DONATE_GITHUB_URL, label: 'GitHub' }].map((dn) => (
+            dn.url
+              ? <a key={dn.label} href={dn.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '8px 14px', borderRadius: 999, background: T.accent, color: T.bg, textDecoration: 'none', whiteSpace: 'nowrap' }}>{dn.label} →</a>
+              : <span key={dn.label} style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '8px 14px', borderRadius: 999, border: '1px solid ' + T.lineSoft, color: T.faint, whiteSpace: 'nowrap' }}>{dn.label} · pronto</span>
+          ))}
+        </div>
+      </div>
+
+      <footer style={{ marginTop: 40, paddingTop: 24, borderTop: '1px solid ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, lineHeight: T.lh.relaxed, color: T.faint }}>
         {LEARN_DISCLAIMER}
       </footer>
 
@@ -5165,7 +5218,7 @@ export function ScreenHogar() {
 
       {/* Diagrama compartido */}
       <Card>
-        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 10, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.muted, letterSpacing: 0 }}>
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 10, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>
           {shown.map((s) => (
             <span key={s.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 14, height: 3, background: s.color, borderRadius: 2, display: 'inline-block' }} />{s.label}
@@ -5185,7 +5238,7 @@ export function ScreenHogar() {
           {people.map((p) => (
             <button key={p.id} onClick={() => switchAccount(p.id)} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 10, alignItems: 'center', padding: '10px 12px', borderRadius: 10, background: T.paper, border: '1px solid ' + T.line, cursor: 'pointer', textAlign: 'left', fontFamily: T.serif, color: T.ink }}>
               <span style={{ width: 10, height: 10, borderRadius: 999, background: p.color, flexShrink: 0 }} />
-              <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.body, letterSpacing: T.tracking.tight }}>{p.label}{p.edad != null && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: T.green, marginLeft: 8, letterSpacing: 0 }}>★ libre a los {p.edad}</span>}</span>
+              <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.body, letterSpacing: T.tracking.tight }}>{p.label}{p.edad != null && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.green, marginLeft: 8, letterSpacing: 0 }}>★ libre a los {p.edad}</span>}</span>
               <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide, textAlign: 'right' }}>{fmtEur(p.portfolioNow)} · {fmtEur(p.aporte)}/mes</span>
             </button>
           ))}
