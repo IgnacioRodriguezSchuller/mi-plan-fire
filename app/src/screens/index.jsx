@@ -1391,7 +1391,7 @@ export function ScreenHoy({ goTo }) {
   // Tamaños display LOCALES y estables (los tokens displayMd/displayLg son clamp()
   // dependiente de vw y encogen en anchos intermedios; aquí la columna es fija a
   // 720, así que fijamos el tamaño: móvil = mínimos actuales, escritorio = constante).
-  const DISPLAY_LG = mobile ? 28 : 44;   // "Hola, {nombre}"
+  const DISPLAY_LG = mobile ? 34 : 56;   // "Hola, {nombre}" · igualado al titular grande del resto de pantallas
   const DISPLAY_MD = mobile ? 24 : 32;   // títulos de sección, "Sin un plan", cifras clave
 
   return (
@@ -3565,7 +3565,7 @@ export function ScreenAjustes() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
       <div>
         <SectionTag>Datos</SectionTag>
-        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4 }}>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXxl, lineHeight: 1.02, letterSpacing: T.tracking.display, marginTop: 8 }}>
           Quién eres y dónde están tus cuentas.
         </div>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 8, maxWidth: 640, lineHeight: T.lh.normal }}>
@@ -5187,7 +5187,7 @@ export function ScreenHogar() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
       <div>
         <SectionTag>Vuestro hogar</SectionTag>
-        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, letterSpacing: T.tracking.display, marginTop: 4, lineHeight: T.lh.tight, textWrap: 'pretty' }}>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXxl, letterSpacing: T.tracking.display, marginTop: 8, lineHeight: T.lh.tight, textWrap: 'pretty' }}>
           Entre {list.length === 2 ? 'los dos' : 'todos'} tenéis <em style={{ color: T.accent }}>{fmtEur(totalNow)}</em> hoy.
           <span style={{ color: T.muted }}> Y cada mes sumáis {fmtEur(totalAporte)} a vuestro futuro.</span>
         </div>
