@@ -397,7 +397,9 @@ export function Onboarding() {
       input: (
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-            <EditableNumber value={data.age} onChange={(v) => set('age', v)} min={16} max={80} width={140} />
+            <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.accent }}>
+              <EditableValue value={data.age} onChange={(v) => set('age', v)} min={16} max={80} big ariaLabel="Edad" />
+            </span>
             <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.muted }}>años</span>
           </div>
           <input type="range" min="18" max="70" value={data.age} onChange={(e) => set('age', +e.target.value)}
@@ -415,7 +417,9 @@ export function Onboarding() {
       input: (
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 18 }}>
-            <EditableNumber value={data.capital} onChange={(v) => set('capital', v)} min={0} max={10_000_000} width={220} />
+            <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.accent }}>
+              <EditableValue value={data.capital} onChange={(v) => set('capital', v)} min={0} max={10_000_000} big ariaLabel="Capital inicial" />
+            </span>
             <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.muted }}>€</span>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -443,7 +447,9 @@ export function Onboarding() {
       input: (
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
-            <EditableNumber value={data.income} onChange={(v) => set('income', v)} min={0} max={50000} color={T.accent} />
+            <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.accent }}>
+              <EditableValue value={data.income} onChange={(v) => set('income', v)} min={0} max={50000} big ariaLabel="Ingreso mensual neto" />
+            </span>
             <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.muted }}>€ / mes</span>
             <span style={{
               fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '5px 10px',
@@ -537,11 +543,10 @@ export function Onboarding() {
             ].map((opt) => (
               <button key={opt.id} onClick={() => set('savingType', opt.id)}
                 style={{
-                  flex: 1, fontFamily: T.mono, fontSize: T.size.eyebrow, padding: '10px 12px',
+                  flex: 1, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, padding: '11px 12px',
                   background: data.savingType === opt.id ? T.ink : 'transparent',
                   color: data.savingType === opt.id ? T.bg : T.muted,
                   border: 'none', borderRadius: 999, cursor: 'pointer',
-                  letterSpacing: T.tracking.wider, textTransform: 'uppercase',
                 }}>{opt.l}</button>
             ))}
           </div>
@@ -553,10 +558,12 @@ export function Onboarding() {
             const tier = getSavingsTier(data.savingPercent);
             return (
             <>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6, flexWrap: 'wrap' }}>
-                <EditableNumber value={data.savingPercent} onChange={(v) => set('savingPercent', Math.max(0, Math.min(100, v)))} min={0} max={100} color={T.accent} />
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.accent }}>
+                  <EditableValue value={data.savingPercent} onChange={(v) => set('savingPercent', Math.max(0, Math.min(100, v)))} min={0} max={100} big ariaLabel="Porcentaje de ahorro" />
+                </span>
                 <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.muted }}>%</span>
-                <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: tier.color, letterSpacing: 0 }}>{tier.label}</span>
+                <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: tier.color, letterSpacing: 0 }}>{tier.label}</span>
               </div>
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginBottom: 8 }}>
                 {data.income > 0 ? (
@@ -586,21 +593,18 @@ export function Onboarding() {
             const tier = data.income > 0 ? getSavingsTier(ratio) : null;
             return (
             <>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6, flexWrap: 'wrap' }}>
-                <EditableNumber value={data.monthly} onChange={(v) => set('monthly', Math.max(0, Math.min(v, 20000)))} min={0} max={20000} color={T.accent} />
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.accent }}>
+                  <EditableValue value={data.monthly} onChange={(v) => set('monthly', Math.max(0, Math.min(v, 20000)))} min={0} max={20000} big ariaLabel="Aporte fijo mensual" />
+                </span>
                 <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.muted }}>€ / mes</span>
                 {tier && (
-                  <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.eyebrow, color: tier.color, letterSpacing: 0 }}>{tier.label}</span>
+                  <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: tier.color, letterSpacing: 0 }}>{tier.label}</span>
                 )}
               </div>
               {data.income > 0 && (
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginBottom: 8 }}>
                   Hoy es un <strong style={{ color: T.accent, fontStyle: 'normal' }}>{Math.round(ratio)}%</strong>. No crecerá aunque suba tu sueldo.
-                </div>
-              )}
-              {tier && (
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: tier.color, fontSize: T.size.body, lineHeight: T.lh.normal, marginBottom: 14 }}>
-                  {tier.message}
                 </div>
               )}
               <input type="range" min="0" max={Math.max(500, data.income || 5000)} step="50" value={data.monthly} onChange={(e) => set('monthly', +e.target.value)}
@@ -765,7 +769,9 @@ export function Onboarding() {
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 18 }}>
             <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.muted }}>a los</span>
-            <EditableNumber value={data.retireAge} onChange={(v) => set('retireAge', v)} min={data.age + 1} max={90} width={140} />
+            <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.accent }}>
+              <EditableValue value={data.retireAge} onChange={(v) => set('retireAge', v)} min={data.age + 1} max={90} big ariaLabel="Edad de jubilación" />
+            </span>
             <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.muted }}>años</span>
           </div>
           <input type="range" min={data.age + 1} max="85" value={data.retireAge} onChange={(e) => set('retireAge', +e.target.value)}
