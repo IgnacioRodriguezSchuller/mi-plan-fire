@@ -39,6 +39,7 @@ import {
 } from '../modals/index.jsx'
 import { StateProvider, useStore, useDerived, usePlanMutators } from '../state/index.jsx'
 import { LandingPreOnboarding, Landing } from '../flows/index.jsx'
+import { getDeeplinkWelcome, dismissDeeplinkWelcome } from '../lib/deeplink.js'
 
 // ── Plan BASE = solo eventos CONFIRMADOS ─────────────────────────────────────
 // Fuente ÚNICA de verdad de si el TITULAR (curva hero de Proyección + Monte Carlo)
@@ -1323,6 +1324,11 @@ export function ScreenHoy({ goTo }) {
   const sinPlanKPIs = useMemo(() => computeSinPlanKPIs(plan, profile), [plan, profile]);
   const [showSinPlanModal, setShowSinPlanModal] = useState(false);
   const [verMasFuturo, setVerMasFuturo] = useState(false);  // S8 · colapsa el detalle del futuro (densidad GX2)
+  // Deep-link · nota de bienvenida si llegamos pre-rellenados desde una calculadora.
+  // getDeeplinkWelcome() es transitorio (en memoria); welcomeHidden oculta al instante,
+  // dismissDeeplinkWelcome() lo mantiene oculto al cambiar de pestaña (no persiste).
+  const [welcomeHidden, setWelcomeHidden] = useState(false);
+  const showWelcome = !welcomeHidden && !!getDeeplinkWelcome();
   const inlineLink = { background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: T.serif, fontWeight: 600, color: T.accent, fontSize: 'inherit', appearance: 'none', WebkitAppearance: 'none' };
 
   // ── Layout · el ancho/centrado de la columna lo da ahora el Shell (CONTENT_MAX),
@@ -1350,6 +1356,20 @@ export function ScreenHoy({ goTo }) {
       <div style={{ fontFamily: T.serif, fontSize: T.size.lead, color: T.muted, lineHeight: T.lh.normal, maxWidth: 640, marginTop: 10 }}>
         Esta es tu vista de conjunto: <strong style={{ color: T.ink, fontWeight: 600, fontStyle: 'normal' }}>dónde estás</strong> hoy, <strong style={{ color: T.ink, fontWeight: 600, fontStyle: 'normal' }}>hacia dónde puedes ir</strong> y <strong style={{ color: T.ink, fontWeight: 600, fontStyle: 'normal' }}>la ruta</strong> que une las dos. Los números los afinas en Proyección y los haces realidad mes a mes en Seguimiento.
       </div>
+
+      {/* Deep-link · nota sutil cuando llegamos pre-rellenados desde una calculadora.
+          Estilo NextStep (franja accent + kicker + prosa serif), descartable, sin persistir. */}
+      {showWelcome && (
+        <Card style={{ borderLeft: '3px solid ' + T.accent }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+            <Label style={{ color: T.accent, marginBottom: 0 }}>Desde la calculadora</Label>
+            <Btn variant="text" size="sm" onClick={() => { dismissDeeplinkWelcome(); setWelcomeHidden(true); }}>Entendido</Btn>
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: T.size.lead, lineHeight: T.lh.normal, color: T.ink, marginTop: 10 }}>
+            Hemos traído tus datos de la calculadora — revísalos y ajusta lo que haga falta.
+          </div>
+        </Card>
+      )}
 
       {/* Household multi-account summary (only renders if list.length > 1) */}
       <HouseholdTeaserCard goTo={goTo} />
