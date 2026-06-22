@@ -735,7 +735,7 @@ export function ConceptModal({ id, onClose, read = false, onToggleRead }) {
 
 // Portales de donación (KDP-style placeholder, configurable). Vacío → «próximamente»;
 // con URL → enlace activo. Cero red: es un <a href>, no fetch. Pega aquí tus URLs reales.
-export const DONATE_KOFI_URL = '';      // p.ej. 'https://ko-fi.com/miplanfire'
+export const DONATE_KOFI_URL = 'https://ko-fi.com/miplanfire';
 export const DONATE_GITHUB_URL = '';    // p.ej. 'https://github.com/sponsors/IgnacioRodriguezSchuller'
 // Portal de sugerencias (cero red). Vacío → «pronto»; con URL → enlace activo.
 // p.ej. 'mailto:hola@miplanfire.com?subject=Sugerencia%20para%20Mi%20Plan%20FIRE' o issues de GitHub.
