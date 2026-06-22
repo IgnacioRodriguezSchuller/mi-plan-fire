@@ -43,7 +43,7 @@ function IconArrowRight() {
   );
 }
 
-export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro', onBack, onLoadDemo }) {
+export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro', onBack, onLoadDemo, returning = false, onEnter }) {
   const mobile = useIsMobile();
   return (
     <div style={{
@@ -90,14 +90,17 @@ export function LandingPreOnboarding({ onStart, onOpenManifesto, mode = 'intro',
         <div style={{ display: 'flex', flexDirection: mobile ? 'column' : 'row', gap: 12, paddingTop: 4 }}>
           {mode === 'revisit' ? (
             <Btn variant="primary" size="lg" onClick={onBack}>← Volver</Btn>
+          ) : returning ? (
+            <Btn variant="accent" size="lg" onClick={onEnter}>Entrar →</Btn>
           ) : (
             <>
               <Btn variant="accent" size="lg" onClick={onStart}>Empezar →</Btn>
             </>
           )}
         </div>
-        {/* Acceso a la demo (antes vivía en la Landing grande, ahora reubicada como presentación). */}
-        {mode !== 'revisit' && onLoadDemo && (
+        {/* Acceso a la demo · solo para visitantes nuevos (un usuario con datos no debe poder
+            sobrescribirlos por error desde aquí; la demo sigue en Datos con confirmación). */}
+        {mode !== 'revisit' && !returning && onLoadDemo && (
           <button onClick={onLoadDemo} style={{
             fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, background: 'transparent',
             border: 'none', cursor: 'pointer', letterSpacing: T.tracking.wide, textTransform: 'uppercase',

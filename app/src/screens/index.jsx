@@ -5295,6 +5295,9 @@ export function Shell() {
   const accInitial = (accName.trim()[0] || accLabel.trim()[0] || '·').toUpperCase();
   const accColor = (state.profile && state.profile.color) || ACCOUNT_PALETTE[accIdx % ACCOUNT_PALETTE.length];
   const [showLanding, setShowLanding] = useState(false);
+  // Landing = home en CADA entrada/refresco. `entered` es de SESIÓN (no se persiste): cada carga
+  // arranca en false → se muestra la landing. Usuario con datos → «Entrar →»; nuevo → «Empezar →».
+  const [entered, setEntered] = useState(false);
   // v5.8 · Manifesto modal triggered by the secondary CTA of LandingPreOnboarding.
   // B8 · Revisit-mode landing, triggered by header logo or Ajustes button.
   // Does NOT toggle the persisted hasSeenLandingPreOnboarding flag.
@@ -5393,13 +5396,17 @@ export function Shell() {
   // La presentación (Landing en modo view) se comprueba ANTES de los guards de bienvenida/
   // onboarding → el logo-menú «Ver presentación» funciona en CUALQUIER estado, incl. onboarding.
   if (showLanding) return <Landing mode="view" onClose={() => setShowLanding(false)} />;
-  if (!state.hasSeenLandingPreOnboarding) {
+  // Puerta de sesión: la landing se muestra en cada carga (home). Quien ya tiene plan ve «Entrar →»
+  // (entra directo); el nuevo ve «Empezar →» (→ onboarding) o «Ver una demo».
+  if (!entered) {
     return (
       <>
         <LandingPreOnboarding
           mode="intro"
-          onStart={() => update({ hasSeenLandingPreOnboarding: true, landingSeen: true })}
-          onLoadDemo={() => seedDemo()}
+          returning={!!state.onboardingComplete}
+          onStart={() => { update({ hasSeenLandingPreOnboarding: true, landingSeen: true }); setEntered(true); }}
+          onEnter={() => setEntered(true)}
+          onLoadDemo={() => { seedDemo(); setEntered(true); }}
         />
       </>
     );
