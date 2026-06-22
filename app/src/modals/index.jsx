@@ -317,18 +317,23 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(78px, 1fr))', gap: 8 }}>
                 {cells.map(({ idx, month }) => {
                   const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-                  const planned = month ? computePlannedFor(plan, month.key) : 0;
+                  // El objetivo del mes: el del plan VIVO para ese mes; si es 0 (mes anterior al
+                  // inicio del segmento de ahorro), se cae al `planned` guardado al registrarlo.
+                  // Sin objetivo real (0) → neutral, NO verde (no había meta contra la que comparar).
+                  const planned = month ? (computePlannedFor(plan, month.key) || month.planned || 0) : 0;
                   const actual = month && month.actual != null ? month.actual : null;
                   let bg, color, border;
                   if (!month || actual == null) {
                     bg = T.panel; color = T.muted; border = '1px dashed ' + T.line;
+                  } else if (planned <= 0) {
+                    bg = T.paper; color = T.ink; border = '1px solid ' + T.line;
                   } else if (actual >= planned) {
                     bg = 'rgba(21,128,61,0.18)'; color = T.green; border = '1px solid ' + T.green;
                   } else {
                     bg = 'rgba(180,83,9,0.14)'; color = T.amber; border = '1px solid ' + T.amber;
                   }
                   const onCellClick = () => {
-                    if (month) { setActiveKey(month.key); return; }
+                    if (month) { setActiveKey(activeKey === month.key ? null : month.key); return; }
                     const key = ensureMonth(year, idx);
                     setActiveKey(key);
                   };
@@ -358,7 +363,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
             <div style={{ display: 'flex', gap: 22, marginTop: 10, flexWrap: 'wrap', alignItems: 'baseline' }}>
               <div>
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Plan</div>
-                <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(computePlannedFor(plan, activeMonth.key))}</div>
+                <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(computePlannedFor(plan, activeMonth.key) || activeMonth.planned || 0)}</div>
               </div>
               <div>
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Real</div>

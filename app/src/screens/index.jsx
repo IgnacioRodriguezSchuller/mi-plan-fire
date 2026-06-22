@@ -1974,8 +1974,10 @@ export function ScreenMesAMes() {
 export function MonthRow({ month, isCurrent, onChange }) {
   const { state } = useStore();
   const mobile = useIsMobile();
-  // Live compute the planned for this month from current tramos
-  const plannedComputed = useMemo(() => computePlannedFor(state.plan, month.key), [state.plan, month.key]);
+  // Objetivo del mes: el del plan vivo; si es 0 (mes anterior al inicio del segmento de ahorro)
+  // se cae al `planned` guardado al registrarlo, para que los meses pasados se comparen contra
+  // el objetivo que aplicó entonces (sin esto, plan=0 → todo «cumplido»).
+  const plannedComputed = useMemo(() => computePlannedFor(state.plan, month.key) || month.planned || 0, [state.plan, month.key, month.planned]);
   const incomeAtMonth = useMemo(() => computeIncomeFor(state.plan, month.key), [state.plan, month.key]);
   const seg = useMemo(() => findActiveSegment(state.plan.savingSegments, month.key), [state.plan.savingSegments, month.key]);
   const ratio = month.actual != null && plannedComputed ? month.actual / plannedComputed : null;
