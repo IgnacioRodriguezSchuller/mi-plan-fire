@@ -24,15 +24,24 @@ export function StateProvider({ children }) {
   // The "current" state is the active account's state
   const state = accountsData.accounts[accountsData.activeId]?.state || emptyState();
 
-  // setState writes into the active account
+  // setState writes into the active account. Además, el NOMBRE de la cuenta (label) sigue al del
+  // usuario (profile.name): si el nombre cambia y el label es por defecto/sincronizado, se actualiza.
+  // Único sitio con esta regla (lo usan update/updateProfile/finish del onboarding…). Respeta los
+  // renombrados manuales (renameAccount deja un label distinto → no se sobrescribe).
   const setState = useCallback((updater) => {
     setAccountsData((d) => {
       const cur = d.accounts[d.activeId];
       if (!cur) return d;
       const newState = typeof updater === 'function' ? updater(cur.state) : updater;
+      let label = cur.label;
+      const prevName = (cur.state.profile && cur.state.profile.name) || '';
+      const newName = (newState.profile && newState.profile.name) || '';
+      if (newName && newName !== prevName && (cur.label === 'Mi cuenta' || cur.label === 'Nueva persona' || !cur.label || cur.label === prevName)) {
+        label = newName.trim() || cur.label;
+      }
       return {
         ...d,
-        accounts: { ...d.accounts, [d.activeId]: { ...cur, state: newState } },
+        accounts: { ...d.accounts, [d.activeId]: { ...cur, state: newState, label } },
       };
     });
   }, []);
@@ -72,18 +81,8 @@ export function StateProvider({ children }) {
   const update = useCallback((patch) => {
     setState((s) => (typeof patch === 'function' ? patch(s) : { ...s, ...patch }));
   }, []);
-  const updateProfile = useCallback((p) => setAccountsData((d) => {
-    const cur = d.accounts[d.activeId];
-    if (!cur) return d;
-    const prevName = (cur.state.profile && cur.state.profile.name) || '';
-    const newState = { ...cur.state, profile: { ...cur.state.profile, ...p } };
-    let label = cur.label;
-    // El nombre de la cuenta sigue al del usuario, salvo que se haya renombrado a mano.
-    if (p.name != null && (cur.label === 'Mi cuenta' || cur.label === 'Nueva persona' || !cur.label || cur.label === prevName)) {
-      label = (p.name && p.name.trim()) || cur.label;
-    }
-    return { ...d, accounts: { ...d.accounts, [d.activeId]: { ...cur, state: newState, label } } };
-  }), []);
+  // El sync nombre→label vive en setState (único sitio). updateProfile solo escribe el perfil.
+  const updateProfile = useCallback((p) => setState((s) => ({ ...s, profile: { ...s.profile, ...p } })), [setState]);
 
   // updatePlan now writes to sandbox if active, otherwise to real plan
   const updatePlan = useCallback((p) => setState((s) => {

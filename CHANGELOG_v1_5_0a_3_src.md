@@ -2109,3 +2109,10 @@ Tres arreglos de UX detectados por el dueño usando la app (interacción/conteni
 - **Cambio** (`screens/index.jsx`, `Shell`): barra sticky superior visible **solo** si la cuenta activa es demo (`activeAccountId` empieza por `demo-`): «Estás viendo una demo» + CTA «Empezar mi plan →» → `wipeEverything` (borra cuentas → arranque limpio → landing). El header se desplaza `DEMO_BAR_H` (40px). En ambas ramas (móvil/escritorio). Reusa `wipeEverything` (con su confirmación).
 - **No tocado**: flujo de arranque (landing → onboarding → plan; demo solo por toque), `seedDemo`, motor, tokens, claves, baseline.
 - **Verificación**: preview con demo → aparece la barra; «Empezar mi plan» → confirma → `activeId:'default'` y vuelve a la landing; sin demo no aparece. Build OK; `verify-content`/`verify-state` PASS; lib 13 / tokens 2; baseline intacto.
+
+### Nombre de cuenta = nombre del usuario
+- **Petición del dueño**: al crear una cuenta, el nombre de la cuenta (label) debe ser el del usuario, y la inicial del círculo la primera letra del nombre.
+- **Causa raíz**: la inicial ya era `profile.name[0]` (#T5) y `updateProfile` ya sincronizaba el label, pero el **fin del onboarding** escribe `profile.name` vía `update()`→`setState()`, que solo tocaba `.state` (no el `label`) → la cuenta nueva se quedaba en «Nueva persona».
+- **Cambio** (`state/index.jsx`): la regla nombre→label se mueve a `setState` (chokepoint común): si `profile.name` cambia y el label es por defecto/sincronizado (`'Mi cuenta'`|`'Nueva persona'`|vacío|== nombre anterior), el label pasa a ser el nombre. Respeta renombrados manuales (`renameAccount`). `updateProfile` se simplifica para enrutar por `setState` (regla en un único sitio). Inicial sin cambios (ya era `name[0]`).
+- **No tocado**: `createAccount` (label por defecto sigue de fallback), claves localStorage, `migrateToV2`, baseline.
+- **Verificación**: preview — editar nombre «Alex»→«Carlos» en Datos → label de cuenta «Carlos», círculo «C», aria «Menú de cuenta · Carlos». Build OK; verify-content/state PASS; lib 13 / tokens 2; baseline intacto.
