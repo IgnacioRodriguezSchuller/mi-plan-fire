@@ -35,7 +35,7 @@ import {
 } from '../content/index.js'
 import {
   ConfirmModal, MonthlyCalendarModal, PublicPensionDisclaimerModal,
-  Concept, ConceptModal, AboutModal,
+  Concept, ConceptModal, WhyModal,
   DONATE_KOFI_URL, DONATE_GITHUB_URL, SUGGEST_URL,
 } from '../modals/index.jsx'
 import { StateProvider, useStore, useDerived, usePlanMutators } from '../state/index.jsx'
@@ -1854,6 +1854,15 @@ export function ScreenMesAMes() {
     return key;
   };
 
+  // trimFutureMonths: «recoger» los periodos añadidos. Quita SOLO los meses estrictamente
+  // futuros y vacíos (actual==null y key > mes actual); conserva el mes actual, los pasados
+  // y cualquiera con dato. Seguro: `planned` se recalcula vivo, sin refs cruzadas a months.
+  const nowKey = todayKey();
+  const hasTrimmable = (state.months || []).some(m => m.actual == null && m.key > nowKey);
+  const trimFutureMonths = () => {
+    update((s) => ({ ...s, months: s.months.filter(m => !(m.actual == null && m.key > todayKey())) }));
+  };
+
   const now = new Date();
   const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
@@ -1957,6 +1966,8 @@ export function ScreenMesAMes() {
           plan={state.plan}
           setMonth={setMonth}
           addMonths={addMonths}
+          trimFutureMonths={trimFutureMonths}
+          canTrim={hasTrimmable}
           ensureMonth={ensureMonth}
           update={update}
         />
@@ -2667,6 +2678,10 @@ export function HitosEditor() {
   const [newGoal, setNewGoal] = useState({ name: '', target: 10000, targetAge: profile.age + 5, category: 'otro' });
   // Bento · el formulario de alta vive tras disclosure (P3). Formulario intacto.
   const [showAdd, setShowAdd] = useState(false);
+  // El editor de un hito se despliega DEBAJO del grid (no reemplaza el chip): el estado vive
+  // aquí (qué hito está activo), los chips conservan su orden y el activo se resalta. Toggle.
+  const [activeGoalId, setActiveGoalId] = useState(null);
+  const activeGoal = goals.find(g => g.id === activeGoalId) || null;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div>
@@ -2686,12 +2701,20 @@ export function HitosEditor() {
             </div>
           </Card>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, alignItems: 'start' }}>
-            {goals.map((g) => (
-              <GoalRow key={g.id} goal={g} d={d} profile={profile} plan={plan}
-                onChange={(p) => updateGoal(g.id, p)} onRemove={() => removeGoal(g.id)} />
-            ))}
-          </div>
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, alignItems: 'start' }}>
+              {goals.map((g) => (
+                <GoalRow key={g.id} goal={g} d={d} active={activeGoalId === g.id}
+                  onToggle={() => setActiveGoalId((id) => id === g.id ? null : g.id)} />
+              ))}
+            </div>
+            {activeGoal && (
+              <GoalEditor key={activeGoal.id} goal={activeGoal} d={d} profile={profile} plan={plan}
+                onChange={(p) => updateGoal(activeGoal.id, p)}
+                onRemove={() => { removeGoal(activeGoal.id); setActiveGoalId(null); }}
+                onClose={() => setActiveGoalId(null)} />
+            )}
+          </>
         )}
         {/* Añadir una meta · tras disclosure (P3). Formulario intacto. */}
         {!showAdd ? (
@@ -2847,10 +2870,7 @@ export function MonthlyFlowBlock() {
   return <MonthlyFlowCard plan={state.plan} profile={state.profile} />;
 }
 
-export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
-  const [editing, setEditing] = useState(false);
-  // #U1 · la «×» CIERRA la card (no borra); borrar va por «Borrar» + confirmación.
-  const [confirmDelete, setConfirmDelete] = useState(false);
+export function GoalRow({ goal, d, active, onToggle }) {
   const tg = useMemo(() => {
     const series = d.seriesPlan || [];
     for (let i = 0; i < series.length; i++) {
@@ -2861,41 +2881,42 @@ export function GoalRow({ goal, d, profile, plan, onChange, onRemove }) {
   const onTrack = tg && tg.age <= goal.targetAge;
   const progress = Math.min(100, d.currentPortfolio / goal.target * 100);
   const faltan = Math.max(0, goal.target - d.currentPortfolio);
-  const category = goal.category || 'otro';
 
-  // ── Vista · anillo de progreso (clic en la tarjeta para editar) ───────────
-  if (!editing) {
-    const RAD = 34, CIRC = 2 * Math.PI * RAD, dash = CIRC * progress / 100;
-    const col = onTrack ? T.green : T.amber;
-    return (
-      <Card>
-        <div onClick={() => setEditing(true)} role="button" tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setEditing(true); }}
-          style={{ cursor: 'pointer', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-          <svg viewBox="0 0 86 86" width="86" height="86" style={{ marginBottom: 8 }} aria-hidden="true">
-            <circle cx="43" cy="43" r={RAD} fill="none" stroke={T.lineSoft} strokeWidth="7" />
-            <circle cx="43" cy="43" r={RAD} fill="none" stroke={col} strokeWidth="7" strokeLinecap="round"
-              strokeDasharray={`${dash.toFixed(1)} ${CIRC.toFixed(1)}`} transform="rotate(-90 43 43)" />
-            <text x="43" y="48" textAnchor="middle" fontFamily={T.display} fontWeight="600" fontSize="22" fill={T.ink}>
-              {Math.round(progress)}<tspan fontSize="12" fill={T.muted}>%</tspan>
-            </text>
-          </svg>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, letterSpacing: T.tracking.tight, lineHeight: 1.15, color: T.ink }}>{goal.name}</div>
-          <div style={{ fontFamily: T.mono, fontSize: T.size.caption, letterSpacing: T.tracking.wide, color: T.muted, marginTop: 2 }}>{fmtEur(goal.target)} · {goal.targetAge} años</div>
-          <Pill color={onTrack ? T.green : T.amber} bg={onTrack ? T.greenSoft : 'rgba(180,83,9,0.10)'} border="transparent" style={{ fontSize: T.size.caption, padding: '4px 10px', marginTop: 10 }}>
-            {onTrack ? 'En camino' : 'Falta'} · faltan {fmtEur(faltan)}
-          </Pill>
-        </div>
-      </Card>
-    );
-  }
-
-  // ── Edición · campos editables (la función no se pierde, solo se pliega) ───
-  // Cualquier hito en edición ocupa TODO el ancho del grid → el editor se abre entero y limpio
-  // (no en una columna estrecha de ~180px). La vivienda además necesita aire para sus dos columnas.
+  // Chip-only: el editor se abre DEBAJO del grid (lo controla HitosEditor). Aquí solo el anillo;
+  // clic = toggle del editor; el chip activo se resalta y permanece en su sitio.
+  const RAD = 34, CIRC = 2 * Math.PI * RAD, dash = CIRC * progress / 100;
+  const col = onTrack ? T.green : T.amber;
   return (
-    <Card style={{ gridColumn: '1 / -1' }}>
-      <button onClick={() => setEditing(false)} title="Cerrar" aria-label="Cerrar"
+    <Card style={active ? { border: '1.5px solid ' + T.accent, background: T.panel } : {}}>
+      <div onClick={onToggle} role="button" tabIndex={0} aria-expanded={!!active}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
+        style={{ cursor: 'pointer', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+        <svg viewBox="0 0 86 86" width="86" height="86" style={{ marginBottom: 8 }} aria-hidden="true">
+          <circle cx="43" cy="43" r={RAD} fill="none" stroke={T.lineSoft} strokeWidth="7" />
+          <circle cx="43" cy="43" r={RAD} fill="none" stroke={col} strokeWidth="7" strokeLinecap="round"
+            strokeDasharray={`${dash.toFixed(1)} ${CIRC.toFixed(1)}`} transform="rotate(-90 43 43)" />
+          <text x="43" y="48" textAnchor="middle" fontFamily={T.display} fontWeight="600" fontSize="22" fill={T.ink}>
+            {Math.round(progress)}<tspan fontSize="12" fill={T.muted}>%</tspan>
+          </text>
+        </svg>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, letterSpacing: T.tracking.tight, lineHeight: 1.15, color: T.ink }}>{goal.name}</div>
+        <div style={{ fontFamily: T.mono, fontSize: T.size.caption, letterSpacing: T.tracking.wide, color: T.muted, marginTop: 2 }}>{fmtEur(goal.target)} · {goal.targetAge} años</div>
+        <Pill color={onTrack ? T.green : T.amber} bg={onTrack ? T.greenSoft : 'rgba(180,83,9,0.10)'} border="transparent" style={{ fontSize: T.size.caption, padding: '4px 10px', marginTop: 10 }}>
+          {onTrack ? 'En camino' : 'Falta'} · faltan {fmtEur(faltan)}
+        </Pill>
+      </div>
+    </Card>
+  );
+}
+
+// Editor de un hito · se renderiza DEBAJO del grid de chips (HitosEditor controla cuál). A ancho
+// completo (mejor sitio para HousingPathsCard). «×» o reclicar el chip lo cierran (onClose).
+export function GoalEditor({ goal, d, profile, plan, onChange, onRemove, onClose }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const category = goal.category || 'otro';
+  return (
+    <Card>
+      <button onClick={onClose} title="Cerrar" aria-label="Cerrar"
         style={{ position: 'absolute', top: 10, right: 12, fontFamily: T.mono, fontSize: T.size.body, color: T.faint, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 6px', lineHeight: 1, borderRadius: 4 }}>×</button>
       <input value={goal.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="Nombre de la meta"
         style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight, background: 'transparent', border: 'none', outline: 'none', color: T.ink, padding: 0, width: '100%', minWidth: 0, marginBottom: 10, paddingRight: 24 }} />
@@ -5061,7 +5082,7 @@ export function LogoMenu({ fontSize = 28 }) {
   );
 }
 
-export function AccountMenu({ open, anchor, onClose, onGoToAjustes, onShowAbout }) {
+export function AccountMenu({ open, anchor, onClose, onShowWhy }) {
   const { accounts, activeAccountId, switchAccount, createAccount } = useStore();
   useEffect(() => {
     if (!open) return;
@@ -5116,9 +5137,7 @@ export function AccountMenu({ open, anchor, onClose, onGoToAjustes, onShowAbout 
       })}
       <Item onClick={() => createAccount()}>+ Crear otro perfil</Item>
       <div style={{ height: 1, background: T.lineSoft, margin: '6px 0' }} />
-      <Item onClick={onGoToAjustes}>Mis datos</Item>
-      <Item onClick={onShowAbout}>Acerca de</Item>
-      <Item onClick={() => { window.__openLanding && window.__openLanding(); }}>Apoyar Mi Plan</Item>
+      <Item onClick={onShowWhy}>¿Por qué?</Item>
     </div>
   );
 }
@@ -5287,7 +5306,7 @@ export function Shell() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const accountAnchorRef = useRef(null);
   // v1.5.0a · About modal triggered from AccountMenu.
-  const [showAbout, setShowAbout] = useState(false);
+  const [showWhy, setShowWhy] = useState(false);
   // Lote 2 · pista de scroll: hay más contenido abajo y aún no se ha llegado al final.
   const [showScrollHint, setShowScrollHint] = useState(false);
   useEffect(() => {
@@ -5450,7 +5469,7 @@ export function Shell() {
               fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 11, lineHeight: 1,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             }}>{accInitial}</button>
-            <AccountMenu open={showAccountMenu} anchor={accountAnchorRef.current} onClose={() => setShowAccountMenu(false)} onGoToAjustes={() => setTab('ajustes')} onShowAbout={() => setShowAbout(true)} />
+            <AccountMenu open={showAccountMenu} anchor={accountAnchorRef.current} onClose={() => setShowAccountMenu(false)} onShowWhy={() => setShowWhy(true)} />
           </div>
         </div>
       </header>
@@ -5492,7 +5511,7 @@ export function Shell() {
       {scrollHint}
     </div>
     {globalConceptId && <ConceptModal id={globalConceptId} onClose={() => setGlobalConceptId(null)} />}
-    {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+    {showWhy && <WhyModal onClose={() => setShowWhy(false)} />}
     </>
   );
 
@@ -5521,7 +5540,7 @@ export function Shell() {
               fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 13, lineHeight: 1,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             }}>{accInitial}</button>
-            <AccountMenu open={showAccountMenu} anchor={accountAnchorRef.current} onClose={() => setShowAccountMenu(false)} onGoToAjustes={() => setTab('ajustes')} onShowAbout={() => setShowAbout(true)} />
+            <AccountMenu open={showAccountMenu} anchor={accountAnchorRef.current} onClose={() => setShowAccountMenu(false)} onShowWhy={() => setShowWhy(true)} />
           </div>
         </div>
       </header>
@@ -5547,7 +5566,7 @@ export function Shell() {
       {scrollHint}
     </div>
     {globalConceptId && <ConceptModal id={globalConceptId} onClose={() => setGlobalConceptId(null)} />}
-    {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+    {showWhy && <WhyModal onClose={() => setShowWhy(false)} />}
     </>
   );
 }

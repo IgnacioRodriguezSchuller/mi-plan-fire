@@ -13,7 +13,7 @@ import {
 import { project, projectV2, projectDecumulation, projectStandardPlan } from '../lib/index.js'
 import {
   ConfirmModal, WhyDifferentModal, MonthlyCalendarModal, PublicPensionDisclaimerModal,
-  ProgressionWizard, Concept, ConceptModal, AboutModal,
+  ProgressionWizard, Concept, ConceptModal, WhyModal,
 } from '../modals/index.jsx'
 import { TABLON, LEARN_CORPUS } from '../content/index.js'
 import { LandingPreOnboarding, Landing } from '../flows/index.jsx'
@@ -221,7 +221,7 @@ export default function Gallery() {
         <Btn variant="ghost" size="sm" onClick={() => setOpenModal('calendar')}>MonthlyCalendarModal</Btn>
         <Btn variant="ghost" size="sm" onClick={() => setOpenModal('pension')}>PublicPensionDisclaimerModal</Btn>
         <Btn variant="ghost" size="sm" onClick={() => setOpenModal('wizard')}>ProgressionWizard</Btn>
-        <Btn variant="ghost" size="sm" onClick={() => setOpenModal('about')}>AboutModal</Btn>
+        <Btn variant="ghost" size="sm" onClick={() => setOpenModal('about')}>WhyModal</Btn>
         <Btn variant="ghost" size="sm" onClick={() => setOpenModal('concept')}>ConceptModal (directo)</Btn>
       </Section>
 
@@ -296,7 +296,7 @@ export default function Gallery() {
       )}
       {openModal === 'pension' && <PublicPensionDisclaimerModal open onCancel={() => setOpenModal(null)} onConfirm={() => setOpenModal(null)} />}
       {openModal === 'wizard' && <ProgressionWizard onClose={() => setOpenModal(null)} onApply={() => setOpenModal(null)} />}
-      {openModal === 'about' && <AboutModal onClose={() => setOpenModal(null)} />}
+      {openModal === 'about' && <WhyModal onClose={() => setOpenModal(null)} />}
       {openModal === 'concept' && <ConceptModal id="interes-compuesto" onClose={() => setOpenModal(null)} />}
 
       {/* Flows a pantalla completa (preview con cierre flotante) */}

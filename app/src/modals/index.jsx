@@ -241,7 +241,7 @@ export function WhyDifferentModal({ onClose }) {
 }
 
 
-export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensureMonth, update, onClose, inline = false }) {
+export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, trimFutureMonths, canTrim, ensureMonth, update, onClose, inline = false }) {
   const [activeKey, setActiveKey] = useState(null);
   useEffect(() => {
     if (inline) return;  // inline: vive en el flujo de la página, sin lock de scroll ni captura global de Escape
@@ -395,6 +395,7 @@ export function MonthlyCalendarModal({ grouped, plan, setMonth, addMonths, ensur
           <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted }}>Añadir periodos</span>
           <Btn variant="ghost" size="sm" onClick={() => addMonths(6)}>+ 6 meses</Btn>
           <Btn variant="ghost" size="sm" onClick={() => addMonths(12)}>+ 1 año</Btn>
+          {canTrim && trimFutureMonths && <Btn variant="ghost" size="sm" onClick={() => { setActiveKey(null); trimFutureMonths(); }}>− Recoger</Btn>}
         </div>
       </div>
   );
@@ -740,7 +741,7 @@ export const DONATE_GITHUB_URL = '';    // p.ej. 'https://github.com/sponsors/Ig
 // p.ej. 'mailto:hola@miplanfire.com?subject=Sugerencia%20para%20Mi%20Plan%20FIRE' o issues de GitHub.
 export const SUGGEST_URL = '';
 
-export function AboutModal({ onClose }) {
+export function WhyModal({ onClose }) {
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -769,11 +770,11 @@ export function AboutModal({ onClose }) {
           style={{ position: 'absolute', top: 14, right: 14, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, padding: 8, letterSpacing: T.tracking.wider }}>
           ✕ CERRAR
         </button>
-        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 28 : 34, letterSpacing: T.tracking.tight, lineHeight: T.lh.tight, color: T.ink, marginBottom: 6 }}>
-          <em style={{ color: T.accent }}>Mi Plan FIRE</em>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 34 : 44, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, color: T.accent, marginBottom: 6 }}>
+          ¿Por qué?
         </div>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint, marginBottom: 22 }}>
-          Planificador FIRE honesto, libre y local
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.lead, letterSpacing: 0, color: T.muted, marginBottom: 22 }}>
+          La asignatura que nunca nos dieron.
         </div>
         {(() => {
           const para = { fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.relaxed, marginBottom: 14 };
@@ -781,32 +782,34 @@ export function AboutModal({ onClose }) {
           return (
             <>
               <div style={para}>
-                Una herramienta para ver, <strong style={strong}>sin promesas</strong>, hacia dónde te lleva lo que ahorras: proyección a 30 años, Monte Carlo, tu número FIRE, diagnóstico, rebalanceo, comparador de escenarios y vista de hogar. <strong style={strong}>Todo incluido</strong> — no hay versión de pago ni funciones bloqueadas.
+                Nadie nos enseñó a manejar el dinero. Ni en el colegio, ni en la universidad, ni en casa — lo aprendemos tarde, a base de errores caros, o nunca. Y mientras, la <strong style={strong}>inflación</strong> y el <strong style={strong}>interés compuesto</strong> trabajan cada día: a favor de quien los entiende, en contra de quien los ignora.
               </div>
               <div style={para}>
-                Funciona <strong style={strong}>entera en tu navegador</strong>. Tus datos no salen de tu dispositivo: sin cuenta, sin nube, sin seguimiento, sin anuncios. Cuando borras, se borra. Puedes exportarlos cuando quieras.
+                Mi Plan nace de ahí: poner en tus manos lo que deberían habernos contado. Ver, con tus cifras y <strong style={strong}>sin promesas</strong>, hacia dónde te lleva lo que ahorras hoy. No para venderte nada — <strong style={strong}>para que abras los ojos</strong>.
               </div>
-              <div style={{ ...para, marginBottom: 24 }}>
-                Es <strong style={strong}>software libre y gratuito</strong> (AGPL-3.0). No es asesoramiento financiero ni garantiza rentabilidades: es una calculadora honesta, las matemáticas las pones tú.
+              <div style={{ ...para, marginBottom: 4 }}>
+                Por debajo es una calculadora honesta: proyección a 30 años, tu número FIRE, Monte Carlo, diagnóstico, escenarios y hogar. Todo incluido, sin versión de pago. Funciona <strong style={strong}>entera en tu navegador</strong> — sin cuenta, sin nube, sin seguimiento, sin anuncios; cuando borras, se borra. Software libre (AGPL-3.0). No es asesoramiento financiero ni garantiza rentabilidades: las matemáticas las pones tú.
               </div>
             </>
           );
         })()}
-        {/* Donaciones · enlaces (cero red). Vacío → «próximamente». */}
-        <div style={{ paddingTop: 20, borderTop: '1px solid ' + T.lineSoft }}>
-          <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal, marginBottom: 14 }}>
-            Mantenerlo y mejorarlo lleva tiempo. Si te resulta útil y quieres echar una mano:
+        {/* Donación · visual (cero red). Icono café ya en uso. Vacío → «· pronto». */}
+        <div style={{ marginTop: 24, padding: mobile ? '22px 18px' : '26px 24px', background: T.paper, border: '1.5px solid ' + T.accent, borderRadius: 14, textAlign: 'center' }}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: 'block', margin: '0 auto 10px' }}>
+            <path d="M4 9h13v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z" />
+            <path d="M17 10h2.2a2.3 2.3 0 0 1 0 4.6H17" />
+            <path d="M7.5 3.4c-.5.7-.5 1.3 0 2M11 3.4c-.5.7-.5 1.3 0 2" />
+          </svg>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.lead, color: T.ink, lineHeight: T.lh.snug, maxWidth: 380, margin: '0 auto' }}>
+            Es gratis y sin anuncios. Si te abre los ojos, puedes invitarme a un café.
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {[
-              { url: DONATE_KOFI_URL, label: 'Invítame a un café' },
-              { url: DONATE_GITHUB_URL, label: 'Patrocina en GitHub' },
-            ].map((d) => (
-              d.url
-                ? <a key={d.label} href={d.url} target="_blank" rel="noopener noreferrer"
-                    style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '10px 16px', borderRadius: 999, background: T.ink, color: T.bg, textDecoration: 'none', whiteSpace: 'nowrap' }}>{d.label} →</a>
-                : <span key={d.label}
-                    style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '10px 16px', borderRadius: 999, border: '1px solid ' + T.line, color: T.faint, whiteSpace: 'nowrap' }}>{d.label} · próximamente</span>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 16 }}>
+            {[{ url: DONATE_KOFI_URL, label: 'Ko-fi' }, { url: DONATE_GITHUB_URL, label: 'GitHub' }].map((dn) => (
+              dn.url
+                ? <a key={dn.label} href={dn.url} target="_blank" rel="noopener noreferrer"
+                    style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '9px 16px', borderRadius: 999, background: T.accent, color: T.bg, textDecoration: 'none', whiteSpace: 'nowrap' }}>{dn.label} →</a>
+                : <span key={dn.label}
+                    style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', padding: '9px 16px', borderRadius: 999, border: '1px solid ' + T.lineSoft, color: T.faint, whiteSpace: 'nowrap' }}>{dn.label} · pronto</span>
             ))}
           </div>
         </div>
