@@ -5280,7 +5280,7 @@ export function ScreenHogar() {
 }
 
 export function Shell() {
-  const { state, update, seedDemo, accounts, activeAccountId } = useStore();
+  const { state, update, seedDemo, wipeEverything, accounts, activeAccountId } = useStore();
   const mobile = useIsMobile();
   // Tab «Hogar» solo con 2+ cuentas (un hogar son varias personas).
   const isHousehold = Object.keys(accounts || {}).length > 1;
@@ -5455,10 +5455,30 @@ export function Shell() {
     </div>
   ) : null;
 
+  // Barra de modo demo · solo cuando la cuenta activa es una demo (demo-alex/demo-marta).
+  // Salida de un toque: «Empezar mi plan» → wipeEverything (borra la demo → arranque limpio).
+  // Sticky arriba; el header se desplaza DEMO_BAR_H para no taparse (ver `top` del header).
+  const isDemoAccount = String(activeAccountId || '').startsWith('demo-');
+  const DEMO_BAR_H = 40;
+  const demoBar = isDemoAccount ? (
+    <div style={{
+      position: 'sticky', top: 0, zIndex: 55, height: DEMO_BAR_H, boxSizing: 'border-box',
+      background: T.accent, color: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      gap: 12, padding: '0 12px', whiteSpace: 'nowrap', overflow: 'hidden',
+    }}>
+      <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption }}>Estás viendo una demo</span>
+      <button onClick={wipeEverything} style={{
+        fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase',
+        background: T.bg, color: T.accent, border: 'none', borderRadius: 999, padding: '5px 12px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+      }}>Empezar mi plan →</button>
+    </div>
+  ) : null;
+
   if (mobile) return (
     <>
     <div style={{ width: '100vw', minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: T.serif, display: 'flex', flexDirection: 'column' }}>
-      <header style={{ padding: '10px 14px', background: T.panel, borderBottom: '1px solid ' + T.line, display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50 }}>
+      {demoBar}
+      <header style={{ padding: '10px 14px', background: T.panel, borderBottom: '1px solid ' + T.line, display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: isDemoAccount ? DEMO_BAR_H : 0, zIndex: 50 }}>
         <LogoMenu fontSize={22} />
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <KpiPill onClick={() => setTab('proy')} />
@@ -5518,7 +5538,8 @@ export function Shell() {
   return (
     <>
     <div style={{ width: '100vw', minHeight: '100vh', background: T.bg, color: T.ink, fontFamily: T.serif, display: 'flex', flexDirection: 'column' }}>
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: T.panel, borderBottom: '1px solid ' + T.line, padding: '14px clamp(24px, 3vw, 48px)', display: 'flex', alignItems: 'center', gap: 28 }}>
+      {demoBar}
+      <header style={{ position: 'sticky', top: isDemoAccount ? DEMO_BAR_H : 0, zIndex: 50, background: T.panel, borderBottom: '1px solid ' + T.line, padding: '14px clamp(24px, 3vw, 48px)', display: 'flex', alignItems: 'center', gap: 28 }}>
         <LogoMenu fontSize={28} />
         <nav style={{ display: 'flex', gap: 24, flex: 1 }}>
           {tabs.map((t) => (
