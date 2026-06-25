@@ -1327,6 +1327,122 @@ export function SinMiPlanModal({ onClose }) {
   );
 }
 
+// Rentabilidades históricas de REFERENCIA (cero red · cifras estáticas, nominales, aproximadas,
+// a largo plazo). Alineadas con los supuestos internos del motor (planReturn 8, deposits ~2,
+// «S&P 500 μ≈9,35% nominal»). Orden peor→mejor para que el color (rojo→verde) cuente la historia.
+const HISTORICAL_RETURNS = [
+  { key: 'cash',   label: 'Cuenta corriente',            what: 'Tu dinero parado. La inflación se lo come.',          ret: 0.5, color: T.red },
+  { key: 'bonds',  label: 'Renta fija / depósitos',      what: 'Prestar a estados y empresas solventes.',             ret: 2.5, color: T.amber },
+  { key: 'mix',    label: 'Cartera 60/40',               what: 'Bolsa y bonos a partes. Más tranquila, menos retorno.', ret: 6, color: T.muted },
+  { key: 'world',  label: 'Bolsa mundial · MSCI World',  what: '~1.500 empresas de los países desarrollados.',        ret: 8,   color: T.green },
+  { key: 'sp500',  label: 'S&P 500 · EE. UU.',           what: 'Las 500 mayores empresas de Estados Unidos.',         ret: 9.5, color: T.green },
+];
+const RETURNS_NOTE = 'Rentabilidad media anual histórica · nominal y aproximada · a largo plazo (decenas de años).';
+
+// Gráfico de barras «a mano» (estilo cartel): barras horizontales por dónde pones el dinero,
+// con línea de referencia discontinua en el 8% que asume Mi Plan.
+function ReturnsBars() {
+  const rows = HISTORICAL_RETURNS;
+  const W = 640, rowH = 52, padT = 28, padB = 4;
+  const H = padT + rows.length * rowH + padB;
+  const marginL = 2, marginR = 6, fullW = W - marginL - marginR;
+  const maxRet = 10.5;
+  const x8 = marginL + (8 / maxRet) * fullW;
+  const fmtR = (v) => (Number.isInteger(v) ? String(v) : fmtNum(v, 1)) + ' %';
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }} aria-label="Rentabilidad media anual histórica según dónde inviertes">
+      {/* referencia · 8% que asume Mi Plan */}
+      <line x1={x8} y1={padT - 4} x2={x8} y2={H - padB} stroke={T.accent} strokeWidth="1.5" strokeDasharray="3 4" />
+      <text x={x8} y={padT - 10} textAnchor="middle" fontFamily={T.serif} fontStyle="italic" fontSize="12" fill={T.accent}>8 % · Mi Plan</text>
+      {rows.map((r, i) => {
+        const yL = padT + i * rowH;
+        const yBar = yL + 24;
+        const full = (r.ret / maxRet) * fullW;
+        return (
+          <g key={r.key}>
+            <text x={marginL} y={yL + 12} textAnchor="start" fontFamily={T.serif} fontStyle="italic" fontSize="14.5" fill={T.ink}>{r.label}</text>
+            <text x={W - marginR} y={yL + 13} textAnchor="end" fontFamily={T.display} fontWeight="600" fontSize="16" fill={r.color}>{fmtR(r.ret)}</text>
+            <rect x={marginL} y={yBar} height="13" rx="6.5" fill={T.lineSoft} opacity="0.55" width={fullW} />
+            <rect x={marginL} y={yBar} height="13" rx="6.5" fill={r.color} width={full} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// Ventana «¿De dónde sale el 8%? · ¿En qué se invierte?» — visual, honesta, sin vender.
+// Enlaza a los conceptos que YA existen en Aprende (no duplica el corpus cerrado).
+export function ReturnsExplainerModal({ onClose, planReturn = 8 }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
+  }, [onClose]);
+  const mobile = useIsMobile();
+  // Cierra esta ventana y abre el concepto de Aprende (queda por encima al cerrarse esta).
+  const goLearn = (id) => { onClose(); if (window.__openLearnConcept) window.__openLearnConcept(id); };
+  const inkLink = { background: 'transparent', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer', borderBottom: '1px dashed ' + T.accent };
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(26,22,18,0.62)', zIndex: 1200, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '32px 16px', overflowY: 'auto' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: T.bg, maxWidth: 760, width: '100%', borderRadius: 14, padding: mobile ? 24 : 36, fontFamily: T.serif, color: T.ink, boxShadow: '0 24px 60px rgba(26,22,18,0.3)', position: 'relative' }}>
+        <button onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', top: 14, right: 14, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, padding: 8, letterSpacing: T.tracking.wider }}>✕ CERRAR</button>
+        <SectionTag>El motor</SectionTag>
+        <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4, color: T.ink }}>
+          ¿De dónde sale el {planReturn} %? ¿Y en qué se invierte?
+        </div>
+        <p style={{ fontFamily: T.serif, fontSize: T.size.lead, color: T.muted, lineHeight: T.lh.normal, marginTop: 12, marginBottom: 0 }}>
+          El {planReturn} % no es magia ni una promesa. Es, más o menos, lo que ha rendido a largo plazo el dinero invertido en <strong style={{ color: T.ink, fontStyle: 'normal' }}>bolsa mundial diversificada y barata</strong>. Aquí lo ves — sin venderte nada.
+        </p>
+        <div style={{ marginTop: 22 }}><ReturnsBars /></div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, marginTop: 6, lineHeight: T.lh.normal }}>{RETURNS_NOTE}</div>
+
+        {/* Qué es cada uno */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 22 }}>
+          {HISTORICAL_RETURNS.map((r) => (
+            <div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: r.color, flexShrink: 0, alignSelf: 'center' }} aria-hidden="true" />
+              <div style={{ fontSize: T.size.body, lineHeight: T.lh.snug }}>
+                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', color: T.ink }}>{r.label}</span>
+                <span style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted }}> — {r.what}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Avisos honestos */}
+        <div style={{ marginTop: 22, padding: mobile ? '16px' : '18px 20px', background: T.panel, borderRadius: 12, border: '1px solid ' + T.line }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, marginBottom: 10 }}>Lo que tienes que tener claro</div>
+          <ul style={{ margin: 0, paddingLeft: 18, fontFamily: T.serif, fontSize: T.size.body, color: T.muted, lineHeight: T.lh.normal, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <li><strong style={{ color: T.ink, fontStyle: 'normal' }}>La rentabilidad pasada no garantiza la futura.</strong> Son cifras históricas, no una promesa.</li>
+            <li>Por el camino hay <button onClick={() => goLearn('volatilidad')} style={inkLink}>caídas del −30 % al −50 %</button>; aguantarlas es el precio de ese retorno.</li>
+            <li>El dinero en <strong style={{ color: T.ink, fontStyle: 'normal' }}>cuenta corriente no da esto</strong>: para obtenerlo hay que invertir. Mi Plan asume un {planReturn} % (≈ bolsa mundial, por debajo del S&P 500).</li>
+            <li>Esto es <strong style={{ color: T.ink, fontStyle: 'normal' }}>educación, no recomendación ni asesoramiento</strong>. No vendemos ningún producto.</li>
+          </ul>
+        </div>
+
+        {/* Profundiza · abre los conceptos existentes de Aprende */}
+        <div style={{ marginTop: 22 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, marginBottom: 10 }}>Profundiza</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {[
+              { id: 'retorno-anual', label: 'De dónde sale el 8 %' },
+              { id: 'fondos-indexados', label: 'Fondos indexados' },
+              { id: 'asset-allocation', label: 'Cómo repartir' },
+              { id: 'volatilidad', label: 'Las caídas' },
+              { id: 'comisiones', label: 'Las comisiones' },
+            ].map((c) => (
+              <button key={c.id} onClick={() => goLearn(c.id)} style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.body, padding: '7px 14px', borderRadius: 999, background: 'transparent', color: T.accent, border: '1px solid ' + T.accent, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', whiteSpace: 'nowrap' }}>{c.label} →</button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ScreenHoy({ goTo }) {
   const { state, updatePlan } = useStore();
   const d = useDerived();
@@ -1377,6 +1493,7 @@ export function ScreenHoy({ goTo }) {
   const sinPlanKPIs = useMemo(() => computeSinPlanKPIs(plan, profile), [plan, profile]);
   const [showSinPlanModal, setShowSinPlanModal] = useState(false);
   const [verMasFuturo, setVerMasFuturo] = useState(false);  // S8 · colapsa el detalle del futuro (densidad GX2)
+  const [showReturns, setShowReturns] = useState(false);  // ventana «¿De dónde sale el 8%?»
   // Deep-link · nota de bienvenida si llegamos pre-rellenados desde una calculadora.
   // getDeeplinkWelcome() es transitorio (en memoria); welcomeHidden oculta al instante,
   // dismissDeeplinkWelcome() lo mantiene oculto al cambiar de pestaña (no persiste).
@@ -1493,6 +1610,9 @@ export function ScreenHoy({ goTo }) {
                   </div>
                 </div>
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>El mismo tiempo. La diferencia la pone el <Concept id="interes-compuesto">interés compuesto</Concept> · <Concept id="retorno-anual">{planReturn} % anual</Concept> asumido.</div>
+                <div style={{ textAlign: 'center', marginTop: 12 }}>
+                  <CartelBtn variant="text" onClick={() => setShowReturns(true)}>¿De dónde sale ese {planReturn} %? ¿En qué se invierte? →</CartelBtn>
+                </div>
               </div>
               );
             })() : (
@@ -1628,6 +1748,9 @@ export function ScreenHoy({ goTo }) {
             <OnboardingHelp title="Supuestos">
               Cifras en euros nominales (los que tendrás en el futuro); el recordatorio las ajusta a € de 2026 por la inflación. Asumiendo {planReturn}% de rentabilidad media anual y una tasa de retiro del {fmtPctView(withdrawalRate)} %. La edad de libertad sale de tu ritmo de ahorro real — todo configurable en Proyección.
             </OnboardingHelp>
+            <div style={{ marginTop: 12 }}>
+              <CartelBtn variant="text" onClick={() => setShowReturns(true)}>¿De dónde sale ese {planReturn} %? ¿En qué se invierte? →</CartelBtn>
+            </div>
           </div>
           );
         })() : (
@@ -1652,6 +1775,7 @@ export function ScreenHoy({ goTo }) {
       </section></Reveal>
 
       {showSinPlanModal && <SinMiPlanModal onClose={() => setShowSinPlanModal(false)} />}
+      {showReturns && <ReturnsExplainerModal planReturn={planReturn} onClose={() => setShowReturns(false)} />}
     </div>
   );
 }
