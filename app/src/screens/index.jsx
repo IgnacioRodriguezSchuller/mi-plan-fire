@@ -1584,7 +1584,9 @@ export function ScreenHoy({ goTo }) {
               // App en NOMINAL · ambas cajas del fork en euros corrientes (comparación
               // justa, misma unidad): parado = capital+aportes sin invertir (nominal);
               // invertido = finalNominal del plan (mismo nº que el pill y las monedas M2).
-              const parked = sinPlanKPIs.parkedFinalNominal;
+              // Parado = MISMO patrimonio de hoy + MISMAS aportaciones, a 0% (comparable con Invertido,
+              // que sale de projectV2 con currentPortfolio). Antes usaba plan.capital (foto vieja) → no cuadraba.
+              const parked = (d.currentPortfolio || 0) + aportadoNominal;
               const invested = finalNominal;
               return (
               <div style={cardStyle}>
@@ -4348,12 +4350,6 @@ export function ScreenSinMiPlan({ embedded = false }) {
   const al = plan.actualLife || { completed: false };
   const completed = !!al.completed;
   const [showOnboarding, setShowOnboarding] = useState(false);
-  // Exploratory salary-growth assumption for Truth 1. Local state on purpose:
-  // not persisted, the user can play with it without writing to plan state.
-  // Only used when the plan has a single income tramo (a steady salary). When
-  // the plan defines multiple tramos (escalonado, variable, etc.) we project
-  // straight from the tramos and this control is hidden.
-  const [salaryGrowthAnnual, setSalaryGrowthAnnual] = useState(1.0);
   const hasMultipleIncomeSegments = (plan.incomeSegments || []).length > 1;
 
   const yearsToRetire = Math.max(1, profile.retireAge - profile.age);
@@ -4361,67 +4357,37 @@ export function ScreenSinMiPlan({ embedded = false }) {
   const inflRate = plan.inflationRate != null ? plan.inflationRate : 2.5;
   const planReturn = plan.annualReturn || 8;
 
-  // ---- Truth 1 · Salary erosion ----
-  // Nominal salary path: from the plan's tramos when there are several,
-  // from a steady salary × salary-growth factor when there is just one.
+  // ---- Verdad 1 · Erosión del salario ----
+  // El salario nominal crece como en el MOTOR (projectV2): inflRate × salaryInflationFactor.
+  // «Perdido» = poder de compra que se queda por debajo del de hoy (0 si el sueldo sigue al IPC).
+  const salaryFactor = plan.salaryInflationFactor != null ? plan.salaryInflationFactor : 1;
   const erosion = useMemo(() => {
     if (income <= 0) return null;
-    const gMo = Math.pow(1 + salaryGrowthAnnual / 100, 1 / 12) - 1;
+    const gMo = Math.pow(1 + (inflRate * salaryFactor) / 100, 1 / 12) - 1;
     const piMo = Math.pow(1 + inflRate / 100, 1 / 12) - 1;
-    const rows = [];
-    let sumNominal = 0;
-    let sumReal = 0;
+    let lostAccum = 0;
+    let finalNominal = income, finalReal = income;
     for (let m = 0; m <= monthsToRetire; m++) {
       const nominal = hasMultipleIncomeSegments
         ? computeIncomeFor(plan, addMonthsKey(tk, m))
         : income * Math.pow(1 + gMo, m);
       const real = nominal / Math.pow(1 + piMo, m);
-      if (m > 0) { sumNominal += nominal; sumReal += real; }
-      rows.push({ age: profile.age + m / 12, nominal, real, monthIndex: m });
+      if (m > 0) lostAccum += Math.max(0, income - real);
+      finalNominal = nominal; finalReal = real;
     }
-    return {
-      rows,
-      finalNominal: rows[rows.length - 1].nominal,
-      finalReal: rows[rows.length - 1].real,
-      sumNominal, sumReal,
-      lost: sumNominal - sumReal,
-    };
-  }, [income, inflRate, profile.age, profile.retireAge, monthsToRetire, salaryGrowthAnnual, plan, tk, hasMultipleIncomeSegments]);
+    return { finalNominal, finalReal, lostAccum, keepsUp: finalReal >= income * 0.999 };
+  }, [income, inflRate, salaryFactor, profile.age, profile.retireAge, monthsToRetire, plan, tk, hasMultipleIncomeSegments]);
 
-  // ---- Truth 2 · Opportunity cost ----
-  // A: capital + future monthly contributions parked at 0% nominal (= negative real)
-  // B: capital + future monthly contributions invested at the plan return
-  // Iterates month by month with computePlannedFor so plan-driven growth in
-  // contributions (escalonado, etc.) is reflected in both curves.
-  const oppCost = useMemo(() => {
-    const piMo = Math.pow(1 + inflRate / 100, 1 / 12) - 1;
-    const planMo = Math.pow(1 + planReturn / 100, 1 / 12) - 1;
-    const capital = plan.capital || 0;
-    const rows = [];
-    let parkedNominal = capital;
-    let investedNominal = capital;
-    for (let m = 0; m <= monthsToRetire; m++) {
-      if (m > 0) {
-        const futureKey = addMonthsKey(tk, m);
-        const monthly = computePlannedFor(plan, futureKey);
-        parkedNominal += monthly; // 0% nominal
-        investedNominal = investedNominal * (1 + planMo) + monthly;
-      }
-      const deflator = Math.pow(1 + piMo, m);
-      rows.push({
-        age: profile.age + m / 12,
-        parkedReal: parkedNominal / deflator,
-        investedReal: investedNominal / deflator,
-        monthIndex: m,
-      });
-    }
-    return {
-      rows,
-      parkedFinalReal: rows[rows.length - 1].parkedReal,
-      investedFinalReal: rows[rows.length - 1].investedReal,
-      difference: rows[rows.length - 1].investedReal - rows[rows.length - 1].parkedReal,
-    };
-  }, [plan, inflRate, planReturn, profile.age, monthsToRetire, tk]);
+  // ---- Verdad 2 · Coste de no invertir ----
+  // MISMA proyección que el dashboard: «Invertido» = patrimonio oficial de projectV2 (vía d, con
+  // currentPortfolio + retorno efectivo + eventos); «Parado» = mismo capital de hoy + mismas
+  // aportaciones a 0%. Apples-to-apples; en € de hoy con toRealEur.
+  const aportadoNominalSMP = (d.seriesPlan || []).reduce((a, r) => r.monthIndex > 0 ? a + (r.monthlyAporte || 0) : a, 0);
+  const investedNominalSMP = d.finalPlan ? d.finalPlan.portfolio : 0;
+  const parkedNominalSMP = (d.currentPortfolio || 0) + aportadoNominalSMP;
+  const investedRealSMP = toRealEur(investedNominalSMP, monthsToRetire, inflRate);
+  const parkedRealSMP = toRealEur(parkedNominalSMP, monthsToRetire, inflRate);
+  const oppDiffSMP = investedRealSMP - parkedRealSMP;
 
   // ---- Truth 3 · Day-to-day cost (vista completa) ----
   const declaredExpenses = sumExpenses(al);
@@ -4456,57 +4422,21 @@ export function ScreenSinMiPlan({ embedded = false }) {
 
   const sectionStyle = { display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 };
 
-  // Small chart wrapper for the two minimum-view charts.
-  const ErosionChart = () => {
-    const R = window.Recharts || {};
-    const { ResponsiveContainer, LineChart: RLC, Line, XAxis, YAxis, CartesianGrid, Tooltip } = R;
-    if (!ResponsiveContainer || !erosion) return null;
-    const data = erosion.rows.filter((_, i) => i % 12 === 0); // year-resolution
-    return (
-      <div style={{ width: '100%', height: mobile ? 200 : 240 }}>
-        <ResponsiveContainer>
-          <RLC data={data} margin={{ top: 8, right: 12, left: 4, bottom: 6 }}>
-            <CartesianGrid stroke={T.lineSoft} strokeDasharray="2 4" vertical={false} />
-            <XAxis dataKey="age" type="number" domain={['dataMin', 'dataMax']}
-              tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
-              tickFormatter={(v) => Math.round(v) + ''} axisLine={{ stroke: T.line }} tickLine={false} />
-            <YAxis tickFormatter={fmtEur} tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }} axisLine={false} tickLine={false} width={56} />
-            <Tooltip
-              formatter={(v, name) => [fmtEur(v) + '/mes', name === 'nominal' ? 'Salario sobre el papel' : 'Poder adquisitivo (ajustado por inflación)']}
-              labelFormatter={(age) => `${Math.round(age)} años`}
-              contentStyle={{ background: T.ink, border: 'none', borderRadius: 6, fontFamily: T.mono, fontSize: T.size.eyebrow, color: '#fff', padding: '6px 10px' }} />
-            <Line type="monotone" dataKey="nominal" stroke={T.faint} strokeWidth={1.5} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey="real" stroke={T.accent} strokeWidth={2} dot={false} isAnimationActive={false} />
-          </RLC>
-        </ResponsiveContainer>
+  // Comparación visual de dos cifras (barras cartel, escala al máximo). Para Verdad 1 y 2.
+  const CompareBars = ({ a, b }) => {
+    const max = Math.max(a.value, b.value, 1);
+    const Bar = (x) => (
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+          <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>{x.label}</span>
+          <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: x.color, letterSpacing: T.tracking.tight }}>{fmtEur(x.value)}</span>
+        </div>
+        <div style={{ height: 13, marginTop: 5, background: T.lineSoft, borderRadius: 6.5, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: Math.max(2, Math.min(100, (x.value / max) * 100)) + '%', background: x.color, borderRadius: 6.5 }} />
+        </div>
       </div>
     );
-  };
-
-  const OppCostChart = () => {
-    const R = window.Recharts || {};
-    const { ResponsiveContainer, LineChart: RLC, Line, XAxis, YAxis, CartesianGrid, Tooltip } = R;
-    if (!ResponsiveContainer || !oppCost) return null;
-    const data = oppCost.rows.filter((_, i) => i % 12 === 0);
-    return (
-      <div style={{ width: '100%', height: mobile ? 200 : 240 }}>
-        <ResponsiveContainer>
-          <RLC data={data} margin={{ top: 8, right: 12, left: 4, bottom: 6 }}>
-            <CartesianGrid stroke={T.lineSoft} strokeDasharray="2 4" vertical={false} />
-            <XAxis dataKey="age" type="number" domain={['dataMin', 'dataMax']}
-              tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }}
-              tickFormatter={(v) => Math.round(v) + ''} axisLine={{ stroke: T.line }} tickLine={false} />
-            <YAxis tickFormatter={fmtEur} tick={{ fill: T.faint, fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: '0.04em' }} axisLine={false} tickLine={false} width={64} />
-            <Tooltip
-              formatter={(v, name) => [fmtEur(v), name === 'parkedReal' ? 'En cuenta corriente' : 'Con Plan']}
-              labelFormatter={(age) => `${Math.round(age)} años`}
-              contentStyle={{ background: T.ink, border: 'none', borderRadius: 6, fontFamily: T.mono, fontSize: T.size.eyebrow, color: '#fff', padding: '6px 10px' }} />
-            <Line type="monotone" dataKey="parkedReal" stroke={T.faint} strokeWidth={1.5} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
-            <Line type="monotone" dataKey="investedReal" stroke={T.accent} strokeWidth={2} dot={false} isAnimationActive={false} />
-          </RLC>
-        </ResponsiveContainer>
-      </div>
-    );
+    return <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{Bar(a)}{Bar(b)}</div>;
   };
 
   // Truth 4 stacked bar chart (mortgage).
@@ -4548,104 +4478,55 @@ export function ScreenSinMiPlan({ embedded = false }) {
         </div>
       )}
 
-      {/* Verdad 1 · Salary erosion */}
+      {/* Verdad 1 · Erosión del salario (simple y visual) */}
       <Card pad={mobile ? 18 : 26}>
-        <Label>Verdad 1 · La erosión del salario</Label>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
-          Si tu salario sube exactamente al ritmo de la <Concept id="inflacion">inflación</Concept> (lo que rara vez ocurre, ya que la mayoría de salarios suben menos), tu poder adquisitivo se mantiene. Si sube menos, pierdes. Esta es la realidad estadística española de las últimas dos décadas.
-        </div>
-        <div style={{ marginTop: 14, paddingTop: 14, paddingBottom: 6, borderTop: '1px dashed ' + T.lineSoft }}>
-          {hasMultipleIncomeSegments ? (
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, lineHeight: T.lh.normal }}>
-              Proyección según los tramos de tu plan de Ajustes.
-            </div>
-          ) : (
-            <>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted }}>Crecimiento salarial asumido</span>
-                <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink }}>
-                  <EditableNumber value={salaryGrowthAnnual} onChange={setSalaryGrowthAnnual} min={0} max={10} step={0.1} color={T.ink} /> % / año
-                </span>
-              </div>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 4, lineHeight: T.lh.normal }}>
-                La media española en los últimos 20 años ha sido cercana al 1% nominal anual. Cámbialo si conoces tu caso concreto.
-              </div>
-            </>
-          )}
-        </div>
-        <div style={{ marginTop: 14 }}>
-          {erosion ? <ErosionChart /> : (
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body }}>
-              Define tu ingreso en <strong style={{ color: T.ink, fontStyle: 'normal' }}>Proyección → Tramos de ingreso</strong> para ver esta cifra.
-            </div>
-          )}
-        </div>
-        {erosion && (
+        <Label>Verdad 1 · La inflación encoge tu sueldo</Label>
+        {erosion ? (
           <>
-            <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 18, height: 0, borderTop: '2px dashed ' + T.faint }} /> {hasMultipleIncomeSegments ? 'Salario sobre el papel (según tu plan)' : `Salario sobre el papel (sube ${salaryGrowthAnnual.toFixed(1)}%/año)`}
-              </span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 18, height: 2, background: T.accent }} /> Poder adquisitivo (ajustado por inflación)
-              </span>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
+              {erosion.keepsUp
+                ? <>Según tu plan, tu sueldo sube al ritmo de la <Concept id="inflacion">inflación</Concept>: en {yearsToRetire} años mantienes tu poder de compra.</>
+                : <>Tu sueldo sube en el papel, pero menos que la <Concept id="inflacion">inflación</Concept>. Dentro de {yearsToRetire} años comprará menos que hoy.</>}
             </div>
-            <div style={{ marginTop: 16, padding: '14px 16px', background: T.panel, border: '1px solid ' + T.line, borderRadius: 10 }}>
-              <div style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
-                {erosion.finalNominal > 0
-                  ? <>En <strong>{yearsToRetire} años</strong>, tu salario habrá crecido hasta <strong style={{ color: T.accent }}>{fmtEur(erosion.finalNominal)}/mes</strong> sobre el papel, pero comprará lo que <strong style={{ color: T.accent }}>{fmtEur(erosion.finalReal)}</strong> compran hoy.</>
-                  : <>Tu plan no tiene un tramo de salario vigente hasta la jubilación. Añade o extiende un tramo de ingreso en <strong style={{ color: T.ink }}>Proyección</strong> para ver la erosión por inflación.</>}
-              </div>
+            <div style={{ marginTop: 18 }}>
+              <CompareBars
+                a={{ label: 'Hoy', value: income, color: T.ink }}
+                b={{ label: `Dentro de ${yearsToRetire} años · poder de compra`, value: Math.round(erosion.finalReal), color: erosion.keepsUp ? T.green : T.red }} />
             </div>
-            <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line }}>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Poder adquisitivo perdido (acumulado)</div>
-              <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXl, color: T.red, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
-                −{fmtEur(erosion.lost)}
+            {!erosion.keepsUp && (
+              <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line }}>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Poder de compra perdido en {yearsToRetire} años</div>
+                <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.red, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
+                  −{fmtEur(erosion.lostAccum)}
+                </div>
               </div>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 6, lineHeight: T.lh.normal }}>
-                Es la diferencia entre lo que el sistema te paga nominalmente y lo que ese dinero puede comprar. Se queda por el camino sin aparecer en ningún sitio.
-              </div>
-            </div>
+            )}
           </>
+        ) : (
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 8, lineHeight: T.lh.normal }}>
+            Define tu ingreso en <strong style={{ color: T.ink, fontStyle: 'normal' }}>Proyección</strong> para ver esta cifra.
+          </div>
         )}
       </Card>
 
-      {/* Verdad 2 · Opportunity cost */}
+      {/* Verdad 2 · Coste de no invertir (mismas cifras que el dashboard · projectV2) */}
       <Card pad={mobile ? 18 : 26}>
-        <Label>Verdad 2 · El coste de oportunidad de no invertir</Label>
+        <Label>Verdad 2 · Parado pierde, invertido compone</Label>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
-          Cada mes que dejas el ahorro en cuenta corriente, el dinero no compone. Esto es lo que dejarías de tener.
+          Mismo dinero, mismas aportaciones. La única diferencia es dejarlo en cuenta corriente o invertirlo. En {yearsToRetire} años, en € de hoy.
         </div>
-        <div style={{ marginTop: 14 }}>
-          <OppCostChart />
-        </div>
-        <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 18, height: 0, borderTop: '2px dashed ' + T.faint }} /> En cuenta corriente (real)
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 18, height: 2, background: T.accent }} /> Con Mi Plan (real)
-          </span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginTop: 16 }}>
-          <div style={{ padding: '12px 14px', background: T.panel, border: '1px solid ' + T.line, borderRadius: 10 }}>
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.muted, marginBottom: 6 }}>Sin Plan</div>
-            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.muted, letterSpacing: T.tracking.tight }}>{fmtEur(oppCost.parkedFinalReal)}</div>
-            <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 4, letterSpacing: T.tracking.wide }}>ajustado por inflación</div>
-          </div>
-          <div style={{ padding: '12px 14px', background: T.ink, color: T.bg, borderRadius: 10 }}>
-            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>Con Plan</div>
-            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, letterSpacing: T.tracking.tight }}>{fmtEur(oppCost.investedFinalReal)}</div>
-            <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: 'rgba(255,255,255,0.45)', marginTop: 4, letterSpacing: T.tracking.wide }}>ajustado por inflación</div>
-          </div>
+        <div style={{ marginTop: 18 }}>
+          <CompareBars
+            a={{ label: 'Parado · cuenta corriente', value: Math.round(parkedRealSMP), color: T.muted }}
+            b={{ label: 'Invertido · Mi Plan', value: Math.round(investedRealSMP), color: T.green }} />
         </div>
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line }}>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Diferencia</div>
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayXl, color: T.red, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
-            {fmtEur(oppCost.difference)}
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Lo que ganas por invertir</div>
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.green, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
+            +{fmtEur(oppDiffSMP)}
           </div>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 6, lineHeight: T.lh.normal }}>
-            Es lo que te separa de la realidad que tendrías si no hicieras nada. No es magia: es matemática del <Concept id="interes-compuesto">interés compuesto</Concept> aplicado durante {yearsToRetire} años.
+            Pura matemática del <Concept id="interes-compuesto">interés compuesto</Concept> durante {yearsToRetire} años.
           </div>
         </div>
       </Card>
