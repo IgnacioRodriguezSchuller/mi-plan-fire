@@ -1628,12 +1628,12 @@ export function ScreenHoy({ goTo }) {
                 <div style={{ fontFamily: T.serif, color: T.ink, fontSize: T.size.body, lineHeight: T.lh.normal }}>
                   Este año, la <Concept id="inflacion">inflación</Concept> resta <strong style={{ color: T.ink, fontStyle: 'normal' }}>~{fmtEur(sinPlanKPIs.lostFirstYear)}</strong> a tu salario — y más cada año que pasa.
                 </div>
-                <OnboardingHelp title="Supuestos">
+                <NotaSupuestos>
                   Pérdida de poder de compra del primer año: un año de inflación ({inflRate}%) sobre tu salario anual.
-                </OnboardingHelp>
+                </NotaSupuestos>
               </div>
             )}
-            <div><CartelBtn variant="text" onClick={() => setShowSinPlanModal(true)}>Ver el cálculo completo →</CartelBtn></div>
+            <CalculoCompletoCard onOpen={() => setShowSinPlanModal(true)} mobile={mobile} />
           </div>
           );
         })()}
@@ -1747,9 +1747,9 @@ export function ScreenHoy({ goTo }) {
                 </div>
               </div>
             )}
-            <OnboardingHelp title="Supuestos">
+            <NotaSupuestos>
               Cifras en euros nominales (los que tendrás en el futuro); el recordatorio las ajusta a € de 2026 por la inflación. Asumiendo {planReturn}% de rentabilidad media anual y una tasa de retiro del {fmtPctView(withdrawalRate)} %. La edad de libertad sale de tu ritmo de ahorro real — todo configurable en Proyección.
-            </OnboardingHelp>
+            </NotaSupuestos>
             <div style={{ marginTop: 12 }}>
               <CartelBtn variant="text" onClick={() => setShowReturns(true)}>¿De dónde sale ese {planReturn} %? ¿En qué se invierte? →</CartelBtn>
             </div>
@@ -4721,6 +4721,63 @@ export function OnboardingHelp({ title, children }) {
         </div>
       )}
     </div>
+  );
+}
+
+// Nota de supuestos: footnote difuminada (no desplegable). Sustituye a OnboardingHelp en el
+// dashboard de Plan — los supuestos quedan a la vista, en bajo énfasis (T.faint), sin un «+».
+export function NotaSupuestos({ children }) {
+  return (
+    <div style={{ marginTop: 14, padding: '9px 13px', background: T.bg, border: '1px solid ' + T.lineSoft, borderRadius: 8 }}>
+      <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase', color: T.faint }}>Supuestos</div>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.faint, lineHeight: T.lh.normal, marginTop: 3 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// Card «ventana difuminada» que invita a abrir el cálculo completo: cabecera de ventana + un
+// vistazo borroso del contenido bajo un velo que funde al fondo, con la CTA nítida encima.
+export function CalculoCompletoCard({ onOpen, mobile }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onOpen}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      aria-label="Ver el cálculo completo"
+      style={{
+        position: 'relative', display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer',
+        appearance: 'none', WebkitAppearance: 'none', overflow: 'hidden', padding: 0, marginTop: 14,
+        background: T.paper, border: '1px solid ' + (hover ? T.line : T.lineSoft), borderRadius: 14,
+        boxShadow: hover ? '0 16px 38px rgba(26,22,18,0.15)' : '0 6px 18px rgba(26,22,18,0.07)',
+        transform: hover ? 'translateY(-2px)' : 'none', transition: 'box-shadow .2s ease, transform .2s ease, border-color .2s ease',
+      }}>
+      {/* cabecera de ventana */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '11px 16px', borderBottom: '1px solid ' + T.lineSoft }}>
+        <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted }}>Antes de Mi Plan · cálculo completo</span>
+        <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: hover ? T.accent : T.faint, whiteSpace: 'nowrap', transition: 'color .2s ease' }}>abrir ↗</span>
+      </div>
+      {/* vistazo borroso + velo + CTA */}
+      <div style={{ position: 'relative' }}>
+        <div style={{ padding: mobile ? '16px 16px 60px' : '20px 22px 72px', filter: 'blur(2px)', opacity: 0.55, userSelect: 'none', pointerEvents: 'none' }} aria-hidden="true">
+          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 23 : 29, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1.1 }}>
+            Tu situación si no <em style={{ color: T.accent }}>haces nada</em>.
+          </div>
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 11 }}>
+            {['100%', '58%', '86%', '40%'].map((w, i) => (
+              <div key={i} style={{ height: 12, width: w, background: i % 2 ? T.muted : T.ink, opacity: 0.38, borderRadius: 6 }} />
+            ))}
+          </div>
+        </div>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 28%, ' + T.paper + ' 80%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 8, padding: mobile ? '0 16px 16px' : '0 22px 18px' }}>
+          <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.accent, letterSpacing: T.tracking.tight }}>Ver el cálculo completo</span>
+          <span style={{ fontFamily: T.display, fontWeight: 600, color: T.accent, fontSize: T.size.lead }}>→</span>
+        </div>
+      </div>
+    </button>
   );
 }
 
