@@ -4387,7 +4387,11 @@ export function ScreenSinMiPlan({ embedded = false }) {
   const parkedNominalSMP = (d.currentPortfolio || 0) + aportadoNominalSMP;
   const investedRealSMP = toRealEur(investedNominalSMP, monthsToRetire, inflRate);
   const parkedRealSMP = toRealEur(parkedNominalSMP, monthsToRetire, inflRate);
-  const oppDiffSMP = investedRealSMP - parkedRealSMP;
+  // La ventana sigue el modo de la app (igual que el dashboard «Hacia dónde»): en nominal,
+  // «Invertido» = d.finalPlan.portfolio = la MISMA cifra que la cabecera; en real, su equivalente.
+  const invertidoView = realMode ? investedRealSMP : investedNominalSMP;
+  const paradoView = realMode ? parkedRealSMP : parkedNominalSMP;
+  const oppDiffView = invertidoView - paradoView;
 
   // ---- Truth 3 · Day-to-day cost (vista completa) ----
   const declaredExpenses = sumExpenses(al);
@@ -4437,6 +4441,35 @@ export function ScreenSinMiPlan({ embedded = false }) {
       </div>
     );
     return <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{Bar(a)}{Bar(b)}</div>;
+  };
+
+  // Barra apilada horizontal (cartel) + leyenda compacta. Una sola «imagen» por reparto. Verdad 3 y 5.
+  const StackedBar = ({ segments }) => {
+    const segs = segments.filter((x) => x.value > 0);
+    const sum = segs.reduce((s, x) => s + x.value, 0) || 1;
+    return (
+      <div>
+        <div style={{ display: 'flex', height: 24, borderRadius: 6, overflow: 'hidden', background: T.lineSoft }}>
+          {segs.map((x, i) => (
+            <div key={i} title={x.label} style={{
+              width: (x.value / sum * 100) + '%',
+              background: x.color,
+              backgroundImage: x.dashed ? 'repeating-linear-gradient(45deg, transparent 0, transparent 3px, rgba(255,255,255,0.4) 3px, rgba(255,255,255,0.4) 6px)' : 'none',
+              borderRight: i < segs.length - 1 ? '1.5px solid ' + T.paper : 'none',
+            }} />
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px 16px', marginTop: 13 }}>
+          {segs.map((x, i) => (
+            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide }}>
+              <span style={{ width: 9, height: 9, borderRadius: 2, flexShrink: 0, background: x.color,
+                backgroundImage: x.dashed ? 'repeating-linear-gradient(45deg, transparent 0, transparent 2px, rgba(255,255,255,0.5) 2px, rgba(255,255,255,0.5) 4px)' : 'none' }} />
+              {x.label} · {fmtEur(x.value)} · {(x.value / sum * 100).toFixed(0)}%
+            </span>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   // Truth 4 stacked bar chart (mortgage).
@@ -4513,17 +4546,17 @@ export function ScreenSinMiPlan({ embedded = false }) {
       <Card pad={mobile ? 18 : 26}>
         <Label>Verdad 2 · Parado pierde, invertido compone</Label>
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
-          Mismo dinero, mismas aportaciones. La única diferencia es dejarlo en cuenta corriente o invertirlo. En {yearsToRetire} años, en € de hoy.
+          Mismo dinero, mismas aportaciones. La única diferencia es dejarlo en cuenta corriente o invertirlo. {realMode ? `En ${yearsToRetire} años, en € de hoy.` : `Dentro de ${yearsToRetire} años.`}
         </div>
         <div style={{ marginTop: 18 }}>
           <CompareBars
-            a={{ label: 'Parado · cuenta corriente', value: Math.round(parkedRealSMP), color: T.muted }}
-            b={{ label: 'Invertido · Mi Plan', value: Math.round(investedRealSMP), color: T.green }} />
+            a={{ label: 'Parado · cuenta corriente', value: Math.round(paradoView), color: T.muted }}
+            b={{ label: 'Invertido · Mi Plan', value: Math.round(invertidoView), color: T.green }} />
         </div>
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px dashed ' + T.line }}>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>Lo que ganas por invertir</div>
           <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayLg, color: T.green, letterSpacing: T.tracking.display, lineHeight: T.lh.tight, marginTop: 4 }}>
-            +{fmtEur(oppDiffSMP)}
+            +{fmtEur(oppDiffView)}
           </div>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.caption, marginTop: 6, lineHeight: T.lh.normal }}>
             Pura matemática del <Concept id="interes-compuesto">interés compuesto</Concept> durante {yearsToRetire} años.
@@ -4555,8 +4588,8 @@ export function ScreenSinMiPlan({ embedded = false }) {
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
               De {fmtEur(income)}/mes netos, así se reparten en realidad.
             </div>
-            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[
+            <div style={{ marginTop: 18 }}>
+              <StackedBar segments={[
                 { label: 'Vivienda', value: al.expenses.housing, color: T.muted },
                 { label: 'Comida', value: al.expenses.food, color: T.muted },
                 { label: 'Transporte', value: al.expenses.transport, color: T.muted },
@@ -4564,46 +4597,16 @@ export function ScreenSinMiPlan({ embedded = false }) {
                 { label: 'Otros', value: al.expenses.other, color: T.muted },
                 { label: 'Ahorro / inversión', value: investment, color: T.accent },
                 { label: 'Sobrante sin destino', value: sobrante, color: T.amber, dashed: true },
-              ].map((row) => {
-                const pct = income > 0 ? Math.max(0, row.value) / income * 100 : 0;
-                return (
-                  <div key={row.label} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 10, alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>{row.label}</div>
-                      <div style={{ height: 10, marginTop: 4, background: T.panel, borderRadius: 999, border: '1px solid ' + T.lineSoft, overflow: 'hidden', position: 'relative' }}>
-                        <div style={{
-                          height: '100%',
-                          width: Math.min(100, pct) + '%',
-                          background: row.color,
-                          borderRadius: 999,
-                          backgroundImage: row.dashed ? 'repeating-linear-gradient(45deg, transparent 0, transparent 3px, rgba(255,255,255,0.4) 3px, rgba(255,255,255,0.4) 6px)' : 'none',
-                        }} />
-                      </div>
-                    </div>
-                    <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: row.color, letterSpacing: T.tracking.tight, textAlign: 'right' }}>{fmtEur(row.value)}</div>
-                    <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, minWidth: 44, textAlign: 'right' }}>{pct.toFixed(0)}%</div>
-                  </div>
-                );
-              })}
+              ]} />
             </div>
 
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed ' + T.line, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
-              De <strong>{fmtEur(income)}</strong>/mes netos, vives con <strong>{fmtEur(declaredExpenses)}</strong> (gastos), aportas <strong style={{ color: T.accent }}>{fmtEur(investment)}</strong> (inversión)
-              {sobrante > 0 && <> y <strong style={{ color: T.amber }}>{fmtEur(sobrante)}</strong> desaparecen sin destino claro.</>}
-              {sobrante === 0 && !overspending && <> y nada queda sin destino.</>}
-              {overspending && <> pero declaras <strong style={{ color: T.red }}>{fmtEur(totalSpendInvest - income)} más</strong> de los que ingresas. Revisa tus cifras.</>}
+              {overspending ? (
+                <>Declaras <strong style={{ color: T.red }}>{fmtEur(totalSpendInvest - income)} más</strong> de lo que ingresas. Revisa tus cifras.</>
+              ) : (
+                <>De <strong>{fmtEur(income)}</strong>/mes netos: <strong>{fmtEur(declaredExpenses)}</strong> en gastos, <strong style={{ color: T.accent }}>{fmtEur(investment)}</strong> en inversión{sobrante > 0 ? <> y <strong style={{ color: T.amber }}>{fmtEur(sobrante)}</strong> sin destino.</> : <>; nada sin destino.</>}</>
+              )}
             </div>
-
-            {sobrante > 0 && (
-              <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(194,65,12,0.06)', border: '1px solid ' + T.accent, borderRadius: 10, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.ink, lineHeight: T.lh.normal }}>
-                Esos {fmtEur(sobrante)} sin destino pueden convertirse en <strong style={{ color: T.accent, fontStyle: 'normal' }}>{fmtEur(sobrante * (Math.pow(1 + planReturn / 100, yearsToRetire) - 1) / (planReturn / 100) * 12)}</strong> en {yearsToRetire} años si los inviertes al {planReturn}%. Ajusta los parámetros en <strong style={{ color: T.ink, fontStyle: 'normal' }}>Proyección</strong> para ver otros escenarios.
-              </div>
-            )}
-            {overspending && (
-              <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(180,83,9,0.08)', border: '1px solid ' + T.amber, borderRadius: 10, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.amber, lineHeight: T.lh.normal }}>
-                Estás declarando más gasto e inversión que ingreso. Revisa tus números en Ajustes o reabre este mini-onboarding desde el botón "Editar mis datos" abajo.
-              </div>
-            )}
           </Card>
 
           {/* Verdad 4 · Mortgage */}
@@ -4643,31 +4646,15 @@ export function ScreenSinMiPlan({ embedded = false }) {
           <Card pad={mobile ? 18 : 26}>
             <Label>Verdad 5 · Dónde está tu dinero hoy</Label>
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
-              Tu capital actual de {fmtEur(plan.capital || 0)} repartido entre categorías. Color por rentabilidad nominal: rojo &lt;1%, amber 1-3%, verde &gt;3%.
+              Tu capital ({fmtEur(plan.capital || 0)}), por dónde está. Color por rentabilidad: rojo &lt;1% · amber 1-3% · verde &gt;3%.
             </div>
-            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {allocCategories.filter(c => c.pct > 0).map((c) => (
-                <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0 }}>{c.label}</div>
-                    <div style={{ height: 12, marginTop: 4, background: T.panel, borderRadius: 999, border: '1px solid ' + T.lineSoft, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: c.pct + '%', background: c.color, borderRadius: 999 }} />
-                    </div>
-                    <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, marginTop: 4, letterSpacing: T.tracking.wide }}>
-                      rinde {c.ret.toFixed(1)}% nominal · {c.realRet >= 0 ? '+' : ''}{c.realRet.toFixed(1)}% real
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>{fmtEur(c.amount)}</div>
-                    <div style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint }}>{c.pct.toFixed(0)}%</div>
-                  </div>
-                </div>
-              ))}
+            <div style={{ marginTop: 18 }}>
+              <StackedBar segments={allocCategories.filter(c => c.pct > 0).map((c) => ({ label: c.label, value: c.amount, color: c.color }))} />
             </div>
 
             {d.effectiveReturn != null && (
               <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed ' + T.line, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
-                Tu patrimonio actual de <strong>{fmtEur(plan.capital || 0)}</strong> rinde de media <strong style={{ color: T.accent }}>{d.effectiveReturn.toFixed(1)}%</strong> nominal, que en términos reales son <strong style={{ color: (d.effectiveReturn - inflRate) >= 0 ? T.green : T.red }}>{(d.effectiveReturn - inflRate).toFixed(1)}%</strong> (descontada inflación). Si movieras todo el efectivo a inversión al {planReturn}%, el rendimiento real subiría hacia el {(planReturn - inflRate).toFixed(1)}%.
+                Rinde de media <strong style={{ color: T.accent }}>{d.effectiveReturn.toFixed(1)}%</strong> nominal · <strong style={{ color: (d.effectiveReturn - inflRate) >= 0 ? T.green : T.red }}>{(d.effectiveReturn - inflRate).toFixed(1)}%</strong> real (descontada inflación).
               </div>
             )}
           </Card>
