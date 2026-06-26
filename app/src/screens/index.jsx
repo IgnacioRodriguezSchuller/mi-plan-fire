@@ -4443,30 +4443,38 @@ export function ScreenSinMiPlan({ embedded = false }) {
     return <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{Bar(a)}{Bar(b)}</div>;
   };
 
-  // Barra apilada horizontal (cartel) + leyenda compacta. Una sola «imagen» por reparto. Verdad 3 y 5.
-  const StackedBar = ({ segments }) => {
+  // Barra apilada (cartel) + leyenda alineada. La barra cuenta la historia (color semántico);
+  // la leyenda identifica cada elemento (swatch + nombre + € y % en columnas tabulares). Verdad 3 y 5.
+  // `barSegments` opcional agrupa la barra sin tocar el detalle de la leyenda (Verdad 3 → 3 zonas).
+  const stripe = (a, b) => `repeating-linear-gradient(45deg, transparent 0, transparent ${a}px, rgba(255,255,255,0.4) ${a}px, rgba(255,255,255,0.4) ${b}px)`;
+  const tabular = { fontVariantNumeric: 'lining-nums tabular-nums' };
+  const StackedBar = ({ segments, barSegments }) => {
     const segs = segments.filter((x) => x.value > 0);
+    const bars = (barSegments || segments).filter((x) => x.value > 0);
     const sum = segs.reduce((s, x) => s + x.value, 0) || 1;
+    const barSum = bars.reduce((s, x) => s + x.value, 0) || 1;
     return (
       <div>
-        <div style={{ display: 'flex', height: 24, borderRadius: 6, overflow: 'hidden', background: T.lineSoft }}>
-          {segs.map((x, i) => (
+        <div style={{ display: 'flex', height: 26, borderRadius: 7, overflow: 'hidden', background: T.lineSoft, border: '1px solid ' + T.line }}>
+          {bars.map((x, i) => (
             <div key={i} title={x.label} style={{
-              width: (x.value / sum * 100) + '%',
+              width: (x.value / barSum * 100) + '%',
               background: x.color,
-              backgroundImage: x.dashed ? 'repeating-linear-gradient(45deg, transparent 0, transparent 3px, rgba(255,255,255,0.4) 3px, rgba(255,255,255,0.4) 6px)' : 'none',
-              borderRight: i < segs.length - 1 ? '1.5px solid ' + T.paper : 'none',
+              backgroundImage: x.dashed ? stripe(3, 6) : 'none',
+              borderRight: i < bars.length - 1 ? '2px solid ' + T.paper : 'none',
             }} />
           ))}
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px 16px', marginTop: 13 }}>
-          {segs.map((x, i) => (
-            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.muted, letterSpacing: T.tracking.wide }}>
-              <span style={{ width: 9, height: 9, borderRadius: 2, flexShrink: 0, background: x.color,
-                backgroundImage: x.dashed ? 'repeating-linear-gradient(45deg, transparent 0, transparent 2px, rgba(255,255,255,0.5) 2px, rgba(255,255,255,0.5) 4px)' : 'none' }} />
-              {x.label} · {fmtEur(x.value)} · {(x.value / sum * 100).toFixed(0)}%
-            </span>
-          ))}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', columnGap: 16, rowGap: 10, marginTop: 18, alignItems: 'baseline' }}>
+          {segs.flatMap((x, i) => [
+            <div key={i + 'l'} style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
+              <span style={{ width: 11, height: 11, borderRadius: 3, flexShrink: 0, background: x.color, alignSelf: 'center',
+                backgroundImage: x.dashed ? stripe(2, 4) : 'none' }} />
+              <span style={{ fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.snug, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.label}</span>
+            </div>,
+            <span key={i + 'v'} style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.ink, textAlign: 'right', whiteSpace: 'nowrap', ...tabular }}>{fmtEur(x.value)}</span>,
+            <span key={i + 'p'} style={{ fontFamily: T.mono, fontSize: T.size.caption, color: T.faint, textAlign: 'right', minWidth: 38, whiteSpace: 'nowrap', ...tabular }}>{(x.value / sum * 100).toFixed(0)}%</span>,
+          ])}
         </div>
       </div>
     );
@@ -4589,15 +4597,21 @@ export function ScreenSinMiPlan({ embedded = false }) {
               De {fmtEur(income)}/mes netos, así se reparten en realidad.
             </div>
             <div style={{ marginTop: 18 }}>
-              <StackedBar segments={[
-                { label: 'Vivienda', value: al.expenses.housing, color: T.muted },
-                { label: 'Comida', value: al.expenses.food, color: T.muted },
-                { label: 'Transporte', value: al.expenses.transport, color: T.muted },
-                { label: 'Suscripciones', value: al.expenses.subscriptions, color: T.muted },
-                { label: 'Otros', value: al.expenses.other, color: T.muted },
-                { label: 'Ahorro / inversión', value: investment, color: T.accent },
-                { label: 'Sobrante sin destino', value: sobrante, color: T.amber, dashed: true },
-              ]} />
+              <StackedBar
+                barSegments={[
+                  { label: 'Gastos', value: declaredExpenses, color: T.muted },
+                  { label: 'Ahorro / inversión', value: investment, color: T.accent },
+                  { label: 'Sobrante sin destino', value: sobrante, color: T.amber, dashed: true },
+                ]}
+                segments={[
+                  { label: 'Vivienda', value: al.expenses.housing, color: T.muted },
+                  { label: 'Comida', value: al.expenses.food, color: T.muted },
+                  { label: 'Transporte', value: al.expenses.transport, color: T.muted },
+                  { label: 'Suscripciones', value: al.expenses.subscriptions, color: T.muted },
+                  { label: 'Otros', value: al.expenses.other, color: T.muted },
+                  { label: 'Ahorro / inversión', value: investment, color: T.accent },
+                  { label: 'Sobrante sin destino', value: sobrante, color: T.amber, dashed: true },
+                ]} />
             </div>
 
             <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px dashed ' + T.line, fontFamily: T.serif, fontSize: T.size.body, color: T.ink, lineHeight: T.lh.normal }}>
@@ -4646,7 +4660,15 @@ export function ScreenSinMiPlan({ embedded = false }) {
           <Card pad={mobile ? 18 : 26}>
             <Label>Verdad 5 · Dónde está tu dinero hoy</Label>
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, marginTop: 6, lineHeight: T.lh.normal }}>
-              Tu capital ({fmtEur(plan.capital || 0)}), por dónde está. Color por rentabilidad: rojo &lt;1% · amber 1-3% · verde &gt;3%.
+              Tu capital ({fmtEur(plan.capital || 0)}), por dónde está.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 16px', marginTop: 9, fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide }}>
+              <span style={{ color: T.muted }}>Color por rentabilidad</span>
+              {[{ c: T.red, t: '<1%' }, { c: T.amber, t: '1-3%' }, { c: T.green, t: '>3%' }].map((d, i) => (
+                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, ...tabular }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.c, display: 'inline-block', flexShrink: 0 }} />{d.t}
+                </span>
+              ))}
             </div>
             <div style={{ marginTop: 18 }}>
               <StackedBar segments={allocCategories.filter(c => c.pct > 0).map((c) => ({ label: c.label, value: c.amount, color: c.color }))} />
