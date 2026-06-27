@@ -1298,8 +1298,10 @@ export function SinMiPlanModal({ onClose }) {
     };
   }, [onClose]);
   const mobile = useIsMobile();
-  return (
-    <div onClick={onClose} style={{
+  const scrollRef = useRef(null);
+  useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, []);
+  return createPortal(
+    <div ref={scrollRef} onClick={onClose} style={{
       position: 'fixed', inset: 0, background: 'rgba(26,22,18,0.62)',
       zIndex: 1200, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
       padding: '32px 16px', overflowY: 'auto',
@@ -1323,7 +1325,8 @@ export function SinMiPlanModal({ onClose }) {
         </div>
         <ScreenSinMiPlan embedded />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -1385,8 +1388,10 @@ export function ReturnsExplainerModal({ onClose, planReturn = 8 }) {
   // Cierra esta ventana y abre el concepto de Aprende (queda por encima al cerrarse esta).
   const goLearn = (id) => { onClose(); if (window.__openLearnConcept) window.__openLearnConcept(id); };
   const inkLink = { background: 'transparent', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer', borderBottom: '1px dashed ' + T.accent };
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(26,22,18,0.62)', zIndex: 1200, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '32px 16px', overflowY: 'auto' }}>
+  const scrollRef = useRef(null);
+  useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, []);
+  return createPortal(
+    <div ref={scrollRef} onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(26,22,18,0.62)', zIndex: 1200, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '32px 16px', overflowY: 'auto' }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: T.bg, maxWidth: 760, width: '100%', borderRadius: 14, padding: mobile ? 24 : 36, fontFamily: T.serif, color: T.ink, boxShadow: '0 24px 60px rgba(26,22,18,0.3)', position: 'relative' }}>
         <button onClick={onClose} aria-label="Cerrar" style={{ position: 'absolute', top: 14, right: 14, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, padding: 8, letterSpacing: T.tracking.wider }}>✕ CERRAR</button>
         <SectionTag>El motor</SectionTag>
@@ -1439,7 +1444,8 @@ export function ReturnsExplainerModal({ onClose, planReturn = 8 }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -1612,9 +1618,7 @@ export function ScreenHoy({ goTo }) {
                   </div>
                 </div>
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: 16, lineHeight: T.lh.snug, textAlign: 'center', marginTop: 18 }}>El mismo tiempo. La diferencia la pone el <Concept id="interes-compuesto">interés compuesto</Concept> · <Concept id="retorno-anual">{planReturn} % anual</Concept> asumido.</div>
-                <div style={{ textAlign: 'center', marginTop: 12 }}>
-                  <CartelBtn variant="text" onClick={() => setShowReturns(true)}>¿De dónde sale ese {planReturn} %? ¿En qué se invierte? →</CartelBtn>
-                </div>
+                <Returns8Card onOpen={() => setShowReturns(true)} mobile={mobile} planReturn={planReturn} />
               </div>
               );
             })() : (
@@ -1750,9 +1754,6 @@ export function ScreenHoy({ goTo }) {
             <NotaSupuestos>
               Cifras en euros nominales (los que tendrás en el futuro); el recordatorio las ajusta a € de 2026 por la inflación. Asumiendo {planReturn}% de rentabilidad media anual y una tasa de retiro del {fmtPctView(withdrawalRate)} %. La edad de libertad sale de tu ritmo de ahorro real — todo configurable en Proyección.
             </NotaSupuestos>
-            <div style={{ marginTop: 12 }}>
-              <CartelBtn variant="text" onClick={() => setShowReturns(true)}>¿De dónde sale ese {planReturn} %? ¿En qué se invierte? →</CartelBtn>
-            </div>
           </div>
           );
         })() : (
@@ -4061,10 +4062,12 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null,
   })();
 
   const totalSteps = 4;
+  const scrollRef = useRef(null);
+  useEffect(() => { if (!inline) scrollRef.current?.scrollTo(0, 0); }, [inline]);
 
   // Reusable styled bits
-  return (
-    <div onClick={inline ? undefined : onClose} style={inline ? undefined : {
+  const tree = (
+    <div ref={scrollRef} onClick={inline ? undefined : onClose} style={inline ? undefined : {
       position: 'fixed', inset: 0, background: 'rgba(26,22,18,0.55)',
       zIndex: 1100, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
       padding: '24px 12px', overflowY: 'auto',
@@ -4336,6 +4339,7 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null,
       </div>
     </div>
   );
+  return inline ? tree : createPortal(tree, document.body);
 }
 
 export function ScreenSinMiPlan({ embedded = false }) {
@@ -4737,16 +4741,17 @@ export function NotaSupuestos({ children }) {
   );
 }
 
-// Card «ventana difuminada» que invita a abrir el cálculo completo: cabecera de ventana + un
-// vistazo borroso del contenido bajo un velo que funde al fondo, con la CTA nítida encima.
-export function CalculoCompletoCard({ onOpen, mobile }) {
+// Card «ventana difuminada»: cabecera de ventana (eyebrow + «abrir ↗») + un vistazo BORROSO del
+// contenido (children) bajo un velo que funde al fondo, con la CTA nítida encima. Invita a abrir.
+// Genérica; se especializa en CalculoCompletoCard y Returns8Card (abajo).
+export function VentanaDifuminadaCard({ eyebrow, ctaLabel, onOpen, mobile, children }) {
   const [hover, setHover] = useState(false);
   return (
     <button
       onClick={onOpen}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      aria-label="Ver el cálculo completo"
+      aria-label={ctaLabel}
       style={{
         position: 'relative', display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer',
         appearance: 'none', WebkitAppearance: 'none', overflow: 'hidden', padding: 0, marginTop: 14,
@@ -4756,28 +4761,54 @@ export function CalculoCompletoCard({ onOpen, mobile }) {
       }}>
       {/* cabecera de ventana */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '11px 16px', borderBottom: '1px solid ' + T.lineSoft }}>
-        <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted }}>Antes de Mi Plan · cálculo completo</span>
+        <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted }}>{eyebrow}</span>
         <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, color: hover ? T.accent : T.faint, whiteSpace: 'nowrap', transition: 'color .2s ease' }}>abrir ↗</span>
       </div>
       {/* vistazo borroso + velo + CTA */}
       <div style={{ position: 'relative' }}>
         <div style={{ padding: mobile ? '16px 16px 60px' : '20px 22px 72px', filter: 'blur(2px)', opacity: 0.55, userSelect: 'none', pointerEvents: 'none' }} aria-hidden="true">
-          <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 23 : 29, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1.1 }}>
-            Tu situación si no <em style={{ color: T.accent }}>haces nada</em>.
-          </div>
-          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 11 }}>
-            {['100%', '58%', '86%', '40%'].map((w, i) => (
-              <div key={i} style={{ height: 12, width: w, background: i % 2 ? T.muted : T.ink, opacity: 0.38, borderRadius: 6 }} />
-            ))}
-          </div>
+          {children}
         </div>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 28%, ' + T.paper + ' 80%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 8, padding: mobile ? '0 16px 16px' : '0 22px 18px' }}>
-          <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.accent, letterSpacing: T.tracking.tight }}>Ver el cálculo completo</span>
+          <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.lead, color: T.accent, letterSpacing: T.tracking.tight }}>{ctaLabel}</span>
           <span style={{ fontFamily: T.display, fontWeight: 600, color: T.accent, fontSize: T.size.lead }}>→</span>
         </div>
       </div>
     </button>
+  );
+}
+
+// Card que invita a abrir el cálculo completo «Antes de Mi Plan».
+export function CalculoCompletoCard({ onOpen, mobile }) {
+  return (
+    <VentanaDifuminadaCard eyebrow="Antes de Mi Plan · cálculo completo" ctaLabel="Ver el cálculo completo" onOpen={onOpen} mobile={mobile}>
+      <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 23 : 29, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1.1 }}>
+        Tu situación si no <em style={{ color: T.accent }}>haces nada</em>.
+      </div>
+      <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 11 }}>
+        {['100%', '58%', '86%', '40%'].map((w, i) => (
+          <div key={i} style={{ height: 12, width: w, background: i % 2 ? T.muted : T.ink, opacity: 0.38, borderRadius: 6 }} />
+        ))}
+      </div>
+    </VentanaDifuminadaCard>
+  );
+}
+
+// Card que invita a abrir la ventana de rentabilidades «¿De dónde sale el 8 %?». El vistazo
+// borroso evoca el gráfico ReturnsBars: barras ascendentes (peor→mejor) en grises de token.
+export function Returns8Card({ onOpen, mobile, planReturn = 8 }) {
+  return (
+    <VentanaDifuminadaCard eyebrow="El motor · rentabilidad histórica" ctaLabel={`¿De dónde sale ese ${planReturn} %? ¿En qué se invierte?`} onOpen={onOpen} mobile={mobile}>
+      <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: mobile ? 23 : 29, color: T.ink, letterSpacing: T.tracking.display, lineHeight: 1.1 }}>
+        ¿De dónde sale el <em style={{ color: T.accent }}>{planReturn} %</em>?
+      </div>
+      <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 11 }}>
+        {['22%', '44%', '66%', '85%', '97%'].map((w, i) => (
+          <div key={i} style={{ height: 12, width: w, background: i < 2 ? T.muted : T.ink, opacity: 0.34, borderRadius: 6 }} />
+        ))}
+      </div>
+    </VentanaDifuminadaCard>
   );
 }
 
