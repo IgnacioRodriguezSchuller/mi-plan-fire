@@ -3883,6 +3883,28 @@ export function AllocRow({ k, label, fixedReturn, customKey, returnLabel, alloca
   );
 }
 
+// Bloque desplegable (acordeón) para el editor inline de «tu situación económica» (Datos):
+// cabecera con título + resumen + chevron; cuerpo colapsable. Por defecto cerrado (compacta).
+function InlineFold({ title, summary, defaultOpen = false, children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{ border: '1px solid ' + T.line, borderRadius: 12, overflow: 'hidden', marginBottom: 12 }}>
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} style={{
+        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        padding: '14px 18px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left',
+        appearance: 'none', WebkitAppearance: 'none',
+      }}>
+        <span style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.subtitle, color: T.ink, letterSpacing: T.tracking.tight }}>{title}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+          {summary != null && <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, letterSpacing: T.tracking.wide }}>{summary}</span>}
+          <span style={{ fontFamily: T.mono, fontSize: T.size.eyebrow, color: T.faint, whiteSpace: 'nowrap' }}>{open ? '▾ ocultar' : '▸ ver'}</span>
+        </span>
+      </button>
+      {open && <div style={{ padding: '2px 18px 20px', borderTop: '1px solid ' + T.lineSoft }}>{children}</div>}
+    </div>
+  );
+}
+
 export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null, inline = false }) {
   const { state, mutatePlan } = useStore();
   const plan = overridePlan || state.plan;
@@ -4034,11 +4056,12 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null,
         )}
 
         {/* Step 1 · Expenses */}
-        {(inline || step === 0) && (
+        {(inline || step === 0) && (() => {
+          const content = (
           <>
-            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8 }}>
+            {!inline && <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8 }}>
               ¿Cuánto te cuesta vivir cada mes?
-            </div>
+            </div>}
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, marginBottom: 18 }}>
               Estimación, no contabilidad. Si tienes hipoteca, mete la cuota en Vivienda.
             </div>
@@ -4070,14 +4093,17 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null,
               No necesitas precisión contable. Una estimación razonable es suficiente. Mi Plan FIRE compara tu gasto declarado con tu salario neto y te muestra dónde va tu dinero, no audita tu vida. Si no llegas a fin de mes con lo que pones, sabremos que falta algo.
             </OnboardingHelp>
           </>
-        )}
+          );
+          return inline ? <InlineFold title="Gastos" summary={fmtEur(totalExpenses) + '/mes'}>{content}</InlineFold> : content;
+        })()}
 
         {/* Step 2 · Mortgage */}
-        {(inline || step === 1) && (
+        {(inline || step === 1) && (() => {
+          const content = (
           <>
-            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8 }}>
+            {!inline && <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8 }}>
               ¿Tienes hipoteca?
-            </div>
+            </div>}
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, marginBottom: 18 }}>
               La cuota mensual ya está en "Vivienda" del paso anterior. Aquí solo es para mostrarte cuánto pagas en intereses a lo largo del plazo.
             </div>
@@ -4158,14 +4184,17 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null,
               </div>
             )}
           </>
-        )}
+          );
+          return inline ? <InlineFold title="Hipoteca" summary={data.mortgage.enabled ? 'Sí' : 'No'}>{content}</InlineFold> : content;
+        })()}
 
         {/* Step 3 · Allocation */}
-        {(inline || step === 2) && (
+        {(inline || step === 2) && (() => {
+          const content = (
           <>
-            <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8 }}>
+            {!inline && <div style={{ fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: T.size.displayMd, letterSpacing: T.tracking.tight, lineHeight: T.lh.snug, marginBottom: 8 }}>
               ¿Dónde está tu dinero hoy?
-            </div>
+            </div>}
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', color: T.muted, fontSize: T.size.body, lineHeight: T.lh.normal, marginBottom: 18 }}>
               Reparte tu capital actual ({fmtEur(plan.capital || 0)}) entre estas categorías. Debe sumar 100%.
             </div>
@@ -4199,7 +4228,9 @@ export function ActualLifeOnboarding({ onClose, onComplete, overridePlan = null,
               Mi Plan FIRE asumía que tu capital inicial rinde el retorno del slider ({planReturn}%). Eso no es realista si la mayoría está en cuenta corriente al 0%. Con esta distribución calculamos el retorno medio ponderado de tu situación actual y reescribimos la proyección para reflejar la realidad de tu dinero hoy.
             </OnboardingHelp>
           </>
-        )}
+          );
+          return inline ? <InlineFold title="Dónde está tu dinero" summary={Math.round(totalAllocation) + '%'}>{content}</InlineFold> : content;
+        })()}
 
         {/* Step 4 · Confirmation · solo en el asistente modal (inline guarda sin paso de confirmación) */}
         {(!inline && step === 3) && (
