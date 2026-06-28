@@ -4500,7 +4500,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
               formatter={(v, name) => [fmtEur(v), name === 'principal' ? 'Capital amortizado' : 'Intereses pagados']}
               labelFormatter={(year) => `Año ${year}`}
               contentStyle={{ background: T.ink, border: 'none', borderRadius: 6, fontFamily: T.mono, fontSize: T.size.eyebrow, color: '#fff', padding: '6px 10px' }} />
-            <Bar dataKey="principal" stackId="m" fill={T.accent} isAnimationActive={false} />
+            <Bar dataKey="principal" stackId="m" fill={T.muted} isAnimationActive={false} />
             <Bar dataKey="interest" stackId="m" fill={T.amber} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
@@ -4642,7 +4642,7 @@ export function ScreenSinMiPlan({ embedded = false }) {
               </div>
               <div style={{ display: 'flex', gap: 14, fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, color: T.muted, letterSpacing: 0, marginTop: 6 }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 14, height: 10, background: T.accent }} /> Capital amortizado
+                  <span style={{ width: 14, height: 10, background: T.muted }} /> Capital amortizado
                 </span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 14, height: 10, background: T.amber }} /> Intereses
