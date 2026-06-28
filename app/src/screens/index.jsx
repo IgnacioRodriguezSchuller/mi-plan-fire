@@ -3876,7 +3876,7 @@ export function ScreenAjustes() {
         </div>
         <div style={{ marginTop: 20 }}>
           {SUGGEST_URL
-            ? <a href={SUGGEST_URL} target="_blank" rel="noopener noreferrer" style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 18, color: T.accent, textDecoration: 'none' }}>Enviar una sugerencia →</a>
+            ? <a href={SUGGEST_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', fontFamily: T.serif, fontStyle: 'italic', fontSize: 18, color: T.bg, background: T.accent, padding: '13px 28px', borderRadius: 999, textDecoration: 'none', boxShadow: '0 6px 18px rgba(26,22,18,0.12)' }}>Enviar una sugerencia →</a>
             : <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 18, color: T.faint }}>Enviar una sugerencia · pronto</span>}
         </div>
       </div></Reveal>
@@ -5240,6 +5240,7 @@ export function AccountMenu({ open, anchor, onClose, onShowWhy }) {
       <Item onClick={() => createAccount()}>+ Crear otro perfil</Item>
       <div style={{ height: 1, background: T.lineSoft, margin: '6px 0' }} />
       <Item onClick={onShowWhy}>¿Por qué?</Item>
+      {SUGGEST_URL && <Item onClick={() => window.open(SUGGEST_URL, '_blank', 'noopener,noreferrer')}>Sugerencias →</Item>}
     </div>
   );
 }
@@ -5593,10 +5594,11 @@ export function Shell() {
           <KpiPill onClick={() => setTab('proy')} />
           <div style={{ position: 'relative' }} ref={accountAnchorRef}>
             <button onClick={() => setShowAccountMenu(v => !v)} aria-label={`Menú de cuenta · ${accLabel}`} style={{
-              width: 24, height: 24, borderRadius: '50%', background: accColor, color: T.bg,
+              width: 32, height: 32, borderRadius: '50%', background: accColor, color: T.bg,
               border: 'none', cursor: 'pointer', padding: 0,
-              fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 11, lineHeight: 1,
+              fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 15, lineHeight: 1,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(26,22,18,0.18)',
             }}>{accInitial}</button>
             <AccountMenu open={showAccountMenu} anchor={accountAnchorRef.current} onClose={() => setShowAccountMenu(false)} onShowWhy={() => setShowWhy(true)} />
           </div>
@@ -5665,10 +5667,11 @@ export function Shell() {
           <KpiPill onClick={() => setTab('proy')} />
           <div style={{ position: 'relative' }} ref={accountAnchorRef}>
             <button onClick={() => setShowAccountMenu(v => !v)} aria-label={`Menú de cuenta · ${accLabel}`} style={{
-              width: 28, height: 28, borderRadius: '50%', background: accColor, color: T.bg,
+              width: 36, height: 36, borderRadius: '50%', background: accColor, color: T.bg,
               border: 'none', cursor: 'pointer', padding: 0,
-              fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 13, lineHeight: 1,
+              fontFamily: T.display, fontWeight: 600, fontOpticalSizing: 'auto', fontSize: 17, lineHeight: 1,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(26,22,18,0.18)',
             }}>{accInitial}</button>
             <AccountMenu open={showAccountMenu} anchor={accountAnchorRef.current} onClose={() => setShowAccountMenu(false)} onShowWhy={() => setShowWhy(true)} />
           </div>

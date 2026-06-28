@@ -2181,3 +2181,9 @@ Tres arreglos de UX detectados por el dueño usando la app (interacción/conteni
 
 ### Sugerencias · formulario activado
 - El dueño creó el Google Form y pasó la URL pública. `SUGGEST_URL` (en `modals/index.jsx`) deja de estar vacío → `https://docs.google.com/forms/d/e/1FAIpQLScRxF-s9NqDqSmF76VqHoRMoBCZCEN9Kszx0psM7eINIep8Ng/viewform` (limpia, sin `?usp=publish-editor`). El panel de Datos/Ajustes pasa de «· pronto» a «Enviar una sugerencia →» (`target=_blank`, `rel=noopener noreferrer`; cero red, es un `<a href>`). Verificado en preview. Search Console: dominio `miplanfire.com` ya verificado por DNS (cubre `app.`).
+
+### Visibilidad: avatar de perfil + acceso a sugerencias
+- **Petición del dueño**: avatar de perfil más grande (que se note y dé ganas de clicar); ítem de sugerencias en el menú de cuenta bajo «¿Por qué?»; y el portal de sugerencias de Datos más visible.
+- **Cambio** (`screens/index.jsx`, solo UI): avatar del header **24→32 px** (font 11→15) y **28→36 px** (font 13→17) en las dos variantes de `Shell`, con `boxShadow` sutil (lift, lectura de botón). En `AccountMenu`, nuevo `Item` **«Sugerencias →»** bajo «¿Por qué?» (gateado a `SUGGEST_URL`; abre el formulario en pestaña nueva con `window.open(..., 'noopener,noreferrer')`). En `ScreenAjustes`, el enlace de sugerencias pasa de texto serif tenue a **botón pill de acento** (`background T.accent`, texto `T.bg`, radio 999, padding 13×28) — claramente perceptible.
+- **No tocado**: motor/`lib`, `content`, tokens, `migrateToV2`, claves, baseline. Color solo por tokens (sombras `rgba(26,22,18,…)` como patrón existente); sin emojis nuevos.
+- **Verificación**: preview (demo) — avatar 32×32 medido; menú con «¿Por qué?» → «Sugerencias →»; botón de Datos con fondo `#c2410c` y texto crema; consola limpia. Build OK; verify-content/state PASS; lib 13 / tokens 2 (sin diffs nuevos); baseline `b3ea52b1…` intacto.
