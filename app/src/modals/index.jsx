@@ -739,7 +739,7 @@ export const DONATE_KOFI_URL = 'https://ko-fi.com/miplanfire';
 export const DONATE_GITHUB_URL = '';    // p.ej. 'https://github.com/sponsors/IgnacioRodriguezSchuller'
 // Portal de sugerencias (cero red). Vacío → «pronto»; con URL → enlace activo.
 // p.ej. 'mailto:hola@miplanfire.com?subject=Sugerencia%20para%20Mi%20Plan%20FIRE' o issues de GitHub.
-export const SUGGEST_URL = '';
+export const SUGGEST_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScRxF-s9NqDqSmF76VqHoRMoBCZCEN9Kszx0psM7eINIep8Ng/viewform';
 
 export function WhyModal({ onClose }) {
   useEffect(() => {
