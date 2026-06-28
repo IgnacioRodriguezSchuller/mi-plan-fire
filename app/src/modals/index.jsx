@@ -599,17 +599,31 @@ export function ConceptModal({ id, onClose, read = false, onToggleRead }) {
           boxShadow: '0 24px 60px rgba(26,22,18,0.3)',
           position: 'relative',
         }}>
-        <button
-          onClick={onClose}
-          aria-label="Cerrar"
-          style={{
-            position: 'absolute', top: 16, right: 16,
-            background: 'transparent', border: 'none', cursor: 'pointer',
-            fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider,
-            color: T.faint, padding: 8,
-          }}>
-          ✕ CERRAR
-        </button>
+        {/* Cabecera: «Marcar como leído» VISIBLE (acento sin leer · verde leído) junto a la cruz. */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, marginBottom: 6 }}>
+          {onToggleRead && (
+            <button onClick={onToggleRead} aria-pressed={read}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase',
+                padding: '7px 15px', borderRadius: 999, cursor: 'pointer',
+                background: read ? T.green : 'transparent',
+                color: read ? T.bg : T.accent,
+                border: '1px solid ' + (read ? T.green : T.accent),
+                appearance: 'none', WebkitAppearance: 'none',
+              }}>
+              {read ? '✓ Leído' : 'Marcar como leído'}
+            </button>
+          )}
+          <button onClick={onClose} aria-label="Cerrar"
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wider,
+              color: T.faint, padding: 8,
+            }}>
+            ✕ CERRAR
+          </button>
+        </div>
 
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: T.size.caption, letterSpacing: 0, color: T.faint, marginBottom: 12 }}>
           {CATEGORY_LABELS[concept.category] || concept.category}
@@ -703,25 +717,8 @@ export function ConceptModal({ id, onClose, read = false, onToggleRead }) {
           </div>
         )}
 
-        {/* Marcar/desmarcar como leído · control EXPLÍCITO (persistente en plan.readLessons).
-            Verde sólido = leído; contorno = sin leer. Común a artículo y glosario. */}
-        {onToggleRead && (
-          <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid ' + T.lineSoft }}>
-            <button onClick={onToggleRead} aria-pressed={read}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                fontFamily: T.mono, fontSize: T.size.eyebrow, letterSpacing: T.tracking.wide, textTransform: 'uppercase',
-                padding: '8px 16px', borderRadius: 999, cursor: 'pointer',
-                background: read ? T.green : 'transparent',
-                color: read ? T.bg : T.muted,
-                border: '1px solid ' + (read ? T.green : T.line),
-                appearance: 'none', WebkitAppearance: 'none',
-              }}>
-              {read ? '✓ Leído' : 'Marcar como leído'}
-            </button>
-          </div>
-        )}
-        <div style={{ marginTop: onToggleRead ? 18 : 32, paddingTop: onToggleRead ? 0 : 20, borderTop: onToggleRead ? 'none' : '1px solid ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, lineHeight: T.lh.relaxed, color: T.faint }}>
+        {/* El control «Marcar como leído» vive ahora en la cabecera (junto a la cruz). */}
+        <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid ' + T.lineSoft, fontFamily: T.mono, fontSize: T.size.eyebrow, lineHeight: T.lh.relaxed, color: T.faint }}>
           Contenido educativo. No es asesoramiento financiero ni de inversión.
         </div>
       </div>

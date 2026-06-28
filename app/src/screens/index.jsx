@@ -14,7 +14,7 @@ import {
   computeRebalance, recommendedWithdrawalRate, effectiveWithdrawalRate, compareHousingPaths, homeEquityAt,
   runMonteCarlo,
   getSavingsTier, seedMonths, defaultGoals, computeUserProfile, projectStandardPlan, computeActivePhase,
-  computeSinPlanKPIs, fmtEur, parseMonthsCSV,
+  computeSinPlanKPIs, fmtEur,
 } from '../lib/index.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import {
@@ -3789,65 +3789,6 @@ export function ScreenAjustes() {
           Todo se guarda en tu dispositivo. Nada sale de aquí.
         </div>
         <div style={{ display: 'flex', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
-          <Btn variant="ghost" size="sm" onClick={() => {
-            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'mi-plan.json'; a.click();
-            URL.revokeObjectURL(url);
-          }}>Exportar JSON</Btn>
-          <Btn variant="ghost" size="sm" onClick={() => {
-            const input = document.createElement('input');
-            input.type = 'file'; input.accept = '.json';
-            input.onchange = (e) => {
-              const file = e.target.files[0]; if (!file) return;
-              const reader = new FileReader();
-              reader.onload = (ev) => {
-                try {
-                  // FN7 · confirmación + preview antes de sobrescribir (importar no tenía red de seguridad).
-                  const parsed = migrateToV2(JSON.parse(ev.target.result));
-                  const st = parsed.profile ? parsed : (parsed.accounts && parsed.accounts[parsed.activeId || 'default'] && parsed.accounts[parsed.activeId || 'default'].state) || parsed;
-                  const prof = (st && st.profile) || {};
-                  const cap = st && st.plan && st.plan.capital != null ? st.plan.capital : null;
-                  const ok = window.confirm('Vas a SUSTITUIR tus datos por el archivo importado:\n\n· Nombre: ' + (prof.name || '—') + '\n· Edad: ' + (prof.age != null ? prof.age : '—') + (cap != null ? '\n· Capital inicial: ' + cap + ' €' : '') + '\n\nEsto sobrescribe el plan actual. ¿Continuar?');
-                  if (ok) update(parsed);
-                }
-                catch(err) { alert('JSON inválido'); }
-              };
-              reader.readAsText(file);
-            };
-            input.click();
-          }}>Importar JSON</Btn>
-          <Btn variant="ghost" size="sm" onClick={() => {
-            // Importar meses (CSV) · fija el real aportado por mes (Pro). Confirmación antes de aplicar (FN7).
-            const input = document.createElement('input');
-            input.type = 'file'; input.accept = '.csv,text/csv,text/plain';
-            input.onchange = (e) => {
-              const file = e.target.files[0]; if (!file) return;
-              const reader = new FileReader();
-              reader.onload = (ev) => {
-                const rows = parseMonthsCSV(ev.target.result);
-                if (!rows.length) { alert('No se reconoció ningún mes en el CSV.\n\nFormato por línea: fecha,importe\nEj.:  2026-01,500'); return; }
-                const ok = window.confirm('Se han reconocido ' + rows.length + ' meses en el CSV.\n\nSe fijará el importe REAL aportado de cada uno (creando el mes si no existe). No borra los meses que no aparezcan. ¿Continuar?');
-                if (!ok) return;
-                update((s) => {
-                  const byKey = {}; s.months.forEach((m) => { byKey[m.key] = m; });
-                  rows.forEach(({ key, amount }) => {
-                    if (byKey[key]) byKey[key] = { ...byKey[key], actual: amount };
-                    else {
-                      const [y, mo] = key.split('-').map(Number);
-                      const dt = new Date(y, mo - 1, 1);
-                      byKey[key] = { key, label: dt.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }), year: y, monthIndex: mo - 1, planned: computePlannedFor(s.plan, key), actual: amount, note: 'importado' };
-                    }
-                  });
-                  const months = Object.values(byKey).sort((a, b) => (a.key > b.key ? 1 : -1));
-                  return { ...s, months };
-                });
-              };
-              reader.readAsText(file);
-            };
-            input.click();
-          }}>Importar meses (CSV)</Btn>
           <Btn variant="ghost" size="sm" onClick={seedDemoConfirm}>Cargar datos demo</Btn>
           {multiAccount && <Btn variant="ghost" size="sm" onClick={resetAll} style={{ color: T.red, borderColor: T.red }}>Borrar solo esta cuenta</Btn>}
           <Btn variant="ghost" size="sm" onClick={wipeEverything} style={{ color: T.red, borderColor: T.red }}>Borrar todo</Btn>
